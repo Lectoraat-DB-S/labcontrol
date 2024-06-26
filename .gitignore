@@ -1,0 +1,11 @@
+venv/
+.idea/
+logs/
+visualizations/
+*.h5
+*.yml
+*.pyc
+testproject/
+*.zip
+**/build
+**/dist

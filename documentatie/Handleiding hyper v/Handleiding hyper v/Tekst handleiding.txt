@@ -1,0 +1,32 @@
+Stap 1-4
+Via zoekbalk naar windows features activatie scherm
+Vinkje bij Hyper V aanzetten
+Wachten tot Windows de benodigde aanpassingen heeft gemaakt
+Windows opnieuw opstarten (!), dit kan enige tijd duren. Net als bij een Windows update.
+
+Géén screenshots, maar eerst Windows Media creation tool downloaden en via de wizard een windows 10 of windows 11 iso maken.
+https://support.microsoft.com/nl-nl/windows/installatiemedia-voor-windows-maken-99a58364-8c02-206f-aa6f-40c3b507420d
+
+Stap 5 Hyper-v manager
+Hyper-V manager openen (evt. via zoekbalk)
+Navigeer naar je desktop in de eerste colomn
+Bij actions / acties: New > Virtual machine
+
+Stap 6-11 New virtual machine wizard
+6. Naam geven aan de machine
+
+7. Generation 2 selecteren voor UEFI 
+
+8. Voor de meeste toepassingen is 4gb ram voldoende, heb je 16gb of meer systeem geheugen in je laptop zou je gerust 8gb kunnen geven. Houdt er rekening mee dat zonder dynamic memory functie dit geheugen niet beschikbaar is voor je host OS. Sommige software kan problemen geven wanneer Dynamic Memory aanstaat, daarom zet ik deze bijvoorkeur meestal uit(!).
+
+9. Meestal is het wenselijk dat de VM internet toegang heeft, selecter de "default switch" om dit toe te staan.
+
+10. Creër een virtuele hardschijf. 64gb houdt de VM compact maar geeft voldoende ruimte voor de meeste (kleinere) applicaties. Denk er om dat je de virtuele hardeschijf later wel groter, maar niet kleiner, kunt maken.
+
+11. Kies het Windows installatie bestan (.iso) die je met de windows media creation tool gedownload hebt.
+
+Na de wizard kun je de vm opstarten en windows installeren zoals je dat gewend bent te doen.
+
+Stap 12 USB-passthrough activeren op host en client
+https://learn.microsoft.com/en-us/answers/questions/707320/attach-usb-device-to-hyper-v-guest-machine
+

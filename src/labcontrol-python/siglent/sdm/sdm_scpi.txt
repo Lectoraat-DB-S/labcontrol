@@ -1,0 +1,25 @@
+5.2 MEASure:CURRent:{AC|DC}? [{<range>|AUTO|MIN|MAX|DEF}] 
+SDM3045X: 
+<range>：{600uA|6mA|60mA|600mA|6A|10A|AUTO}，Default: AUTO 
+The 600uA and 6mA ranges can only be set in DC mode, and the minimum range is 60mA in AC mode 
+SDM3055: 
+<range>：{200uA|2mA|20mA|200mA|2A|10A|AUTO}，Default: AUTO 
+The 200uA and 2mA ranges can only be set in DC mode, and the minimum range is 20mA in AC mode 
+SDM3065X: 
+<range>：{200uA|2mA|20mA|200mA|2A|10A|AUTO}，Default: AUTO 
+
+
+5.5. MEASure:{RESistance|FRESistance}? [{<range>|AUTO|MIN|MAX|DEF}]
+
+SDM3045X
+<range>
+range>：：{600 Ω|6 kΩ|60 kΩ|600 kΩ|6 MΩ|60 MΩ|100 MΩ},  Default: AUTO
+SDM3055
+<range>
+range>：：{200 Ω|2 kΩ|20 kΩ|200 kΩ|2 MΩ|10 MΩ|100 MΩ}, Default: AUTO
+SDM3065X
+<range>
+range>：：{200 Ω|2 kΩ|20 kΩ|200 kΩ|1 MΩ|10 MΩ|100 MΩ}, Default: AUTO
+
+
+
