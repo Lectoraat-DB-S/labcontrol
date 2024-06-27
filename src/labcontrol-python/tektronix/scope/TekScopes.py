@@ -1,7 +1,8 @@
 import pyvisa as visa
 import numpy as np
+
 from tektronix.scope.Channel import TekChannel
-from tektronix.scope.Acquisitions import TekScopeEncodings
+from tektronix.scope.Acquisitions import TekScopeEncodings, WaveformPreamble
 from tektronix.scope.TekLogger import TekLog
 
 class TekScope(object):
@@ -35,13 +36,13 @@ class TekScope(object):
                     #code below assumes TDS2002B/C with 2 channels
                     myCH1 = TekChannel(1, mydev)#TODO:code has te be removed, because of list of Channels.
                     self.CH1 = myCH1            #TODO:code has te be removed, because of list of Channels.
-                    #self.CH1.setVisible(True)
+                    self.CH1.setVisible(True)
                     self._channels.append(myCH1)
                     myCH2 = TekChannel(2, mydev)#TODO:code has te be removed, because of list of Channels.
                     self.CH2 = myCH2            #TODO:code has te be removed, because of list of Channels.
-                    #self.CH2.setVisible(True)
+                    self.CH2.setVisible(True)
                     self._channels.append(myCH2)
-                    self.setToDefault()
+                    #self.setToDefault()
                     break
             else:
                 self.log.addToLog("Tekscope: no Tektronix found on USB.")        
@@ -56,6 +57,13 @@ class TekScope(object):
         for chan in self._channels:
             pass
             
+    def queryWaveFormPreamble(self):
+        #TODO add intern state for ascii or binary. Defines query or binary_query
+        response = self._inst.query('WFMPRE?')
+        print(response)
+        preamble = WaveformPreamble()
+        preamble.decode(response)
+        print(preamble)
     
     ##### DATA TRANSFER RELATED METHODS ######
     def queryEncoding(self):

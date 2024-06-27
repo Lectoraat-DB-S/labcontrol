@@ -2,24 +2,24 @@ import pyvisa as visa
 import numpy as np
 import time
 import struct
-from tektronix.scope.Acquisitions import TekTrace
+from tektronix.scope.Acquisitions import TekTrace,WaveformPreamble
 from tektronix.scope.TekLogger import TekLog
 from tektronix.scope.Acquisitions import TekScopeEncodings
 
 class TekChannel(object):
-    def __init__(self, chan_no: int, scope=None):
+    #def __init__(self, chan_no: int, scope=None):
         # 25/6/24: Got a partially imported or circular import error. A way to prevent the circular is explained here:
         # https://stackoverflow.com/questions/64807163/importerror-cannot-import-name-from-partially-initialized-module-m
         # But an better alternative is to change the structure so its purely hierarchical.
         
-        from tektronix.scope.TekScopes import TekScope
-    #def __init__(self, chan_no: int, visaInstr):
+        #from tektronix.scope.TekScopes import TekScope
+    def __init__(self, chan_no: int, visaInstr):
         self._name = f"CH{chan_no}"
         #self._inst = scope.getDevice() # get handle to the underlying VISA instrument.
         self._inst = visaInstr
         self.log = TekLog()
-        if scope != None:
-            self._parentScope = TekScope(scope)
+        #if scope != None:
+        #    self._parentScope = scope
         self._last_trace = TekTrace()
         self._nrOfDivs = 5  # TODO: should be set during initialisation of the scope.
         self._isVisible = False
@@ -157,7 +157,13 @@ Sample mode";
         #TODO add intern state for ascii or binary. Defines query or binary_query
         self.setAsSource()
         response = self._inst.query('WFMPRE?')
-        struct.unpack('f', response[156:160])[0]
+        response = str(response)
+        b = bytearray()
+        b.extend(map(ord, response))
+        
+        splitted = response.split(';')
+        #for split in splitted:
+            
     
     def createTimeVector(self):
         """
@@ -190,6 +196,8 @@ YOFF_CH1 = float(scope.query('WFMPRE:YOFF?')) #Requesting vertical offset in V f
 
 V_DIV_CH1 = float(scope.query('CH1:SCALE?')) #Requesting the vertical scale of CH1 in V/DIV
 
+debug output.
+'1;8;BIN;RI;MSB;2500;"Ch1, DC coupling, 2.0E0 V/div, 2.5E-4 s/div, 2500 points, Sample mode";Y;1.0E-6;0;-1.25E-3;"s";8.0E-2;0.0E0;0.0E0;"Volts"'
     
     """
     
