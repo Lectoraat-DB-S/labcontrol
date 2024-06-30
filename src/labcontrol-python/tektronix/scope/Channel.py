@@ -2,11 +2,12 @@ import pyvisa as visa
 import numpy as np
 import time
 import struct
-from tektronix.scope.Acquisitions import TekTrace,WaveformPreamble
+from tektronix.scope.Acquisitions import TekTrace, WaveformPreamble
 from tektronix.scope.TekLogger import TekLog
 from tektronix.scope.Acquisitions import TekScopeEncodings
 
 class TekChannel(object):
+    
     #def __init__(self, chan_no: int, scope=None):
         # 25/6/24: Got a partially imported or circular import error. A way to prevent the circular is explained here:
         # https://stackoverflow.com/questions/64807163/importerror-cannot-import-name-from-partially-initialized-module-m
@@ -20,17 +21,18 @@ class TekChannel(object):
         self.log = TekLog()
         #if scope != None:
         #    self._parentScope = scope
-        self._last_trace = TekTrace()
+        self._wfp = WaveformPreamble()
+        self._wfp.queryPreamble()
+        self._last_trace = self._wfp.getTrace()
         self._nrOfDivs = 5  # TODO: should be set during initialisation of the scope.
         self._isVisible = False
         self.setVisible(True)
         self._encoding = None
-        #self.setEncoding(TekScopeEncodings.RIBinary) #Not necessary, already doen in default setting of scope object
         
     def setToDefault(self):
-        pass
-        
-        
+        self.setEncoding(TekScopeEncodings.RIBinary)
+        self.setNrOfByteTransfer(2)
+         
     def setVisible(self, state:bool):
         if state:
             self._inst.write(f"SELECT:{self._name} ON")
@@ -52,7 +54,16 @@ class TekChannel(object):
                 self._encoding = encoding
         else:
             self.log.addToLog("Unknown encoding type. switch to RIBinary format")
-            self._inst.write(f"DATa:ENCdg {encoding.RPBinary.value}")
+            self._inst.write(f"DATa:ENCdg {encoding.RIBinary.value}")
+            
+    def setNrOfByteTransfer(self, nrOfBytes=1):
+        if (nrOfBytes==1):
+            self._inst.write('wfmpre:byt_nr 1')
+        elif (nrOfBytes==2):
+            self._inst.write('wfmpre:byt_nr 2')
+        else:
+            self._inst.write('wfmpre:byt_nr 1')
+            self.log.addToLog("ÏNVALID USER SETTING! Number of byte transfer set to one.")
                 
     def getLastTrace(self):
         return self._last_trace
@@ -61,15 +72,21 @@ class TekChannel(object):
         SEC_DIV = float(self._inst.query('HORIZONTAL:MAIN:SECDIV?')) #Requesting the horizontal scale in SEC/DIV
         return SEC_DIV   
     
-    def setVertGain(self, gain):
-        #TODO check validity of param
-        self._inst.write(f"c:VOLts {gain}")
-        
     def setVertScale(self, scale):
         #TODO check validity of param
         self._inst.write(f"{self._name}:SCALE {scale}") #Sets V/DIV CH1
-        
-
+  
+    def setVoltsDiv(self, scale):
+        #TODO check validity of param
+        vertscalelist = [2e-3, 5e-3, 10e-3, 20e-3, 50e-3, 100e-3, 200e-3, 500e-3, 1, 2, 5]
+        if scale in vertscalelist:
+            self._inst.write(f"{self._name}:SCALE {scale}") #Sets V/DIV CH1   
+        else:   
+            self.log.addToLog("invalid VDIV input, ignoring.....") 
+    
+    def setTimeDiv(self, time):
+        self._inst.write(f"HORizontal:MAIn:SCAle {time}")
+    
     def setAsSource(self):
         self._inst.write(f"DATA:SOURCE {self._name}") #Sets the channel as data source for transimitting data   
     
@@ -79,40 +96,19 @@ class TekChannel(object):
         return int(self._inst.query(f"wfmpre:{self._name}:nr_pt?")) #For a channel version of this command:see programming guide page 231
           
     def capture(self):
-        """
-            copied code below from
-             https://github.com/tektronix/Programmatic-Control-Examples/blob/master/Examples/Oscilloscopes/BenchScopes/src/SimplePlotExample/tbs_simple_plot.py
-        """
-        #self._inst.write('autoset EXECUTE')  # autoset
-        #bin_wave =self._inst.query_binary_values("CURV?")
+        self._wfp.queryPreamble()
         self.log.addToLog("start querying scope")
         bin_wave = self._inst.query_binary_values('curve?', datatype='b', container=np.array)
-        self._last_trace.rawYdata = bin_wave
         self.log.addToLog("scope query ended")
-        #numberOfPoints = int(self._inst.query('wfmpre:nr_pt?'))
-        numberOfPoints = self.getNrOfPoints()
-        #TODO: move these queries to one logic location without creating (circurlar) import errors
-        tscale = float(self._inst.query('wfmpre:xincr?'))
-        tstart = float(self._inst.query('wfmpre:xzero?'))
-        vscale = float(self._inst.query('wfmpre:ymult?'))  # volts / level
-        voff = float(self._inst.query('wfmpre:yzero?'))  # reference voltage
-        vpos = float(self._inst.query('wfmpre:yoff?'))  # reference position (level)
-        #print(self._inst.query("WFMPre?"))
-        self._last_trace.secDiv = self.queryHorizontalSecDiv()
-        # create scaled vectors
-        # horizontal (time)
-        self.getLastTrace().NR_PT = numberOfPoints
-        self.getLastTrace().XINCR = tscale
-        self.getLastTrace().XZERO = tstart
-        self.getLastTrace().YMULT = vscale
-        self.getLastTrace().YZERO = voff
-        self.getLastTrace().YOFF = vpos
-        total_time = tscale * numberOfPoints
-        tstop = tstart + total_time
-        scaled_time = np.linspace(tstart, tstop, num=numberOfPoints, endpoint=False)
+        
+        self._last_trace.rawYdata = bin_wave
+        self._last_trace.rawXdata = np.linspace( 0, num=self._wfp.nrOfPoints, endpoint=False)
+        total_time = self._last_trace.sampleTime * self._wfp.nrOfPoints
+        tstop =  self._last_trace.XZERO + total_time
+        scaled_time = np.linspace( self._last_trace.XZERO, tstop, num=self._wfp.nrOfPoints, endpoint=False)
         # vertical (voltage)
         unscaled_wave = np.array(bin_wave, dtype='double') # data type conversion
-        scaled_wave = (unscaled_wave - vpos) * vscale + voff
+        scaled_wave = (unscaled_wave - self._last_trace.YOFF) *  self._last_trace.YMULT  + self._last_trace.YZERO
         #put the data into internal 'struct'
         self._last_trace.scaledYdata = scaled_wave
         self._last_trace.scaledXData = scaled_time
@@ -157,12 +153,7 @@ Sample mode";
         #TODO add intern state for ascii or binary. Defines query or binary_query
         self.setAsSource()
         response = self._inst.query('WFMPRE?')
-        response = str(response)
-        b = bytearray()
-        b.extend(map(ord, response))
         
-        splitted = response.split(';')
-        #for split in splitted:
             
     
     def createTimeVector(self):
@@ -215,5 +206,3 @@ debug output.
         self._inst.write("acquire:state on")
         self._inst.query("*opc?")
         return self._inst.query('measurement:immed:value?')
-
-
