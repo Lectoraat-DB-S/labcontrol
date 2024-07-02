@@ -3,9 +3,9 @@ Labcontrolling is controlling typical lab devices like functiongenerators, power
 VISA is the standard for configuring, programming, and troubleshooting instrumentation systems. It's owned and maintained by National Instrument. 
 See: [VISA Product Page](https://www.ni.com/nl-nl/shop/product/ni-visa.html)  
 
-Background
+## Background
 
-Installation on Windows
+## Installation on Windows
 Assuming a computer without any Python interpreter (pre)installed, one must follow next step.
 1. Download Python. (In this case version 3.12.4)
 2. Install Python. Tap de checkbox for 'add to Path', installation of 'py' with administrive rights.
