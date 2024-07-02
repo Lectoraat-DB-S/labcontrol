@@ -17,7 +17,7 @@ Assuming a computer without any Python interpreter (pre)installed, one must foll
 8. Install all packages via pip: py -m pip install -r C:\github\labcontrol\src\install-script\pip_requirements.txt
    
 ## Usage
-Many to Rome exists, therefore this readme gives only two options: command line and Visual Studio Code
+Many ways to Rome exists, therefore this readme gives only two options: command line and Visual Studio Code
 ### Command line
 1. Navigate to the directory you've installed the environment in.
 2. Activate the environment: .\Scripts\activate.bat
