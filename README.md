@@ -13,6 +13,9 @@ Assuming a computer without any Python interpreter (pre)installed, one must foll
 4. Navigate to the directory you've installed the environment in.
 5. Activate the environment: .\Scripts\activate.bat
 6. Install pip: py -m pip install --upgrade pip
+7. Clone the repo to your computers drive. Assumption is the repo has been cloned to C:\github\labcontrol
+8. Install all packages via pip: py -m pip install -r C:\github\labcontrol\src\install-script\pip_requirements.txt
+   
 
 Usage
 
