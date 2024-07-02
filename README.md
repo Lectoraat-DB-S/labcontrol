@@ -24,9 +24,11 @@ Many ways to Rome exists, therefore this readme gives only two options: command 
 3. Navigate to the labcontrol python script folder. Assuming same clone folder as before, just navigate to C:\github\labcontrol\src\labcontrol-python
 
 ### Visual Studio Code
-1. Install the Microsoft Python extension first. See: https://marketplace.visualstudio.com/items?itemName=ms-python.python
-2. Open the C:\github\labcontrol\src\labcontrol-python folder in Visual Studio Code.
-3. Select the proper virtual environment through pressing the Pyhton-icon on the left in de VSCode main screen.  
+1. Assumption: a valid Python interpreter has been installed.
+2. Install the 'Microsoft Python" extension . See: https://marketplace.visualstudio.com/items?itemName=ms-python.python
+3. Install the 'Python Auto Venv' extension. Add the folder of your virtual environment in the VSC settings.
+4. Open the C:\github\labcontrol\src\labcontrol-python folder in Visual Studio Code.
+5. Select the proper virtual environment through pressing the Pyhton-icon on the left in de VSCode main screen.  
 
 Documentation
 
