@@ -21,7 +21,7 @@ Many ways to Rome exists, therefore this readme gives only two options: command 
 ### Command line
 1. Navigate to the directory you've installed the environment in.
 2. Activate the environment: .\Scripts\activate.bat
-3. Navigate to the labcontrol python script folder. Assuming same clone folder as before, you go to C:\github\labcontrol\src\labcontrol-python
+3. Navigate to the labcontrol python script folder. Assuming same clone folder as before, just navigate to C:\github\labcontrol\src\labcontrol-python
 
 ### Visual Studio Code
 1. Install the Microsoft Python extension first. See: https://marketplace.visualstudio.com/items?itemName=ms-python.python
