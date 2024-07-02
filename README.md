@@ -5,7 +5,14 @@ See: [VISA Product Page](https://www.ni.com/nl-nl/shop/product/ni-visa.html)
 
 Background
 
-Installation
+Installation on Windows
+Assuming a computer without any Python interpreter (pre)installed, one must follow next step.
+1. Download Python. (In this case version 3.12.4)
+2. Install Python. Tap de checkbox for 'add to Path', installation of 'py' with administrive rights.
+3. Create a virtual environment: for example py -m venv c:\temp\testenv
+4. Navigate to the directory you've installed the environment in.
+5. Activate the environment: .\Scripts\activate.bat
+6. Install pip: py -m pip install --upgrade pip
 
 Usage
 
