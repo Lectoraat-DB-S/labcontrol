@@ -1,8 +1,8 @@
 import pyvisa as visa
 import numpy as np
-
-from tektronix.scope.Channel import TekChannel
 from tektronix.scope.Acquisitions import TekScopeEncodings, WaveformPreamble
+from tektronix.scope.Channel import TekChannel
+
 from tektronix.scope.TekLogger import TekLog
 
 class TekScope(object):
@@ -35,7 +35,9 @@ class TekScope(object):
                     self.CH2 = myCH2            #TODO:code has te be removed, because of list of Channels.
                     self.CH2.setVisible(True)
                     self._channels.append(myCH2)
-                    #self.setToDefault()
+                    self.setToDefault()
+                    self.preamble = WaveformPreamble(mydev)
+                    self.preamble.queryPreamble()
                     break
             else:
                 self.log.addToLog("Tekscope: no Tektronix found on USB.")        
@@ -46,17 +48,8 @@ class TekScope(object):
     
     def setToDefault(self):
         self.setBinEncoding()
-        self.setNrOfByteTransfer(1)
-        for chan in self._channels:
-            pass
-            
-    def queryWaveFormPreamble(self):
-        #TODO add intern state for ascii or binary. Defines query or binary_query
-        response = self._inst.query('WFMPRE?')
-        print(response)
-        preamble = WaveformPreamble()
-        preamble.decode(response)
-        print(preamble)
+        self.setNrOfByteTransfer(2)
+
     
     ##### DATA TRANSFER RELATED METHODS ######
     def queryEncoding(self):
@@ -88,17 +81,6 @@ class TekScope(object):
             self._inst.write('wfmpre:byt_nr 1')
             self.log.addToLog("ÏNVALID USER SETTING! Number of byte transfer set to one.")
     
-    """
-    WFMPre:NR_Pt? (Query Only)
-    Returns the number of points that are in the transmitted waveform record, as
-    specified by DATa:SOUrce. The number of points depends on DATa:STARt,
-    DATa:STOP, and whether DATa:SOUrce is YT or FFT. NR_Pt is at most 2500 for
-    YT and 1024 for FFT. NR_Pt is always at least one.
-    When the DATa:SOUrce is not displayed, the TDS210 and TDS220 (firmware
-    below V 2.00) with a TDS2CMA communications module will return a value. All
-    other oscilloscope, firmware version, and module combinations will generate an
-    error and will return event code 2244.
-    """
     def getNrOfPoints(self):
         #TODO:
         # correct handling of event code 2244
@@ -106,9 +88,12 @@ class TekScope(object):
         
             
     def setTimeBase(self, time):
-        #TODO check validity of time param
+        #checkinp of time param is not necessary: the scope forces incorrect values to the nearest acceptable value
         self._inst.write(f"HORizontal:MAIn:SCAle {time}")
         #print(self._inst.query("HORizontal:MAIn:SCAle?"))
+        
+    def setTimeDiv(self, time):
+        self.setTimeBase(time)
     
     def setTrigger(self, level):
         self._inst.write(f"TRIGGER:MAIN:LEVEL {level}") #Sets Trigger Level in V 
@@ -116,8 +101,7 @@ class TekScope(object):
     #moved to channel and renamed it.
     #def queryHorizontalPositon(self):
     #    SEC_DIV = float(self._inst.query('HORIZONTAL:MAIN:SECDIV?')) #Requesting the horizontal scale in SEC/DIV
-
-    
+ 
     def setHorizontalPositon(self, pos):
         self._inst.write(f"HORizontal:POSITION {pos}") #Sets Horizontal Position in s
    
