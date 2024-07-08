@@ -426,3 +426,30 @@ class EthernetDevice(SiglentScope):
         """
         data = message.encode('utf-8')
         return self._inst.query(data, *args, **kwargs)
+
+class SiglentIDN(object):
+    def __init__(self) -> None:
+        self._brand = None
+        self._model = None
+        self._serial = None
+        self._firmware = None
+        
+    def decode(self, idnstr:str):
+        """
+        example
+        Siglent Technologies,SDS1204X-E,SDS1EBAC0L0098,7.6.1.15
+        """
+        splitted = idnstr.split(",")
+        if len(splitted) != 4:
+            return False
+        brand  = "Siglent"
+        if brand in splitted[0]:
+            if SiglentScope.KNOWN_MODELS in splitted[1]:
+                if len(splitted[2]==14):
+                    self._brand = splitted[0]
+                    self._model = splitted[1]
+                    self._serial = splitted[2]
+                    self._firmware = splitted[3]
+                    return True
+        return False
+            

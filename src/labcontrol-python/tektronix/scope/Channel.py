@@ -2,7 +2,7 @@ import pyvisa as visa
 import numpy as np
 import time
 import struct
-from tektronix.scope.Acquisitions import TekTrace,WaveformPreamble
+from tektronix.scope.Acquisitions import TekTrace
 from tektronix.scope.TekLogger import TekLog
 from tektronix.scope.Acquisitions import TekScopeEncodings
 
@@ -157,12 +157,7 @@ Sample mode";
         #TODO add intern state for ascii or binary. Defines query or binary_query
         self.setAsSource()
         response = self._inst.query('WFMPRE?')
-        response = str(response)
-        b = bytearray()
-        b.extend(map(ord, response))
         
-        splitted = response.split(';')
-        #for split in splitted:
             
     
     def createTimeVector(self):

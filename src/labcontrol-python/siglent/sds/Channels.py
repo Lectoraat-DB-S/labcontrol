@@ -70,6 +70,9 @@ class SDSChannel(object):
         See text output from a Siglent scope for reference. See Repo.
         """
         self._dev._inst.write(f"Time_DIV {value}")
+        
+    def setTimeDiv(self, value):
+        self.setIimeBase(value)
 
     def setVoltDiv(self, value):
         """The query returns the parameters of the source using by the command

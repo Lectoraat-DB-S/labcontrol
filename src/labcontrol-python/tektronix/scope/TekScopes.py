@@ -7,31 +7,24 @@ from tektronix.scope.TekLogger import TekLog
 
 class TekScope(object):
     def __init__(self):
-        self._scaledYData = None #TODO: move this to TekTrace 
-        self._scaleXData = None  #TODO: move this to TekTrace
         self._channels = []
+        self.log = TekLog()
         rm = visa.ResourceManager()
         self._inst = None # None means unconnected state of the scope.
-        self.log = TekLog()
-        #self._idn = IDN()
         theList = rm.list_resources()
         pattern = "USB" #fix for now, TODO: make more robust e.g. able to connect to TCP or serial.
         for url in theList:
             if pattern in url:
-                self.log.addToLog("Tektronix scope found on USB")
+                self.log.addToLog("VISA device found on USB")
                 mydev = rm.open_resource(url)
                 mydev.timeout = 10000  # ms
-                #mydev.encoding = 'latin_1'
                 mydev.read_termination = '\n'
                 mydev.write_termination = '\n'
                 desc = mydev.query("*idn?")
-                #print(desc)
-                #print(mydev)
                 if desc.find("TEKTRONIX,TDS") > -1:
                     self._inst = mydev
                     self.log.addToLog("Tektronix TDS found, assuming a two Channel TDS2002B")
-                    # resp = self._inst.query("*IDN?")
-                    # self._idn.decodeIDN(resp)
+                    # self._idn.decodeIDN(desc)
                     #TODO: based on IDN detect type/model scope and based on that instantiate number of channel
                     #code below assumes TDS2002B/C with 2 channels
                     myCH1 = TekChannel(1, mydev)#TODO:code has te be removed, because of list of Channels.
@@ -74,9 +67,9 @@ class TekScope(object):
     def setEncoding(self, encoding: TekScopeEncodings):
         if isinstance(encoding, TekScopeEncodings):
             if (encoding==encoding.RIBinary or encoding==encoding.ASCII or 
-            encoding==encoding.RPBinary or
-            encoding==encoding.SRIbinary or
-            encoding==encoding.SRPbinary):
+                encoding==encoding.RPBinary or
+                encoding==encoding.SRIbinary or
+                encoding==encoding.SRPbinary):
                 self._inst.write(f"DATa:ENCdg {encoding.value}")
         else:
             self.log.addToLog("Unknown encoding type. switch to RIBinary format")
