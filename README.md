@@ -8,7 +8,7 @@ See: [VISA Product Page](https://www.ni.com/nl-nl/shop/product/ni-visa.html)
 ## Installation on Windows
 1. Install git-scm (for commandline cloning of git based repos).
 2. Create a folder (no spaces in name) for cloning this repo.
-3. Navigate to newly created folder and clone the repo by executing: git clone (https://github.com/Lectoraat-DB-S/labcontrol.git)
+3. Navigate to newly created folder and clone the repo by executing: git clone https://github.com/Lectoraat-DB-S/labcontrol.git
 4. Download and install VISA driver software from National Instruments.
 5. Download latest stable version of Python. (In this case version 3.12.4)
 6. Install Python. Tap de checkbox for 'add to Path', installation of 'py' with administrive rights.
