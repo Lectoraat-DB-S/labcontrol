@@ -6,16 +6,21 @@ See: [VISA Product Page](https://www.ni.com/nl-nl/shop/product/ni-visa.html)
 ## Background
 
 ## Installation on Windows
-Assuming a computer without any Python interpreter (pre)installed, one must follow next steps:
-1. Download Python. (In this case version 3.12.4)
-2. Install Python. Tap de checkbox for 'add to Path', installation of 'py' with administrive rights.
-3. Create a virtual environment: for example py -m venv c:\temp\testenv
-4. Navigate to the directory you've installed the environment in.
-5. Activate the environment: .\Scripts\activate.bat
-6. Install pip: py -m pip install --upgrade pip
-7. Clone the repo to your computers drive. Assumption is the repo has been cloned to C:\github\labcontrol
-8. Install all packages via pip: py -m pip install -r C:\github\labcontrol\src\install-script\pip_requirements.txt
-   
+1. Install git-scm (for commandline cloning of git based repos).
+2. Create a folder (no spaces in name) for cloning this repo.
+3. Navigate to newly created folder and clone the repo: git clone url of repo.
+4. Download and install VISA driver software from National Instruments.
+5. Download latest stable version of Python. (In this case version 3.12.4)
+6. Install Python. Tap de checkbox for 'add to Path', installation of 'py' with administrive rights.
+7. Download and install Visual Studio Code.
+8. Start Visual Studio Code
+9. Install the 'Microsoft Python" extension for Visual Studio Code. See: https://marketplace.visualstudio.com/items?itemName=ms-python.python for instructions.
+10. Install the 'Python Auto Venv' extension for Visual Studio Code. Add the folder of your virtual environment in the VSC settings.
+11. In VSC: open the 'labcontrol-python' folder of this labcontrol repository
+12. Press <Ctrl> + <Shift> + P and type 'Python: create environment'
+13. Select the latest python 'venv' environment.
+14. Select 'requirements.txt' to install required dependencies.
+15. After the creation of the virtual environment, labcontrol is ready to use!
 ## Usage
 Many ways to Rome exists, therefore this readme gives only two options: command line and Visual Studio Code
 ### Command line
