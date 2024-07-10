@@ -17,7 +17,7 @@ See: [VISA Product Page](https://www.ni.com/nl-nl/shop/product/ni-visa.html)
 9. Install the 'Microsoft Python" extension for Visual Studio Code. See: https://marketplace.visualstudio.com/items?itemName=ms-python.python for instructions.
 10. Install the 'Python Auto Venv' extension for Visual Studio Code. Add the folder of your virtual environment in the VSC settings.
 11. In VSC: open the 'labcontrol-python' folder of this labcontrol repository
-12. Press <Ctrl> + <Shift> + P and type 'Python: create environment'
+12. Press Ctrl + Shift + P and type 'Python: create environment'
 13. Select the latest python 'venv' environment.
 14. Select 'requirements.txt' to install required dependencies.
 15. After the creation of the virtual environment, labcontrol is ready to use!
