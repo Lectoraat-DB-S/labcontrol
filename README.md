@@ -34,20 +34,11 @@ Optional, but recommended software:
 12. Press Ctrl + Shift + P and type 'Python: create environment'
 13. Select the latest python 'venv' environment.
 14. Select 'requirements.txt' to install required dependencies.
-15. After the creation of the virtual environment, labcontrol is ready to use!
+15. After VCS finished creation of the virtual environment, labcontrol is ready to use!
 ## Usage
-Many ways to Rome exists, therefore this readme gives only two options: command line and Visual Studio Code
-### Command line
-1. Navigate to the directory you've installed the environment in.
-2. Activate the environment: .\Scripts\activate.bat
-3. Navigate to the labcontrol python script folder. Assuming same clone folder as before, just navigate to C:\github\labcontrol\src\labcontrol-python
+1. Open the C:\github\labcontrol\src\labcontrol-python folder in Visual Studio Code.
+2. Select the proper virtual environment through pressing the Pyhton-icon on the left in de VSCode main screen.
+3. Open one of the measurement python files in the labcontrol-python folder.  
 
-### Visual Studio Code
-1. Assumption: a valid Python interpreter has been installed.
-2. Install the 'Microsoft Python" extension . See: https://marketplace.visualstudio.com/items?itemName=ms-python.python
-3. Install the 'Python Auto Venv' extension. Add the folder of your virtual environment in the VSC settings.
-4. Open the C:\github\labcontrol\src\labcontrol-python folder in Visual Studio Code.
-5. Select the proper virtual environment through pressing the Pyhton-icon on the left in de VSCode main screen.  
-
-Documentation
+#Documentation
 
