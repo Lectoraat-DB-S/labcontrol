@@ -1,0 +1,91 @@
+% Animated distributions
+% Author: Brian S. Marks <http://mypage.iu.edu/~bsmarks/>
+%
+% Note that shell-escape has to be enabled to generate the plots.
+% The animations can only be viewed in Acrobat (Reader) v >= 6.
+\RequirePackage{fix-cm}
+\documentclass[tikz]{standalone}
+\usepackage{tikz}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\usepackage{relsize}
+\usepackage[graphics,tightpage,active]{preview}
+\PreviewEnvironment{tikzpicture}
+
+
+\begin{document}
+\begin{figure}[!ht]
+\centering
+
+\begin{circuitikz}
+%\tikzstyle{every node}=[font=\LARGE]
+%\node (tikzmaker) [shift={(7.75, -5)}] at (0.5,12.5) {\includegraphics[width=15.5cm]{bla}};
+\tikzset{fontscale/.style = {font=\relsize{#1}}}
+ \node[font=\fontsize{1}{1}\selectfont] at (1.2,1.2) [below]{$x_0$};
+\draw [ rounded corners = 0.0] (3.75,11.5) rectangle (3.5,11.5);
+\draw [, rounded corners = 10.8] (2.25,9.25) rectangle (14.25,4.25);
+\draw [, line width=0.3pt , rounded corners = 2.4] (9.25,8.35) rectangle (9.75,8.1)coordinate(start)  node[pos=.5,font=\fontsize{3}{3}\selectfont] {7};
+\draw [, line width=0.3pt , rounded corners = 2.4] (9.25,7.9) rectangle (9.75,7.65) node[pos=.5,font=\fontsize{3}{3}\selectfont] {4};
+\draw [, line width=0.3pt , rounded corners = 2.4] (10,8.35) rectangle (10.5,8.1) node[pos=.5,font=\fontsize{3}{3}\selectfont] {8};
+\draw [, line width=0.3pt , rounded corners = 2.4] (10.75,8.35) rectangle (11.25,8.1) node[pos=.5,font=\fontsize{3}{3}\selectfont] {9};
+\draw [, line width=0.3pt , rounded corners = 2.4] (10.75,7.9) rectangle (11.25,7.65)node[pos=.5,font=\fontsize{3}{3}\selectfont] {6};
+\draw [, line width=0.3pt , rounded corners = 2.4] (10,7.9) rectangle (10.5,7.65)node[pos=.5,font=\fontsize{3}{3}\selectfont] {5};
+\draw [, line width=0.3pt , rounded corners = 2.4] (9.25,7.45) rectangle (9.75,7.2)node[pos=.5,font=\fontsize{3}{3}\selectfont] {1};
+\draw [, line width=0.3pt , rounded corners = 2.4] (10,7.45) rectangle (10.5,7.2)node[pos=.5,font=\fontsize{3}{3}\selectfont] {2};
+\draw [, line width=0.3pt , rounded corners = 2.4] (10.75,7.45) rectangle (11.25,7.2)node[pos=.5,font=\fontsize{3}{3}\selectfont] {3};
+\draw [, line width=0.3pt , rounded corners = 2.4] (9.25,7) rectangle (9.75,6.75) node[pos=.5,font=\fontsize{3}{3}\selectfont] {.};
+\draw [, line width=0.3pt , rounded corners = 2.4] (10,7) rectangle (10.5,6.75) node[pos=.5,font=\fontsize{3}{3}\selectfont] {0};
+\draw [, line width=0.3pt , rounded corners = 2.4] (10.75,7) rectangle (11.25,6.75)  node[pos=.5,font=\fontsize{3}{3}\selectfont] {+/-};
+
+\draw [ fill={rgb,255:red,213; green,212; blue,216} , line width=0.3pt , rounded corners = 2.4] (8.5,8.35) rectangle (9,8.1)node[pos=.5,font=\fontsize{3}{3}\selectfont] {Sine};
+\draw [ fill={rgb,255:red,213; green,212; blue,216} , line width=0.3pt , rounded corners = 2.4] (8.5,7.85) rectangle (9,7.6)node[pos=.5,font=\fontsize{3}{3}\selectfont] {Square};
+\draw [ fill={rgb,255:red,213; green,212; blue,216} , line width=0.3pt , rounded corners = 2.4] (8.5,7.35) rectangle (9,7.1) node[pos=.5,font=\fontsize{3}{3}\selectfont] {Ramp};
+\draw [ fill={rgb,255:red,213; green,212; blue,216} , line width=0.3pt , rounded corners = 2.4] (8.5,6.35) rectangle (9,6.1) node[pos=.5,font=\fontsize{3}{3}\selectfont] {Noise};
+\draw [ fill={rgb,255:red,213; green,212; blue,216} , line width=0.3pt , rounded corners = 2.4] (8.5,5.85) rectangle (9,5.6)node[pos=.5,font=\fontsize{3}{3}\selectfont] {Arb};
+\draw [ fill={rgb,255:red,213; green,212; blue,216} , line width=0.3pt , rounded corners = 2.4] (9.25,6.35) rectangle (9.75,6.1)node[pos=.5,font=\fontsize{3}{3}\selectfont] {Mod};
+\draw [ fill={rgb,255:red,213; green,212; blue,216} , line width=0.3pt , rounded corners = 2.4] (9.25,5.85) rectangle (9.75,5.6) node[pos=.5,font=\fontsize{3}{3}\selectfont] {Store};
+\draw [ fill={rgb,255:red,213; green,212; blue,216} , line width=0.3pt , rounded corners = 2.4] (10,5.85) rectangle (10.5,5.6) node[pos=.5,font=\fontsize{3}{3}\selectfont] {Utility};
+\draw [ fill={rgb,255:red,213; green,212; blue,216} , line width=0.3pt , rounded corners = 2.4] (10.75,5.85) rectangle (11.25,5.6) node[pos=.5,font=\fontsize{3}{3}\selectfont] {Help};
+\draw [ fill={rgb,255:red,213; green,212; blue,216} , line width=0.3pt , rounded corners = 2.4] (10.75,6.35) rectangle (11.25,6.1) node[pos=.5,font=\fontsize{3}{3}\selectfont] {Burst};
+\draw [ fill={rgb,255:red,213; green,212; blue,216} , line width=0.3pt , rounded corners = 2.4] (10,6.35) rectangle (10.5,6.1) node[pos=.5,font=\fontsize{3}{3}\selectfont] {Sweep};
+\draw [ fill={rgb,255:red,213; green,212; blue,216} , line width=0.3pt , rounded corners = 2.4] (13,6.25) rectangle (13.5,6) node[pos=.5,font=\fontsize{3}{3}\selectfont] {Output};
+\draw [ fill={rgb,255:red,213; green,212; blue,216} , line width=0.3pt , rounded corners = 2.4] (11.75,6.25) rectangle (12.25,6) node[pos=.5,font=\fontsize{3}{3}\selectfont] {Output};
+\draw [ fill={rgb,255:red,181; green,182; blue,196} , line width=0.3pt , rounded corners = 1.8] (7.75,7.25) rectangle (8.25,7);
+\draw [ fill={rgb,255:red,181; green,182; blue,196} , line width=0.3pt , rounded corners = 1.8] (7.75,6.75) rectangle (8.25,6.5);
+\draw [ fill={rgb,255:red,181; green,182; blue,196} , line width=0.3pt , rounded corners = 1.8] (7.75,6.25) rectangle (8.25,6);
+\draw [ fill={rgb,255:red,181; green,182; blue,196} , line width=0.3pt , rounded corners = 1.8] (7.75,5.85) rectangle (8.25,5.6)  node[font=\tiny,transform shape,scale=0.1] {$X_0$};
+\draw [ fill={rgb,255:red,181; green,182; blue,196} , line width=0.8pt , rounded corners = 1.8] (7.75,8.25) rectangle (8.25,8.0)  node[pos=.5,font=\fontsize{2}{2}\selectfont] { CH1/2};
+\draw [ fill={rgb,255:red,181; green,182; blue,196} , line width=0.3pt , rounded corners = 1.8] (7.75,7.75) rectangle (8.25,7.5);
+\draw [, line width=0.3pt , rounded corners = 1.8] (3.25,8.25) rectangle (7.25,5.25);
+\draw [ fill={rgb,255:red,228; green,227; blue,237} , line width=0.pt , rounded corners = 1.8] (8.5,6.85) rectangle (9,6.6) node[pos=.5,font=\fontsize{3}{3}\selectfont] {Pulse};
+\draw [ fill={rgb,255:red,228; green,227; blue,237} , line width=0.3pt ] (12,5.25) circle (0.25cm);
+\draw [ fill={rgb,255:red,228; green,227; blue,237} , line width=0.3pt ] (13.25,5.25) circle (0.25cm);
+\draw [ fill={rgb,255:red,228; green,227; blue,237} , line width=0.3pt ] (12.65,8.25) circle (0.75cm);
+\draw [ fill={rgb,255:red,230; green,227; blue,209} , line width=0.3pt , rounded corners = 1.8] (2.5,6) rectangle (2.75,5);
+\draw [, line width=0.3pt , rounded corners = 1.8] (3,9) rectangle (4.75,8.5);
+\draw [, line width=0.3pt , rounded corners = 1.8] (4.75,9) rectangle (7.75,8.5);
+\draw [, line width=0.3pt , rounded corners = 7.8] (11.5,5.75) rectangle (13.75,4.75);
+
+  \begin{tikzpicture}
+       \node (a) at (0,0)
+         {
+            \begin{tikzpicture}
+              	\draw [rounded corners,fill=gray!20] (0,0)--(1,0)--(0.5,1)--cycle;
+	\draw (0,0) arc(0:180:0.4cm and 0.15cm);
+	\draw[blue] (0,0) arc (0:-90:0.05);
+	\draw[blue] (-0.8cm,0) arc (180:270:0.05);
+	\draw(-0.751,-0.05)--(-0.049,-0.05);
+            \end{tikzpicture}
+         };
+        \node (b) at (a.south) [anchor=north,yshift=-1cm]
+         {
+            \tikz\fill[blue] (0,0) circle (0.7cm);
+         };
+       \draw [<->] (a)--(b);
+    \end{tikzpicture}
+   
+\end{circuitikz}
+
+\label{fig:my_label}
+\end{figure}
+\end{document}

@@ -1,0 +1,33 @@
+\documentclass[11pt,twoside]{report}
+\usepackage[siunitx]{circuitikz}
+\usepackage{tikz}
+
+\begin{document}
+
+
+\begin{circuitikz}[transform shape,european,
+big/.style={circuitikz/blocks/scale=1.5}]
+\ctikzset{bipoles/oscope/waveform=sin}
+\ctikzset{bipoles/oscope/width=0.5}\ctikzset{bipoles/oscope/height=0.5}
+\ctikzset{inductors/scale=1.0, inductor=american}
+\ctikzset{quadpoles/fourport/width=4}
+\ctikzset{quadpoles/fourport/height=3}
+
+\draw(0,0)node[fourport]{};
+
+\ctikzset{quadpoles/fourport/width=3.5}
+\ctikzset{quadpoles/fourport/height=2.5}
+
+\draw[dashed](0,0)node[fourport]{};
+\draw(0.5,0)node[oscopeshape]{};
+
+
+\ctikzset{quadpoles/fourport/width=1}
+\ctikzset{quadpoles/fourport/height=1}
+
+\draw(2,2)node[fourport]{};
+
+\end{circuitikz}
+
+
+\end{document}
