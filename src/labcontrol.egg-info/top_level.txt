@@ -1,4 +1,0 @@
-__init__
-curvefitting
-install-script
-labcontrol-python

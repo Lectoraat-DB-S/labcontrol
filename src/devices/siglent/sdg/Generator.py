@@ -8,9 +8,9 @@ import pyvisa as visa
 import logging
 import time
 import xdrlib
-from siglent.sdg.Channels import SDGChannel
+from devices.siglent.sdg.Channels import SDGChannel
 #from sdg.util import IDN
-from siglent.sdg.util import IDN
+from devices.siglent.sdg.util import IDN
 
 consoleHandler = logging.StreamHandler()
 logger = logging.getLogger("sdg1025")

@@ -1,7 +1,7 @@
 import time
-from tektronix.scope.TekScopes import TekScope
-from siglent.sdg.Generator import SiglentGenerator
-#from siglent.sds.Scopes import SiglentScope
+from devices.tektronix.scope.TekScopes import TekScope
+from devices.siglent.sdg.Generator import SiglentGenerator
+from devices.siglent.sds.Scopes import SiglentScope
 
 import matplotlib.pyplot as plt
 import numpy as np

@@ -1,7 +1,7 @@
 import pyvisa as visa
 import enum
-from siglent.sdm.util import MeasType
-import siglent.sdm.util as util
+from devices.siglent.sdm.util import MeasType
+import devices.siglent.sdm.util as util
 
 class SiglentDMM(object):
     KNOWN_MODELS = [

@@ -9,3 +9,5 @@ testproject/
 *.zip
 **/build
 **/dist
+dist/
+__pycache__

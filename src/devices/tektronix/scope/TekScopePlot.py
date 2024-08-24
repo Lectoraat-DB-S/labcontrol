@@ -1,8 +1,8 @@
 #set matplotlib as such it will reflect a Tektronix scope screen.
 #orignal code made by Niels Boer
 import matplotlib.pyplot as plt
-from tektronix.scope.Acquisitions import TekTrace
-from tektronix.scope.TekScopes import TekScope
+from devices.tektronix.scope.Acquisitions import TekTrace
+from devices.tektronix.scope.TekScopes import TekScope
 from enum import Enum
 import numpy as np
 

@@ -2,13 +2,11 @@ import pyvisa as visa
 import numpy as np
 import time
 import struct
-<<<<<<< HEAD
-from tektronix.scope.Acquisitions import TekTrace
-=======
-from tektronix.scope.Acquisitions import TekTrace, WaveformPreamble
->>>>>>> a06ed973d08fb33dbf0427c5c620c548eebf489f
-from tektronix.scope.TekLogger import TekLog
-from tektronix.scope.Acquisitions import TekScopeEncodings
+
+from devices.tektronix.scope.Acquisitions import TekTrace, WaveformPreamble
+
+from devices.tektronix.scope.TekLogger import TekLog
+from devices.tektronix.scope.Acquisitions import TekScopeEncodings
 
 class TekChannel(object):
     

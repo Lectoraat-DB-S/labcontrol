@@ -8,8 +8,8 @@ import pyvisa as visa
 import logging
 import time
 import xdrlib
-from siglent.sds.util import WaveFormPreamble
-from siglent.sds.util import TIMEBASE_HASHMAP
+from devices.siglent.sds.util import WaveFormPreamble
+from devices.siglent.sds.util import TIMEBASE_HASHMAP
 
 # SDSChannel: abstraction of a Siglent oscilloscope channel.
 # Usage: set or get 'vertical' channel properties of a scope and/or start a capture.

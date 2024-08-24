@@ -1,9 +1,9 @@
 import pyvisa as visa
 import numpy as np
-from tektronix.scope.Acquisitions import TekScopeEncodings, WaveformPreamble
-from tektronix.scope.Channel import TekChannel
+from devices.tektronix.scope.Acquisitions import TekScopeEncodings, WaveformPreamble
+from devices.tektronix.scope.Channel import TekChannel
 
-from tektronix.scope.TekLogger import TekLog
+from devices.tektronix.scope.TekLogger import TekLog
 
 class TekScope(object):
     def __init__(self):

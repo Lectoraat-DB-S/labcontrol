@@ -1,5 +1,5 @@
 import pyvisa as visa
-from siglent.spd.SupplyChannel import SPDChannel
+from devices.siglent.spd.SupplyChannel import SPDChannel
 
 class SiglentPowerSupply(object):
     KNOWN_MODELS = [

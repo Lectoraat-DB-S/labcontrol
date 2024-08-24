@@ -8,9 +8,9 @@ import pyvisa as visa
 import logging
 import time
 import xdrlib
-from siglent.sdg.Commands import WaveForm
-from siglent.sdg.Commands import BasicWaveCommandTypes
-from siglent.sdg.Commands import WaVeformTyPe
+from devices.siglent.sdg.Commands import WaveForm
+from devices.siglent.sdg.Commands import BasicWaveCommandTypes
+from devices.siglent.sdg.Commands import WaVeformTyPe
 # SDGChannel: abstraction of a Siglent function generator channel.
 
 class SDGChannel(object):

@@ -1,4 +1,0 @@
-[project]
-name = "labcontrol"
-version = "0.0.1"
-description = "Use python to control your instruments"

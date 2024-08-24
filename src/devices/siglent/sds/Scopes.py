@@ -10,7 +10,7 @@ import logging
 import time
 import xdrlib
 #from .Channels import SDSChannel
-from siglent.sds.Channels import SDSChannel
+from devices.siglent.sds.Channels import SDSChannel
 
 
 consoleHandler = logging.StreamHandler()
