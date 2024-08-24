@@ -2,7 +2,7 @@ import pyvisa
 import logging
 import matplotlib.pyplot as plt
 from tektronix.scope.TekScopes import TekScope
-#from siglent.sdg.Generator import SiglentGenerator
+from siglent.sdg.Generator import SiglentGenerator
 #from siglent.spd.PowerSupply import SiglentPowerSupply
 import time
 #from tektronix.scope.Acquisitions import TekScopeEncodings
