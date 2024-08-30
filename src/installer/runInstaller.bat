@@ -1,0 +1,1 @@
+start powershell -command "& '.\powershell_geklooi.ps1'"

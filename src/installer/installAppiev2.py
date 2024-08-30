@@ -20,7 +20,7 @@ def install_software(package):
 		print("Failed to install {package}")
 
 
-software_packages = ['numpy', 'pandas', 'matplotlib', 'NI-VISA']
-
+#software_packages = ['numpy', 'pandas', 'matplotlib', 'NI-VISA']
+software_packages = ['NI-VISA']
 for package in software_packages:
 	install_software(package)

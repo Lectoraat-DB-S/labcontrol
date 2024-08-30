@@ -1,5 +1,32 @@
 import struct
 
+#hulpfunctie
+def splitAndStripV(response):
+    response =response.rstrip()
+    response =response.strip("V")
+    splitted = response.split(",")
+    return float(splitted[1])
+
+def splitAndStripHz(response):
+    response =response.rstrip()
+    response =response.strip("Hz")
+    splitted = response.split(",")
+    return float(splitted[1])
+
+def splitAndStripSec(response):
+    response =response.rstrip()
+    response =response.strip("s")
+    response =response.strip("S")
+    splitted = response.split(",")
+    return float(splitted[1])
+
+def splitAndStripProc(response):
+    response =response.rstrip()
+    response =response.strip("%")
+    splitted = response.split(",")
+    return float(splitted[1])
+
+
 """
   TIMEBASE: enum
                _0       200_ps/div

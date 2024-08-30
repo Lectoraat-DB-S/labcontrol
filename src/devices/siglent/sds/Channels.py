@@ -8,6 +8,7 @@ import pyvisa as visa
 import logging
 import time
 import xdrlib
+from devices.siglent.sds.util import splitAndStripHz, splitAndStripSec, splitAndStripV 
 from devices.siglent.sds.util import WaveFormPreamble
 from devices.siglent.sds.util import TIMEBASE_HASHMAP
 
@@ -233,7 +234,120 @@ class SDSChannel(object):
 
         """
         return float(self._dev._inst.query_binary_values(":TIMebase:SCALe?"))
+    
+    ########## PARAMETER MEASUREMENTS (PAVA) ###########
+    
+    def getAllParam(self):
+        return self._dev._inst.query(f"{self._name}:PAVA? ALL")
 
+    def getBase(self):
+        return float( self._dev._inst.query(f"{self._name}:PAVA? BASE"))
+    
+    def getNDuty(self):
+        return float( self._dev._inst.query(f"{self._name}:PAVA? NDUTY"))
+    
+    #negative width
+    def getNWid(self):
+        return float( self._dev._inst.query(f"{self._name}:PAVA? NWID"))
+    
+    #negative overshoot
+    def getOvSN(self):
+        return float( self._dev._inst.query(f"{self._name}:PAVA? OVSN"))
+    
+    #mean for cyclic waveform
+    def getCMean(self):
+        response = self._dev._inst.query(f"{self._name}:PAVA? CMEAN")
+        return splitAndStripV(response)
+    
+    #positive overshoot
+    def getOvSP(self):
+        response = self._dev._inst.query(f"{self._name}:PAVA? OVSP")
+        return float( )
+    
+    #root mean square for cyclic part of waveform
+    def getCMean(self):
+        response = self._dev._inst.query(f"{self._name}:PAVA? CRMS")
+        return splitAndStripV(response)
+     
+    #duty cycle
+    def getDuty(self):
+        response =self._dev._inst.query(f"{self._name}:PAVA? DUTY")
+        return float( )
+    
+    #period
+    def getPeriod(self):
+        response = self._dev._inst.query(f"{self._name}:PAVA? PER")
+        return splitAndStripSec(response)
+
+    #falltime
+    def getFall(self):
+        response =self._dev._inst.query(f"{self._name}:PAVA? FALL")
+        return splitAndStripSec(response)
+    
+    #(Vmin-Vbase)/ Vamp before the waveform rising transition
+    def getRPRE(self):
+        response =self._dev._inst.query(f"{self._name}:PAVA? RPRE")
+        return float(response )
+    
+    #positive width
+    def getPwidth(self):
+        response = self._dev._inst.query(f"{self._name}:PAVA? PWID")
+        return float(response )
+    
+    #(Vmin-Vbase)/ Vamp before the waveform falling transition
+    def getFPRE(self):
+        response =  self._dev._inst.query(f"{self._name}:PAVA? FPRE")
+        return float(response)
+    
+    #root mean square
+    def getRMS(self):
+        response = self._dev._inst.query(f"{self._name}:PAVA? RMS")
+        return splitAndStripV(response)
+    
+    #maximum
+    def getMax(self):
+        response = self._dev._inst.query(f"{self._name}:PAVA? MAX")
+        return splitAndStripV(response)
+    
+    #risetime
+    def getRise(self):
+        response = self._dev._inst.query(f"{self._name}:PAVA? RISE")
+        return float( response)
+    
+    #minimum
+    def getMin(self):
+        response =self._dev._inst.query(f"{self._name}:PAVA? MIN")
+        return splitAndStripV(response)
+    
+    #top
+    def getTop(self):
+        response = self._dev._inst.query(f"{self._name}:PAVA? TOP")
+        return splitAndStripV(response)
+    
+    #mean
+    def getMean(self):
+        response = self._dev._inst.query(f"{self._name}:PAVA? MEAN")
+        return splitAndStripV(response)
+    
+    #width
+    def getWidth(self):
+        response = self._dev._inst.query(f"{self._name}:PAVA? WID")
+        return float(response )
+    
+    #Gets the measured parameter 'amplitude'
+    #example response: 'C1:PAVA AMPL,3.20E-01V\n'
+    def getAmplitude(self):
+        response =self._dev._inst.query(f"{self._name}:PAVA? AMPL")
+        return splitAndStripV(response)
+        
+    def getPKPK(self):
+        response =self._dev._inst.query(f"{self._name}:PAVA? PKPK")
+        return splitAndStripV(response)
+        
+    def getFrequency(self):
+        response = self._dev._inst.query(f"{self._name}:PAVA? FREQ")
+        return splitAndStripHz(response)
+        
 class SiglentSDSTriggerStatus(Enum):
     ARM = "Arm"
     READY = "Ready"

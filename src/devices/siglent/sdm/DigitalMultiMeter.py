@@ -26,6 +26,7 @@ class SiglentDMM(object):
             if pattern in url:
                 mydev = rm.open_resource(url)
                 self._inst = mydev
+                print("SDM found")
                 #resp = self._inst.query("*IDN?")
                 #self._idn.decodeIDN(resp)
                 break
@@ -75,7 +76,7 @@ class SiglentDMM(object):
         TODO: add range per model number. See manual.
     """
     def get_resistanceTW(self):
-        return self._inst.query(f"MEAS:RES?")
+        return float(self._inst.query(f"MEAS:RES?"))
 
     def get_resistanceFW(self):
         return self._inst.query(f"MEAS:FRES?")
