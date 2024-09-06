@@ -25,8 +25,9 @@ class SDSChannel(object):
     center_code = 127
 
 
-    def __init__(self, chan_no: int, dev):
+    def __init__(self, chan_no: int, dev, logger):
         self._name = f"C{chan_no}"
+        self._logger = logger
         self._dev = dev
         self._WFP = WaveFormPreamble()
         self._last_trace = None
@@ -82,7 +83,6 @@ class SDSChannel(object):
         <channel>: Volt_DIV <v_gain>
         """
         self._dev._inst.write(f"{self._name}:VOLT_DIV {value}")
-        print(f"{self._name}: Volt_DIV {value}")
 
 
     def get_waveform_preamble(self):
@@ -123,7 +123,7 @@ class SDSChannel(object):
         #   need to classify the error based on more or better information
         #   For now: just print an error message and keep on!
         if timebase == None:
-            print("ERROR TIMEBASE CONVERT: UNKNOWN KEY!\n")
+            self._logger.error("ERROR TIMEBASE CONVERT: UNKNOWN KEY!\n")
         #### end timebase convert
 
         vert_coupling=struct.unpack('H', params[326:328])[0] # enum, 2 bytes use 'H' for now. need check!
@@ -155,21 +155,21 @@ class SDSChannel(object):
         #        break
 
         # Send command that specifies the source waveform to be transferred
-        #print(self._name)
+    
         #self._dev.write(":WAVeform:SOURce {}".format(self._name))
         #self._dev.write('WFSU SP,4,NP,0,FP,0')
         #self._dev.write('WFSU SP,1,NP,0,FP,0')
         #data = self._dev.query_raw(":WAVeform:DATA?")
         #data = self._dev.query_raw('C1:WF? DAT2')
         #data = data[11:-2]  # eliminate header and remove last two bytes
-        #print(f"{self._name}:WF? DAT2")
+  
         data = self._dev._inst.query_binary_values(f"{self._name}:WF? DAT2", datatype='B', is_big_endian=False, container=np.ndarray)
         try:
             trace = np.frombuffer(data, dtype=np.byte)
             self._last_trace = self.convert_to_voltage(trace)
             #self._last_trace = data
         except Exception as e:
-            print(e)
+            self._logger.error(e)
 
         return self._last_trace
 
@@ -193,7 +193,7 @@ class SDSChannel(object):
         try:
             self._last_trace = np.frombuffer(data, dtype=np.byte)
         except Exception as e:
-            print(e)
+            self._logger.error(e)
 
         return self._last_trace
 

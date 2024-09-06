@@ -1,0 +1,73 @@
+DEBUG:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+DEBUG:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+DEBUG:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+DEBUG:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:SiglentGenerator:Trying to resolve host 192.168.0.100
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:SiglentGenerator:Trying to resolve host 192.168.0.100
+INFO:SiglentGenerator:SiglentGenerator found and generator object created.
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:SiglentGenerator:Trying to resolve host 192.168.0.100
+INFO:SiglentGenerator:SiglentGenerator found and generator object created.
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:SiglentGenerator:Trying to resolve host 192.168.0.100
+INFO:SiglentGenerator:SiglentGenerator found and generator object created.
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:SiglentGenerator:Trying to resolve host 192.168.0.100
+INFO:SiglentGenerator:SiglentGenerator found and generator object created.
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:SiglentGenerator:Trying to resolve host 192.168.0.100
+INFO:SiglentGenerator:SiglentGenerator found and generator object created.
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:SiglentGenerator:Trying to resolve host 192.168.0.100
+INFO:SiglentGenerator:SiglentGenerator found and generator object created.
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:SiglentGenerator:Trying to resolve host 192.168.0.100
+INFO:SiglentGenerator:SiglentGenerator found and generator object created.
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:SiglentGenerator:Trying to resolve host 192.168.0.100
+INFO:SiglentGenerator:SiglentGenerator found and generator object created.
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:SiglentGenerator:Trying to resolve host 192.168.0.100
+INFO:SiglentGenerator:SiglentGenerator found and generator object created.
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:SiglentGenerator:Trying to resolve host 192.168.0.100
+INFO:SiglentGenerator:SiglentGenerator found and generator object created.
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:SiglentGenerator:Trying to resolve host 192.168.0.100
+INFO:SiglentGenerator:SiglentGenerator found and generator object created.
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:SiglentGenerator:Trying to resolve host 192.168.0.100
+INFO:SiglentGenerator:SiglentGenerator found and generator object created.
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:SiglentGenerator:Trying to resolve host 192.168.0.100
+INFO:SiglentGenerator:SiglentGenerator found and generator object created.
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:SiglentGenerator:Trying to resolve host 192.168.0.100
+INFO:SiglentGenerator:SiglentGenerator found and generator object created.
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:SiglentGenerator:Trying to resolve host 192.168.0.100
+INFO:SiglentGenerator:SiglentGenerator found and generator object created.
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:SiglentGenerator:Trying to resolve host 192.168.0.100
+INFO:SiglentGenerator:SiglentGenerator found and generator object created.
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:SiglentGenerator:Trying to resolve host 192.168.0.100
+INFO:SiglentGenerator:SiglentGenerator found and generator object created.
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:SiglentGenerator:Trying to resolve host 192.168.0.100
+INFO:SiglentGenerator:SiglentGenerator found and generator object created.
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:devices.siglent.sds.Scopes:Trying to resolve host 192.168.0.32
+INFO:SiglentGenerator:SiglentGenerator found and generator object created.
+INFO:SiglentGenerator:SiglentGenerator found and generator object created.
+INFO:SiglentGenerator:SiglentGenerator found and generator object created.
+INFO:SiglentGenerator:SiglentGenerator found and generator object created.
+INFO:SiglentGenerator:SiglentGenerator found and generator object created.
+INFO:devices.siglent.sdm.DigitalMultiMeter:Siglent SDM found

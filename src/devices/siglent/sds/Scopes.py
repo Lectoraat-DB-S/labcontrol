@@ -13,9 +13,9 @@ import xdrlib
 from devices.siglent.sds.Channels import SDSChannel
 
 
-consoleHandler = logging.StreamHandler()
-logger = logging.getLogger("sds1202x")
-logger.addHandler(consoleHandler)
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(filename='Siglentscope.log', level=logging.INFO)
 logger.setLevel(logging.DEBUG)
 
 
@@ -35,21 +35,29 @@ class SiglentScope(object):
         "SDS1202X": "Siglent",
     }
 
-    def __init__(self):
-        rm = visa.ResourceManager()
+    def __init__(self, host=None):
         self._inst = None
-        #self._idn = IDN()
-        theList = rm.list_resources()
-        pattern = "SDS"
-        for url in theList:
-            if pattern in url:
-                mydev = rm.open_resource(url)
-                self._inst = mydev
-                #resp = self._inst.query("*IDN?")
-                #self._idn.decodeIDN(resp)
-                break
-        self.CH1 = SDSChannel(1, self)
-        self.CH2 = SDSChannel(2, self)
+        rm = visa.ResourceManager()
+        if host is None:
+            theList = rm.list_resources()
+            pattern = "SDS"
+            for url in theList:
+                if pattern in url:
+                    mydev = rm.open_resource(url)
+                    self._inst = mydev
+                    break
+        else:
+            self._host = host
+            try:
+                logger.info(f"Trying to resolve host {self._host}")
+                ip_addr = socket.gethostbyname(self._host)
+            except socket.gaierror:
+                logger.error(f"Couldn't resolve host {self._host}")
+            mydev = rm.open_resource('TCPIP::'+str(ip_addr)+'::INSTR')
+            self._inst = mydev
+        
+        self.CH1 = SDSChannel(1, self, logger)
+        self.CH2 = SDSChannel(2, self, logger)
 
     def __enter__(self):
         try:
@@ -67,19 +75,25 @@ class SiglentScope(object):
         logger.debug(f"Discovered {model} by {mnf}")
         if model not in self.KNOWN_MODELS:
             raise Exception(f"Device {model} not supported")
-    #self.CH1 = SDSChannel(1, self._inst)
-        self.CH1 = SDSChannel(1, self)
-        self.CH2 = SDSChannel(2, self)
+        #controle of onderstaande niet definitie eruit kan, 
+        #self.CH1 = SDSChannel(1, self)
+        #self.CH2 = SDSChannel(2, self)
         return self
 
 
     #   @classmethod
     #    def usb_device(cls, visa_rscr: str = None):
     #        return USBDevice(visa_rscr)
-
-    @classmethod
-    def ethernet_device(cls, host: str):
-        return EthernetDevice(host)
+        
+    def query(self, cmd: str):
+        return self._inst.query(cmd)
+    
+    #opmerking 4/9/2024: wanneer je een SiglentScope object aanmaakt, wordt ook de __enter__ methode van  EthernetDevice aangeroepen.
+    # is dat een default Python gedrag bij de instructie @classmethod?
+    # het gedrag is ongewenst, dus onderstaande uitgecommentarieerd.
+    # #@classmethod
+    #def ethernet_device(cls, host: str):
+    #    return EthernetDevice(host)
 
 
     def __exit__(self, *args):
@@ -392,6 +406,7 @@ class SiglentSDSTriggerStatus(Enum):
 class EthernetDevice(SiglentScope):
     def __init__(self, host: str):
         self._host = host
+        super().__init__()
 
     def __enter__(self):
         try:
@@ -400,10 +415,8 @@ class EthernetDevice(SiglentScope):
         except socket.gaierror:
             logger.error(f"Couldn't resolve host {self._host}")
         #mydev = vxi11.Instrument(ip_addr)
-        print(ip_addr)
         rm = visa.ResourceManager()
         mydev = rm.open_resource('TCPIP::'+str(ip_addr)+'::INSTR')
-        #print(mydev.query("*IDN?"))
         self._inst = mydev
         return super().__enter__()
 

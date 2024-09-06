@@ -1,1 +1,1 @@
-start powershell -command "& '.\install_python_nogui.ps1'"
+start powershell -command "& '.\install_python_nogui.ps1'" -ExecutionPolicy Bypass

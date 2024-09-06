@@ -1,5 +1,12 @@
 import pyvisa as visa
+import logging
+import socket
 from devices.siglent.spd.SupplyChannel import SPDChannel
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(filename='SiglentSupply.log', level=logging.INFO)
+logger.setLevel(logging.INFO)
+
 
 class SiglentPowerSupply(object):
     KNOWN_MODELS = [
@@ -11,22 +18,30 @@ class SiglentPowerSupply(object):
         
     }
 
-    def __init__(self):
+    def __init__(self, host=None):
         rm = visa.ResourceManager()
         self._inst = None
         #self._idn = IDN()
-        theList = rm.list_resources()
-        pattern = "SPD"
-        for url in theList:
+        if host is None:
+         theList = rm.list_resources()
+         pattern = "SPD"
+         for url in theList:
             if pattern in url:
-                mydev = rm.open_resource(url)
-                #mydev.write_termination='\n' #Modify termination character
-                #mydev.read_termination='\n' #Modify termination character
+               mydev = rm.open_resource(url)
+               self._inst = mydev
+               resp = self._inst.query("*IDN?")
+               #self._idn.decodeIDN(resp)
+               break
+        else:
+            self._host = host
+            try:
+                logger.info(f"Trying to resolve host {self._host}")
+                ip_addr = socket.gethostbyname(self._host)
+                mydev = rm.open_resource('TCPIP::'+str(ip_addr)+'::INSTR')
                 self._inst = mydev
-                #resp = self._inst.query("*IDN?\n")
-                #print(resp)
-                #self._idn.decodeIDN(resp)
-                break
+            except socket.gaierror:
+                logger.error(f"Couldn't resolve host {self._host}")
+
         self.CH1 = SPDChannel(1, self._inst)
         self.CH2 = SPDChannel(2, self._inst)
 
@@ -34,19 +49,8 @@ class SiglentPowerSupply(object):
     def __exit__(self, *args):
         self._inst.close()
 
-
-    #def query_raw(self, message, *args, **kwargs):
-    #    """
-    #    Write a message to the scope and read a (binary) answer.
-
-    #    This is the slightly modified version of :py:meth:`vxi11.Instrument.ask_raw()`.
-    #    It takes a command message string and returns the answer as bytes.
-
-    #    :param str message: The SCPI command to send to the scope.
-    #    :return: Data read from the device
-     #   """
-    #    data = message.encode('utf-8')
-    #    return self._inst.ask_raw(data, *args, **kwargs)
+    def query(self, cmd: str):
+        return self._inst.query(cmd)
 
     @property
     def idn(self):

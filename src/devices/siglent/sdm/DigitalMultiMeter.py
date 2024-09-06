@@ -2,6 +2,11 @@ import pyvisa as visa
 import enum
 from devices.siglent.sdm.util import MeasType
 import devices.siglent.sdm.util as util
+import logging
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(filename='Siglentscope.log', level=logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 class SiglentDMM(object):
     KNOWN_MODELS = [
@@ -16,22 +21,30 @@ class SiglentDMM(object):
         "SDM3065X": "Siglent",
     }
 
-    def __init__(self):
+    #TODO: define how to handle unsuccessfull connection.
+    def __init__(self, host=None):
         rm = visa.ResourceManager()
         self._inst = None
-        #self._idn = IDN()
-        theList = rm.list_resources()
-        pattern = "SDM"
-        for url in theList:
-            if pattern in url:
-                mydev = rm.open_resource(url)
+        if host is None:
+            theList = rm.list_resources()
+            pattern = "SDM"
+            for url in theList:
+                if pattern in url:
+                    mydev = rm.open_resource(url)
+                    self._inst = mydev
+                    logger.info("Siglent SDM found")
+                    break
+        else:
+            self._host = host
+            try:
+                logger.info(f"Trying to resolve host {self._host}")
+                ip_addr = socket.gethostbyname(self._host)
+                mydev = rm.open_resource('TCPIP::'+str(ip_addr)+'::INSTR')
                 self._inst = mydev
-                print("SDM found")
-                #resp = self._inst.query("*IDN?")
-                #self._idn.decodeIDN(resp)
-                break
-        #TODO: define how to handle unsuccessfull connection.
-
+            except socket.gaierror:
+                logger.error(f"Couldn't resolve host {self._host}")
+        
+        
     def close(self):
         self._inst.close()
         

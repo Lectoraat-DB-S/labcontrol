@@ -109,3 +109,43 @@ class RISE_TIME(object):
 
     def __init__(self):
         self._valid_range = range(10, 91)
+
+class WaveformParam(object):
+    def __init__(self):
+        self.WVTP   = WaVeformTyPe.SINE
+        self.frequency = 1000               #not with NOISE or DC
+        self.peri      = 1/self.frequency   #not with NOISE or DC
+        self.amp    = 4                     #not with NOISE or DC
+        self.offset = 0                     #not with NOISE or DC
+        self.sym    = 0                     #only with RAMP
+        self.pulWidth = 1e-3
+        #self.duty     = berekening         #only with SQUARE OR PULSE
+        self.phase  = 0                     #not with NOISE, PULSE or DC
+        self.rise   = 0
+        self.fall   = 0
+        self.mean   = 0                     #only with NOISE
+        self.stdev  = 0
+        
+    def keepConsistent(self):
+        pass
+    
+    def decodeWaveformParam(self, resp:str):
+        pass
+        # example response C1:BSWV WVTP,RAMP,FRQ,500HZ,PERI,0.00200000016S,AMP,5V,OFST,2.5V,HLEV,5V,LLEV,0V,PHSE,0,SYM,50
+        # another C1:BSWV WVTP,PULSE,FRQ,500HZ,PERI,0.00200000016S,AMP,5V,OFST,2.5V,HLEV,5V,LLEV,0V,DUTY,67,WIDTH,0.00134,DLY,0
+        # remark examples: if FRQ = 500Hz then PERI = 0.002s and not PERI,0.00200000016S
+        head = resp.split(" ")
+        head = head.split(":")
+        resp_list = resp.split(",")
+        for param in resp_list:
+            pass
+        
+    def toSCPI(self):
+        cmds = list()
+        cmds.append(f"FRQ,{self.frequency}")
+        cmds.append(f"AMP,{self.amp}")
+        cmds.append(f"OFST,{self.offset}")
+        cmds.append(f"WIDTH,{self.pulWidth}")
+        #line =f"FREQ,{self.frequency}Hz,AMP,{self.amp}V,OFST,{self.offset}V,WIDTH,{self.pulWidth}s"
+        return cmds
+        

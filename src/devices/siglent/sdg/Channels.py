@@ -11,6 +11,8 @@ import xdrlib
 from devices.siglent.sdg.Commands import WaveForm
 from devices.siglent.sdg.Commands import BasicWaveCommandTypes
 from devices.siglent.sdg.Commands import WaVeformTyPe
+from devices.siglent.sdg.Commands import WaveformParam
+
 # SDGChannel: abstraction of a Siglent function generator channel.
 
 class SDGChannel(object):
@@ -21,7 +23,18 @@ class SDGChannel(object):
         self._name = f"C{chan_no}"
         self._dev = dev
         self._waveForm = WaveForm()
-
+        
+    def setBasicWave(self, form: WaVeformTyPe, param: WaveformParam):
+        pass
+    
+    def setPulse(self, param: WaveformParam):
+        line1 = f"{self._name}:BSWV WVTP,PULSE"
+        self._dev.write(line1)
+        params = param.toSCPI()
+        for command in params:
+            line2 = f"{self._name}:BSWV {command}"
+            self._dev.write(line2)
+        
     def setBasicWaveFormFreq(self, freq):
         line1 = f"{self._name}:BSWV FRQ,{freq}"
         #print(line1)
@@ -66,3 +79,23 @@ class SDGChannel(object):
             self._dev.write(f"{self._name}:SWWV STATE,ON,START,{start},STOP,{stop},TIME,{sweepTime}")
         else:
             self._dev.write(f"{self._name}:SWWV STATE OFF")
+            
+    ######### GET FUNCTIONS ########
+    
+    def getBasicWaveParam(self):
+        cmd = f"{self._name}:BSWV?"
+        return self._dev.query(cmd)
+    
+    def getModulationParam(self):
+        cmd = f"{self._name}:MDWV?"
+        return self._dev.query(cmd)
+        
+    def getSweepParam(self):
+        cmd = f"{self._name}:SWWV?"
+        return self._dev.query(cmd)
+    
+    def getBurstParam(self):
+        cmd = f"{self._name}:BTWV?"
+        return self._dev.query(cmd)
+    
+    
