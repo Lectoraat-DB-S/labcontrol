@@ -5,6 +5,7 @@ See: [VISA Product Page](https://www.ni.com/nl-nl/shop/product/ni-visa.html)
 
 ## Background
 
+
 ## Windows Install.
 Using Labcontrol relies on third party software, some required other optional.
 ### Required Software
@@ -41,4 +42,10 @@ Optional, but recommended software:
 3. Open one of the measurement python files in the labcontrol-python folder.  
 
 #Documentation
+
+## References
+<a id="1">[1]</a> 
+Dijkstra, E. W. (1968). 
+Go to statement considered harmful. 
+Communications of the ACM, 11(3), 147-148.
 
