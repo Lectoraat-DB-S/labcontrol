@@ -4,7 +4,7 @@ VISA is the standard for configuring, programming, and troubleshooting instrumen
 See: [VISA Product Page](https://www.ni.com/nl-nl/shop/product/ni-visa.html)  
 
 ## Background
-
+Contolling measurement intstruments has been invented and build long ago [[1]](#1)
 
 ## Windows Install.
 Using Labcontrol relies on third party software, some required other optional.
@@ -44,8 +44,6 @@ Optional, but recommended software:
 #Documentation
 
 ## References
-<a id="1">[1]</a> 
-Dijkstra, E. W. (1968). 
-Go to statement considered harmful. 
-Communications of the ACM, 11(3), 147-148.
+[<a id="1">[1]</a> 
+https://www.hp9845.net/
 
