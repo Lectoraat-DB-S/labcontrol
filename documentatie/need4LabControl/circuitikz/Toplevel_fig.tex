@@ -1,0 +1,32 @@
+\documentclass{article}
+\RequirePackage{fix-cm}
+\usepackage{relsize}
+\usepackage{tikz}
+\usepackage{circuitikz}
+
+\tikzset{fontscale/.style = {font=\relsize{#1}}}
+
+\begin{document}
+\ctikzsubcircuitdef{knoppie}{center}{%
+% reference anchor is -center
+coordinate(#1-center)
+% leave the position of the path at the center
+(#1-center)
+(#1-center) arc(0:180:0.25cm and 0.15cm)
+(#1-center) arc (0:-90:0.05)
+(#1-center) +(-0.5cm,0) arc (180:270:0.05)
+(#1-center) +(-0.45cm,-0.05)-- +(-0.049,-0.05)
+}
+\ctikzsubcircuitactivate{knoppie}
+\resizebox{\textwidth}{!}{%
+\input{tekscope.tex}
+}
+
+\ctikzsubcircuitactivate{knoppie}
+\resizebox{15cm}{!}{%
+\input{siglent_sdg.tex}
+}
+
+\includegraphics[width=1\textwidth]{sds1202.png}
+
+\end{document}

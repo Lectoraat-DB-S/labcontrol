@@ -1,0 +1,36 @@
+\documentclass[tikz,border=15mm]{standalone}
+\usepackage[siunitx, RPvoltages,american]{circuitikz}
+
+\standaloneenv{circuitikz}
+\ctikzsetstyle{romano}
+\ctikzset{bipoles/open/voltage/distance from node=0.8mm}
+\ctikzset{voltage/american font=\tiny}
+\usetikzlibrary {arrows.meta}
+%\tikz \draw [line width=1pt, double distance=3pt,
+ %            arrows = {-Latex[length=0pt 3 0]}] (0,0) -- (1,0);
+
+\begin{document}
+
+\begin{circuitikz}[european]
+\ctikzset{bipoles/oscope/waveform=sin}
+\ctikzset{bipoles/oscope/width=1.6}\ctikzset{bipoles/oscope/height=1.2}
+
+	%\draw (0,0) coordinate(start)to[R, l2^=$R_1$ and 1M, name=R1] ++(0,2)--++(1,0)coordinate(ToG)to[C, l2^=$C_1$ and 100n, name=C1] ++(0,-2)		
+	\draw (0,0) coordinate(start)to[R, l2^=$R_1$ and 1k, name=R1] ++(0,2)--++(0.15,0)coordinate(ToG)
+	(ToG)--++(1,0)node[nigfete, xscale=1, anchor=G](Q1){}
+	(Q1.S)--(start-|Q1.S)coordinate(spoint)node[sground]{};
+%sgnd below R1
+	\draw(R1.west)--(start-|R1)node[sground]{};
+	%\draw(start-|C1)node[sground]{};	
+%draw Vgs input
+	\draw(Q1.G-|R1)to[short,-o]++(-1,0)coordinate(VGS);
+%draw labels
+	\draw (VGS)node[left]{${V_{GS}}_{IN}$};
+	\draw (Q1.D)to[short,*-]++(1,0)coordinate(Cdecoup)to[C,l2^=$C_1$ and 100nF, name=C1]++(0,-1.5)node[sground]{};
+% draw Vdd connection
+	\draw (Q1.D)to[ammeter]++(0,1.5)node[vcc](VDD){$V_{DD}$};
+	\draw (Q1.G)++(1.1,1.2)node[left]{$IRF540$};
+	\draw (C1)++(0.06,-0.6)node[right]{$^*$ Zie tekst!!};
+
+\end{circuitikz}
+\end{document}

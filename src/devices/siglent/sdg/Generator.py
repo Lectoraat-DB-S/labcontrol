@@ -11,7 +11,6 @@ import xdrlib
 from devices.siglent.sdg.Channels import SDGChannel
 #from sdg.util import IDN
 from devices.siglent.sdg.util import IDN
-from devices.siglent.sdg.Commands import WaVeformTyPe
 
 logger = logging.getLogger("SiglentGenerator")
 logging.basicConfig(filename='siglentgenerator.log', level=logging.INFO)
@@ -40,7 +39,7 @@ class SiglentGenerator(object):
             if pattern in url:
                mydev = rm.open_resource(url)
                self._inst = mydev
-               resp = self._inst.query("*IDN?")
+               resp = self._inst.query("*IDN?")             
                self._idn.decodeIDN(resp)
                break
       else:

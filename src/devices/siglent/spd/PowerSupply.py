@@ -14,8 +14,7 @@ class SiglentPowerSupply(object):
     ]
 
     MANUFACTURERS = {
-        "SPD3303X": "Siglent",
-        
+        "SPD3303X": "Siglent",  
     }
 
     def __init__(self, host=None):
@@ -29,7 +28,12 @@ class SiglentPowerSupply(object):
             if pattern in url:
                mydev = rm.open_resource(url)
                self._inst = mydev
-               resp = self._inst.query("*IDN?")
+               #
+               mydev.timeout = 10000  # ms
+               mydev.read_termination = '\n'
+               mydev.write_termination = '\n'
+               #resp = self._inst.query("*IDN?")
+               #print(resp)
                #self._idn.decodeIDN(resp)
                break
         else:

@@ -1,0 +1,43 @@
+\documentclass[tikz,border=15mm]{standalone}
+\usepackage[siunitx, RPvoltages,american]{circuitikz}
+
+\standaloneenv{circuitikz}
+\ctikzsetstyle{romano}
+\ctikzset{bipoles/open/voltage/distance from node=0.8mm}
+\ctikzset{voltage/american font=\tiny}
+\usetikzlibrary {arrows.meta}
+%\tikz \draw [line width=1pt, double distance=3pt,
+ %            arrows = {-Latex[length=0pt 3 0]}] (0,0) -- (1,0);
+
+\begin{document}
+
+\begin{circuitikz}[european]
+\ctikzset{bipoles/oscope/waveform=sin}
+\ctikzset{bipoles/oscope/width=1.6}\ctikzset{bipoles/oscope/height=1.2}
+
+	\draw (0,0) coordinate(start)to[R, l=$R_1$ , name=R1, anchor=west] ++(2,0)coordinate(ToG)node[npn, xscale=1, anchor=G](Q1){};
+	\draw(Q1.G-|R1.west)to[short,-o]++(-1,0)coordinate(VGS);
+%draw labels
+	\draw (VGS)node[left]{${V_{GS}}_{IN}$};
+	
+% draw Vdd connection
+	\draw (Q1.D)--++(0,0.5)coordinate(atAmpm)to[ammeter]++(0,1.5)node[vcc](VDD){$V_{DD}$};
+	\draw (Q1.G)++(1.1,1.2)node[below left]{$BC550C$};
+	%\draw (C1)++(0.06,-0.6)node[right]{$^*$ Zie tekst!!};
+	\draw (atAmpm)to[short,*-]++(1,0)coordinate(Cdecoup)to[C,l2^=$C_1$ and 100nF, name=C1]++(0,-1)node[sground]{};
+	\draw (Q1.S)coordinate(mygnd)node[sground]{};
+	
+
+%add some extra C
+	\draw(start)++(0.5,0)coordinate(toC3);
+	\draw(toC3)to[C, l_=$C_2$,name=C2, *-](toC3|-mygnd)node[sground]{};
+	
+%draw scope connections
+	\draw (Q1.G)to[short,-*]++(0.15,0)--++(0,-2)coordinate(toCH1);
+  	\path (toCH1)++(2,0)coordinate(endArrow);
+  	
+	\draw [-{Stealth[length=2mm]}] (toCH1)--(endArrow) ;
+	\draw (endArrow) node[right]{To CH1 Scope};
+
+\end{circuitikz}
+\end{document}

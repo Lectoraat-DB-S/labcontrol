@@ -12,8 +12,6 @@ import xdrlib
 #from .Channels import SDSChannel
 from devices.siglent.sds.Channels import SDSChannel
 
-
-
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='Siglentscope.log', level=logging.INFO)
 logger.setLevel(logging.DEBUG)

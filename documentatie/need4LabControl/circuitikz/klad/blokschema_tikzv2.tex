@@ -1,0 +1,27 @@
+\documentclass[border =3mm]{standalone}
+\usepackage{tikz}
+\usepackage{pspicture}
+\usetikzlibrary{positioning, calc, decorations.markings}
+
+\tikzset{
+    mid arrow/.style={postaction={decorate,decoration={markings,mark=at position #1 with {\arrow{stealth}}}}},
+    connect/.style={mid arrow=#1, out=0, in=180, ->, >=stealth, looseness=2},
+    connect/.default=6mm
+}
+\begin{document}
+
+\begin{pspicture}(6,2)
+\rput(0,1){\rnode{x}{$x[n]$}}
+%\psfblock[framesize =0.75 0.5](2,1){a}{$H_1$}
+%\psfblock[framesize =1.5 1](4,1){b}{$H_2$}
+\psblock(1.5,1){a}{$H_1$}
+\psblock(3,1){b}{$H_2$}
+\rput(6,1){\rnode{y}{$y[n]$}}
+%-----------------
+\psset{style = Arrow }
+\ncline[nodesepA =.15]{x}{a}
+\ncline{a}{b}
+\ncline[nodesepB =.15]{b}{y}
+\end{pspicture
+
+\end{document}

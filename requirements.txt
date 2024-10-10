@@ -90,3 +90,4 @@ windowsapps==0.0.9
 wxpython==4.2.1
 yarg==0.1.9
 zeroconf==0.132.2
+pandas

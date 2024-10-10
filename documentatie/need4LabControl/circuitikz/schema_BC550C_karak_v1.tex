@@ -1,0 +1,28 @@
+\documentclass[tikz,border=15mm]{standalone}
+\usepackage[siunitx, RPvoltages,american]{circuitikz}
+
+\standaloneenv{circuitikz}
+\ctikzsetstyle{romano}
+\ctikzset{bipoles/open/voltage/distance from node=0.8mm}
+\ctikzset{voltage/american font=\tiny}
+\usetikzlibrary {arrows.meta}
+%\tikz \draw [line width=1pt, double distance=3pt,
+ %            arrows = {-Latex[length=0pt 3 0]}] (0,0) -- (1,0);
+
+\begin{document}
+
+\begin{circuitikz}[european]
+\ctikzset{bipoles/oscope/waveform=sin}
+\ctikzset{bipoles/oscope/width=1.6}\ctikzset{bipoles/oscope/height=1.2}
+
+	\draw (0,0) coordinate(start)to[R, l=$R_1$ , name=R1, anchor=west] ++(2,0)coordinate(ToG)node[npn, xscale=1, anchor=G](Q1){};
+	\draw(Q1.G-|R1.west)to[short,-o]++(-1,0)coordinate(VGS);
+%draw labels
+	\draw (VGS)node[left]{${V_{GS}}_{IN}$};
+	
+% draw Vdd connection
+	\draw (Q1.D)to[R, l=$R_2$, name=R2]++(0,2)coordinate(atAmpm)to[ammeter]++(0,1.5)node[vcc](VDD){$V_{DD}$};
+	\draw (Q1.G)++(1.1,1.2)node[left]{$BC550C$};
+	\draw (Q1.S)node[sground]{};
+\end{circuitikz}
+\end{document}

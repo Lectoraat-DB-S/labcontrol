@@ -1,0 +1,70 @@
+\documentclass[border =3mm]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{positioning, calc, decorations.markings}
+
+\tikzset{
+    mid arrow/.style={postaction={decorate,decoration={markings,mark=at position #1 with {\arrow{stealth}}}}},
+    connect/.style={mid arrow=#1, out=0, in=180, ->, >=stealth, looseness=2},
+    connect/.default=6mm
+}
+\begin{document}
+\begin{tikzpicture}[auto, node distance=2cm,>=latex’]
+\matrix[column sep = .75cm, row sep = .375cm]
+{
+\node (u){$u$}; &
+\node [coordinate](d1){}; &
+\node [block](plant){$P$}; &
+\node [coordinate](d2){}; &
+\node (y){$y$}; &
+\\
+& & & & \node [block](obs){Observer}; & \node (xhat){$\hat{x}$};
+\\
+};
+\draw [->] (u) – (plant);
+\draw [->] (plant) – (y);
+\draw [->] (obs) – (xhat);
+\draw [->] (d1) |- (obs.190);
+\draw [->] (d2) |- (obs.170);
+\end{tikzpicture}
+
+\begin{tikzpicture}
+[
+xscale = 1, % to scale horizontally everything but the text
+yscale = 1, % to scale vertically everything but the text
+]
+% NODES DEFINITION
+\matrix [ row sep = .375cm, column sep = .75cm, ]
+{
+% —————————— row 1
+\node (nInputv)[yshift = 0.25cm] {$v$}; &
+\node (n22) [coordinate] {}; &
+\node (nPhi) [block] {\parbox[c]{1.2in}{Static Nonlinearity \\ $\phi(v,y)$}}; &
+\node (nInputu)[above]{$u$}; &
+\node (nSystem) [block] {\parbox[c]{.85in}{Nonlinear \\ Plant}}; &
+\node (n26) [coordinate, xshift = -0.2cm] {}; &
+\node (nOutput) {$y$}; &
+\\
+& & & & & &
+\\
+& & & & & &
+\\
+% —————————— row 2
+\node (n11) [coordinate] {}; &
+\node (n12) [coordinate, xshift = 0.2cm] {}; &
+\node (n13) [coordinate] {}; &
+\node (n14) [coordinate] {}; &
+\node (n15) [coordinate] {}; &
+\\
+};
+% —————————————————— % PATHS
+\draw [->] (nInputv) – (nPhi.172);
+\draw [->] (nPhi) – (nSystem);
+\draw [->] (nSystem) – (nOutput);
+\draw [-] (n26) |- (n12);
+\draw [->] (n12) |- (nPhi.188); %
+% auxiliary nodes
+\node [coordinate, xshift = 0.4cm, yshift = 1cm] (nAux1) at (n26) {};
+\node [coordinate, xshift = -0.4cm, yshift = -1cm] (nAux2) at (n12) {}; %
+\draw [dashed] (nAux1) -| (nAux2) -| (nAux1) node [above, pos = 0.38] {feedback linearized system};
+\end{tikzpicture}
+\end{document}

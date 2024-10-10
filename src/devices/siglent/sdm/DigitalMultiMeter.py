@@ -1,13 +1,33 @@
 import pyvisa as visa
-import enum
+from enum import Enum
 from devices.siglent.sdm.util import MeasType
 import devices.siglent.sdm.util as util
 import logging
+import socket
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='Siglentscope.log', level=logging.INFO)
 logger.setLevel(logging.DEBUG)
 
+class SDM3045X_CURR_RANGE(Enum):
+    R600muA = 1
+    R6miA   = 2
+    R60miA  = 3
+    R600miA = 4
+    R6A     = 5
+    R10A    = 6
+    AUTO    = 7 
+    
+#   According to SDM programming manual page 44:
+# Storing measurements in reading memory with INITiate
+# is faster than sending measurements to the
+# instrument's output buffer using READ? (provided you do not send FETCh? until done). The INITiate
+# command is also an "overlapped" command. This means that after executing INITiate, you can send other
+# commands tha t do not affect the measurements. This allows you to check for data availability before
+# initiating a read attempt that might otherwise time out. Note that the FETCh? query waits until all
+# measurements are complete to terminate. You can store up to 1,000 0 m easurements in the reading
+# memory of the SDM.
+    
 class SiglentDMM(object):
     KNOWN_MODELS = [
         "SDM3045X",
@@ -43,8 +63,7 @@ class SiglentDMM(object):
                 self._inst = mydev
             except socket.gaierror:
                 logger.error(f"Couldn't resolve host {self._host}")
-        
-        
+    
     def close(self):
         self._inst.close()
         
@@ -53,41 +72,43 @@ class SiglentDMM(object):
         
     def __exit__(self, *args):
         self._inst.close() 
+
+    ### Trigger unit functions ####
         
+    def getTriggerDelay(self):
+        return self._inst.query(f"TRIG:DEL?")
     
+    def setTriggerDelay(self, val):
+        self._inst.write(f"TRIG:DEL {val}")
         
- 
-    """
-        get_voltage: measure the voltage 
-        parameters:
-            No parameters: E.g. MEAS:VOLT:DC? Measures DC voltage in auto range.
-    """
+    def setTriggerCount(self, count):
+        if count > 0 and count <=1000000:
+            self._inst.write(f"TRIG:COUN {count}")
+    
+    def setTriggerCont(self):
+        self._inst.write(f"TRIG:COUN INF")
+        
+    def setTriggerSrcIMM(self):
+        self._inst.write(f"TRIG:SOUR IMM")
+        
+    def setTriggerSrcBUS(self):
+        self._inst.write(f"TRIG:SOUR BUS")
+        
+    def setTriggerSrcEXT(self):
+        self._inst.write(f"TRIG:SOUR EXT")
+        
     def get_voltage(self, type=MeasType.DC):
-            """
-            see https://stackoverflow.com/questions/35407477/enums-in-python-how-to-enforce-in-method-arguments
-            in how to handle enum as formal parameter.
-            """
-            meastype = util.checkMeasType(type)   
-            """
-            TODO:
-            1. check the space between semicolon and the value. Space shown in example of SDM manual, but not in conmmandsyntax
-            2. Incorperate the correct ranges per model DMM
-            """
-            return self._inst.query(f"MEAS:VOLT:{meastype}?") 
+        meastype = util.checkMeasType(type)   
+        return self._inst.query(f"MEAS:VOLT:{meastype}?") 
     
     def get_current(self, type=MeasType.DC):
         meastype = util.checkMeasType(type)   
-        return self._inst.query(f"MEAS:CURR:{meastype}?")
+        return float(self._inst.query(f"MEAS:CURR:{meastype}?"))
 
     def get_capacitance(self, type=MeasType.DC):
         meastype = util.checkMeasType(type)   
         return self._inst.query(f"MEAS:CAP:{meastype}?")
 
-    """
-        get_resistance: measures resistance, TW = Two Wire, FW = Four Wire.
-        
-        TODO: add range per model number. See manual.
-    """
     def get_resistanceTW(self):
         return float(self._inst.query(f"MEAS:RES?"))
 
@@ -107,3 +128,47 @@ class SiglentDMM(object):
         print("Not implemented yet")
         return None
     
+    def fetch_res(self, rangeVal):
+        self._inst.write(f"CONF:RES {rangeVal}")
+        self._inst.write(f"INIT")
+        return self._inst.query(f"FETC?")
+    
+    def setContinuity(self):
+        self._inst.write(f"CONF:CONT")
+        
+    def doNDCMeas(self, val):
+        self._inst.write(f"CONF:VOLT:DC")
+        self._inst.write(f"TRIG:SOUR IMM")
+        self._inst.write(f"TRIG:COUN {val}")
+        return self._inst.query(f"FETC?")
+        
+    
+    def set_autorange_volt(self):
+        self._inst.write("TRIG:SOUR IMM")
+        self._inst.write("CONF:VOLT:AC AUTO")
+        self._inst.write("CONF:VOLT:DC AUTO")
+    
+    def set_autorange_res(self):
+        self._inst.write("CONF:RES AUTO")
+        self._inst.write("CONF:FRES AUTO")
+        
+    def set_autorange_curr(self):
+        self._inst.write("CONF:CURR:AC AUTO")
+        self._inst.write("CONF:CURR:DC AUTO")
+    
+    def set_currRangeDC(self, vrange: SDM3045X_CURR_RANGE):
+        if range in SDM3045X_CURR_RANGE:
+            self._inst.write(f"CONF:CURR:DC {vrange}")
+            
+    def set_currRangeAC(self, vrange: SDM3045X_CURR_RANGE):
+        if range in SDM3045X_CURR_RANGE:
+            if vrange != SDM3045X_CURR_RANGE.R600muA or vrange != SDM3045X_CURR_RANGE.R6miA:
+                self._inst.write(f"CONF:CURR:DC {vrange}")
+                
+    def fetch_voltage(self):
+        #self._inst.write("INIT")
+        
+        self._inst.write("CONF:VOLT:DC")
+        self._inst.write("TRIG:SOUR IMM") 
+        self._inst.write("INIT")
+        return self._inst.query("FETCh?")

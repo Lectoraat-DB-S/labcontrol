@@ -1,17 +1,11 @@
-import time
-import vxi11
-import struct
-import numpy as np
-from enum import Enum
-import socket
+
 import pyvisa as visa
 import logging
 import time
-import xdrlib
-from devices.siglent.sdg.Commands import WaveForm
-from devices.siglent.sdg.Commands import BasicWaveCommandTypes
-from devices.siglent.sdg.Commands import WaVeformTyPe
 from devices.siglent.sdg.Commands import WaveformParam
+from devices.siglent.sdg.Commands import WVTP
+from devices.siglent.sdg.Commands import SDGCommand
+
 
 # SDGChannel: abstraction of a Siglent function generator channel.
 
@@ -22,80 +16,68 @@ class SDGChannel(object):
     def __init__(self, chan_no: int, dev):
         self._name = f"C{chan_no}"
         self._dev = dev
-        self._waveForm = WaveForm()
+        self._WVP = WaveformParam()
         
-    def setBasicWave(self, form: WaVeformTyPe, param: WaveformParam):
-        pass
-    
-    def setPulse(self, param: WaveformParam):
-        line1 = f"{self._name}:BSWV WVTP,PULSE"
-        self._dev.write(line1)
-        params = param.toSCPI()
-        for command in params:
-            line2 = f"{self._name}:BSWV {command}"
-            self._dev.write(line2)
-        
-    def setBasicWaveFormFreq(self, freq):
-        line1 = f"{self._name}:BSWV FRQ,{freq}"
-        #print(line1)
-        self._dev.write(line1)
-    #short name for above mentioned
-    def setFreq(self, freq=1000):
-        self.setBasicWaveFormFreq(freq)
+    # __enter__ method
+    # precondition: Generator just started or after waveparam set
+    # purpose: when object will be used (for the first time), this method queries for all basic WaveFormParam, for consistency
+    # Reason: waveparam aren't consistent, e.g. f=500Hz => T=2.0000006 ms? Maybe an artefact of Python or bug (feature) in a VISA 
+    # driver?
+    # postcondition: WaveformParam object reflect actual state of generator.
+    # 
+    def __enter__(self):
+        self.getBasicWaveParam()
+
+    def setfreq(self, freq):
+        self._dev.write(SDGCommand.setWaveCommand(self._name,SDGCommand.FREQUENCY,freq))
 
     def setAmp(self, amp):
-        line1 = f"{self._name}:BSWV AMP,{amp}"
-        self._dev.write(line1)
+        self._dev.write(SDGCommand.setWaveCommand(self._name,SDGCommand.AMPLITUDE,amp))
+    
+    def setOffset(self, offset):
+        self._dev.write(SDGCommand.setWaveCommand(self._name,SDGCommand.OFFSET,offset))
 
-    def setBasicSweepWave(self, startfreq, stopfreq):
-        line1 = f"{self._name}:SWWV STATE,ON"
-        self._dev.write(line1)
-        line1 = f"{self._name}:SWWV STOP,{stopfreq}"
-        self._dev.write(line1)
+    def setSineWave(self,freq=None, amp=None):
+        self._dev.write(SDGCommand.setSine(self._name))
+        if freq != None:
+            self._dev.write(SDGCommand.setWaveCommand(self._name, SDGCommand.FREQUENCY, freq))
+        if amp != None:
+            self._dev.write(SDGCommand.setWaveCommand(self._name, SDGCommand.AMPLITUDE, amp))
             
-    def setBasicWaveFormType(self, val: WaVeformTyPe):
-        # check if WaveParam is correct.
-        self._waveForm.setWVTP(val)
-        line1 = f"{self._name}:BSWV WVTP,{self._waveForm.wavetype.name}"
-        print(line1)
-        self._dev.write(line1)
-
-    #short version call
-    def setType(self, type):
-        match type:
-            case "RAMP":
-                self.setBasicWaveFormType(WaVeformTyPe.RAMP)
-            case "SIN":
-                self.setBasicWaveFormType(WaVeformTyPe.SINE)
-            case _:
-                self.setBasicWaveFormType(WaVeformTyPe.SINE)
-    def setOutputOn(self,val: bool):
+    def setPulseWave(self, period, pulseWidth, rise, fall, delay=0):
+        self._dev.write(SDGCommand.setPulseWave(self._name,period,pulseWidth,rise,fall,delay))
+        
+    def enableSweep(self, val: bool):
         if val:
-            self._dev.write(f"{self._name}:OUTPut ON")
+            self._dev.write(SDGCommand.enableSweep(self._name))
         else:
-            self._dev.write(f"{self._name}:OUTPut OFF")
-    def setSweep(self, enable: bool, start=1, stop=10, sweepTime=1):
-        if enable:
-            self._dev.write(f"{self._name}:SWWV STATE,ON,START,{start},STOP,{stop},TIME,{sweepTime}")
-        else:
-            self._dev.write(f"{self._name}:SWWV STATE OFF")
+            self._dev.write(SDGCommand.disableSweep(self._name))
+    
+    def setSweep(self, time, start, stop):  
+        self._dev.write(SDGCommand.setSweep(self._name,time,start,stop))
+    
+    #short version call
+    def setWaveType(self, type: WVTP):
+        self._dev.write(SDGCommand.setWaveType(self._name, type))
+
+    def enableOutput(self,val: bool):
+        self._dev.write(SDGCommand.setOutput(self._name, val))
+
             
     ######### GET FUNCTIONS ########
     
-    def getBasicWaveParam(self):
-        cmd = f"{self._name}:BSWV?"
-        return self._dev.query(cmd)
+    def getWaveParam(self) -> WaveformParam:
+        resp = self._dev.query(SDGCommand.queryWaveParam(self._name))
+        param = self._WVP.decodeWaveformParamQuery(resp)
+        return param
     
     def getModulationParam(self):
-        cmd = f"{self._name}:MDWV?"
-        return self._dev.query(cmd)
+        return self._dev.query(SDGCommand.queryModParam(self._name))
         
     def getSweepParam(self):
-        cmd = f"{self._name}:SWWV?"
-        return self._dev.query(cmd)
+        return self._dev.query(SDGCommand.querySweepParam(self._name))
     
     def getBurstParam(self):
-        cmd = f"{self._name}:BTWV?"
-        return self._dev.query(cmd)
+        return self._dev.query(SDGCommand.queryBurstParam(self._name))
     
     
