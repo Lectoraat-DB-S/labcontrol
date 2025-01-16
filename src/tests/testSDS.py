@@ -10,3 +10,4 @@ def testTheSDS():
     print(scope.CH1.getMean())
     
     print(scope.CH1.getPKPK())
+    scope.CH1.capture()

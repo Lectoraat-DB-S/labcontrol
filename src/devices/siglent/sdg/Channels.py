@@ -45,7 +45,24 @@ class SDGChannel(object):
             self._dev.write(SDGCommand.setWaveCommand(self._name, SDGCommand.AMPLITUDE, amp))
             
     def setPulseWave(self, period, pulseWidth, rise, fall, delay=0):
-        self._dev.write(SDGCommand.setPulseWave(self._name,period,pulseWidth,rise,fall,delay))
+        #setting the waveform interrupts the signal generation of de SDG, therefore setting the waweform to PULSE only needed
+        #when current waveform is not PULSE. If PULSE then set ONLY the parameters, to prevent signal degradation.
+        if self.WVTP != WVTP.PULSE: 
+            self._dev.write(SDGCommand.setPulseWave(self._name,period,pulseWidth,rise,fall,delay))
+            self.WVTP   = WVTP.PULSE
+            self._WVP.pulWidth = pulseWidth
+            self._WVP.rise = rise
+            self._WVP.fall = fall
+            self._WVP.delay = delay
+        else:
+            self._dev.write(SDGCommand.setWaveCommand(self._name, SDGCommand.PERIOD, period))
+            self._dev.write(SDGCommand.setWaveCommand(self._name, SDGCommand.PULSEWDITH, pulseWidth))
+            self._dev.write(SDGCommand.setWaveCommand(self._name, SDGCommand.RISETIME, rise))
+            self._dev.write(SDGCommand.setWaveCommand(self._name, SDGCommand.FALLTIME, fall))
+        
+    def setPulseWidth(self, pulseWidth):
+        if self.WVTP == WVTP.PULSE:
+            self._dev.write(SDGCommand.setWaveCommand(self._name, SDGCommand.PULSEWDITH, pulseWidth))
         
     def enableSweep(self, val: bool):
         if val:

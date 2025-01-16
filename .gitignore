@@ -1,4 +1,5 @@
 .venv/
+venv/
 .idea/
 logs/
 visualizations/
@@ -9,5 +10,3 @@ testproject/
 *.zip
 **/build
 **/dist
-dist/
-__pycache__

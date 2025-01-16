@@ -34,28 +34,13 @@
   \fill[controlpanels] (13.7,0.5) rectangle (27.1,6.2);
   %Channels
   % CH I
-  \draw[thick] (14.8,1.5) circle (0.7cm);
-  \fill[gray,draw=black,thick] (14.8,1.5) circle (0.5cm);
-  \fill[white,draw=black,thick] (14.8,1.5) circle (0.3cm);
+   \draw (14.5,1.5) node[bnc,xscale=-1](B1){};
   \node[scale={1.5*\scl}] at (14.8,2.5) {CH I};
-  \draw[thick] (16.2,1.5) circle (0.4cm);
-  \fill[black!60!] (16.2,1.5) circle (0.3cm);
-  \draw[thick] (16.6,1.5) --(17,1.5)--(17,1.0);
-  \draw[thick] (16.7,1.0)--(17.3,1.0);
-  \draw[thick] (16.8,0.85)--(17.2,0.85);
-  \draw[thick] (16.9,0.70)--(17.1,0.70);
-  \draw[thick] (26.0,1.5) circle (0.7cm);
   % CH II
-  \fill[gray,draw=black,thick] (26,1.5) circle (0.5cm);
-  \fill[white,draw=black,thick] (26,1.5) circle (0.3cm);
+   \draw (25.3,1.5)node[bnc,xscale=-1](B2){};
+ 
   \node[scale={1.5*\scl}] at (26,2.5) {CH II};
-  \draw[thick] (24.6,1.5) circle (0.4cm);
-  \fill[black!60!] (24.6,1.5) circle (0.3cm);
-  \draw[thick] (24.2,1.5) --(23.7,1.5)--(23.7,1.0);
-  \draw[thick] (23.4,1.0)--(24.0,1.0);
-  \draw[thick] (23.5,0.85)--(23.9,0.85);
-  \draw[thick] (23.6,0.70)--(23.8,0.70);
-  \draw[thick] (26.0,1.5) circle (0.7cm);
+ 
   % Y-pos
   \fill[smallbutton] (14.8,4.9) circle (0.3cm);
   \node[scale={\scl}] at (14.8,5.5) {Y-pos I};

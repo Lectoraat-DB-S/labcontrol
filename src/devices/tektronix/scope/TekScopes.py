@@ -132,3 +132,18 @@ class TekScope(object):
         NR_PT =  int(self._inst.query('WFMPRE:NR_PT?')) #Requesting the number of samples
         return NR_PT
     
+    class Horizontal(object):
+        def __init__(self, position:float):
+            self._position = position
+        
+        def setPosition(self, pos):
+            pass
+        
+        def setScale(self, tdiv):
+            pass
+        
+        def setSecDiv(self, tdiv):
+            self.setScale(tdiv)
+        
+        def setTimeDiv(self, tdiv):
+            self.setScale(tdiv)    

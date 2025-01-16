@@ -6,7 +6,6 @@ import logging
 import socket
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(filename='Siglentscope.log', level=logging.INFO)
 logger.setLevel(logging.DEBUG)
 
 class SDM3045X_CURR_RANGE(Enum):
@@ -29,6 +28,17 @@ class SDM3045X_CURR_RANGE(Enum):
 # memory of the SDM.
     
 class SiglentDMM(object):
+    #TODO: figure out whether or not create a subclass of the visa.Resourcemanager
+    # because the default timeout (2000ms) property of (sub)Instrument class(es) is not sufficient for siglent DMM
+    # So one need a property timeout and query-timeout per actual instrument. The value of these properties are
+    # of 'static' nature: they can't be set prior to the creation of the object and one doesn't want to set these values 
+    # manually each time an instrument will be created
+    # For now this had been fixed adding the timeout properties/parameters locally for each individual instrument-class if needed. The 
+    # default values are defines via 'static' class variables.
+    # It might be better to sub class visa.Resourcemanager and the timeout paramters and methods in the subclass and set the parameter
+    # during creation of the object.
+    INSTRUMENT_TIME_OUT = 10000
+    
     KNOWN_MODELS = [
         "SDM3045X",
         "SDM3055",
@@ -40,11 +50,15 @@ class SiglentDMM(object):
         "SDM3055": "Siglent",
         "SDM3065X": "Siglent",
     }
+    
+    ###### VISA SYSTEM FUNCTIONS ########
 
     #TODO: define how to handle unsuccessfull connection.
-    def __init__(self, host=None):
+    def __init__(self, delay=INSTRUMENT_TIME_OUT,host=None):
         rm = visa.ResourceManager()
         self._inst = None
+        self._query_delay = 0.0
+        self.nrOfAttemps = 2
         if host is None:
             theList = rm.list_resources()
             pattern = "SDM"
@@ -52,7 +66,10 @@ class SiglentDMM(object):
                 if pattern in url:
                     mydev = rm.open_resource(url)
                     self._inst = mydev
-                    logger.info("Siglent SDM found")
+                    logging.info("Siglent SDM found")
+                    mydev.timeout = delay*1000
+                    print(f"DMM timeout = {mydev.timeout}")
+                    
                     break
         else:
             self._host = host
@@ -62,8 +79,22 @@ class SiglentDMM(object):
                 mydev = rm.open_resource('TCPIP::'+str(ip_addr)+'::INSTR')
                 self._inst = mydev
             except socket.gaierror:
-                logger.error(f"Couldn't resolve host {self._host}")
+                logging.error(f"Couldn't resolve host {self._host}")
     
+    def setQueryDelay(self, delay):
+        if self._inst != None:
+            self._query_delay = delay
+        
+    def setTimeOut(self, timeOutms):
+        if self._inst != None:
+            self._inst.timeout = timeOutms
+            
+    ###### End VISA system functions ############
+    
+    ### DMM SYSTEM functions #####
+    def setTriggerSrcEXT(self):
+        self._inst.write(f"SYSTem:PRESet")
+        
     def close(self):
         self._inst.close()
         
@@ -97,50 +128,74 @@ class SiglentDMM(object):
     def setTriggerSrcEXT(self):
         self._inst.write(f"TRIG:SOUR EXT")
         
+    def dmmQuery(self, querystr):
+        nr = 1
+        while True:
+            try:
+                val = self._inst.query(querystr, delay=self._query_delay)
+                return val
+            except visa.errors.VisaIOError:
+                logging.info(f"VisaIOError occured {nr} time(s). Retrying .....")
+                nr+=1
+                if nr > self.nrOfAttemps:
+                    logging.error(f"VisiaIOError occurred too often, raising error")
+                    raise
+        
+        
     def get_voltage(self, type=MeasType.DC):
-        meastype = util.checkMeasType(type)   
-        return self._inst.query(f"MEAS:VOLT:{meastype}?") 
-    
+        meastype = util.checkMeasType(type)
+        querystr = f"MEAS:VOLT:{meastype}?"
+        return float(self.dmmQuery(querystr))
+        
     def get_current(self, type=MeasType.DC):
-        meastype = util.checkMeasType(type)   
-        return float(self._inst.query(f"MEAS:CURR:{meastype}?"))
+        meastype = util.checkMeasType(type)
+        querystr = f"MEAS:CURR:{meastype}?"   
+        return float(self.dmmQuery(querystr))
 
     def get_capacitance(self, type=MeasType.DC):
         meastype = util.checkMeasType(type)   
-        return self._inst.query(f"MEAS:CAP:{meastype}?")
+        querystr = f"MEAS:CAP:{meastype}?"   
+        return float(self.dmmQuery(querystr))
 
     def get_resistanceTW(self):
-        return float(self._inst.query(f"MEAS:RES?"))
-
+        querystr = f"MEAS:RES?"   
+        return float(self.dmmQuery(querystr))
+    
     def get_resistanceFW(self):
-        return self._inst.query(f"MEAS:FRES?")
-
+        querystr = f"MEAS:FRES?"   
+        return float(self.dmmQuery(querystr))
+    
     def get_frequency(self):
-        return self._inst.query(f"MEAS:FREQ?")
-
+        querystr = f"MEAS:FREQ?"   
+        return float(self.dmmQuery(querystr))
+    
     def get_peroid(self):
-        return self._inst.query(f"MEAS:PER?")
-
+        querystr = f"MEAS:PER?"   
+        return float(self.dmmQuery(querystr))
+    
     def get_diode(self):   
-        return self._inst.query(f"MEAS:DIOD?")
+        querystr = f"MEAS:DIOD?"   
+        return float(self.dmmQuery(querystr))
     
     def get_temp(self):   
         print("Not implemented yet")
         return None
     
     def fetch_res(self, rangeVal):
+        querystr = f"FETC?"
         self._inst.write(f"CONF:RES {rangeVal}")
         self._inst.write(f"INIT")
-        return self._inst.query(f"FETC?")
+        return float(self.dmmQuery(querystr))
     
     def setContinuity(self):
         self._inst.write(f"CONF:CONT")
         
-    def doNDCMeas(self, val):
+    def doDCMeas(self, val):
+        querystr = f"FETC?"
         self._inst.write(f"CONF:VOLT:DC")
         self._inst.write(f"TRIG:SOUR IMM")
         self._inst.write(f"TRIG:COUN {val}")
-        return self._inst.query(f"FETC?")
+        return float(self.dmmQuery(querystr))
         
     
     def set_autorange_volt(self):
@@ -167,8 +222,8 @@ class SiglentDMM(object):
                 
     def fetch_voltage(self):
         #self._inst.write("INIT")
-        
+        querystr = f"FETC?"
         self._inst.write("CONF:VOLT:DC")
         self._inst.write("TRIG:SOUR IMM") 
         self._inst.write("INIT")
-        return self._inst.query("FETCh?")
+        return float(self.dmmQuery(querystr))

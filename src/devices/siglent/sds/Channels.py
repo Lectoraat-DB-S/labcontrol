@@ -10,7 +10,9 @@ import time
 import xdrlib
 from devices.siglent.sds.util import splitAndStripHz, splitAndStripSec, splitAndStripV 
 from devices.siglent.sds.util import WaveFormPreamble
+from devices.siglent.sds.util import WaveFormTrace
 from devices.siglent.sds.util import TIMEBASE_HASHMAP
+import pickle
 
 # SDSChannel: abstraction of a Siglent oscilloscope channel.
 # Usage: set or get 'vertical' channel properties of a scope and/or start a capture.
@@ -29,13 +31,14 @@ class SDSChannel(object):
         self._name = f"C{chan_no}"
         self._logger = logger
         self._dev = dev
-        self._WFP = WaveFormPreamble()
-        self._last_trace = None
+        self._WVT = WaveFormTrace()
         self._nrOfDivs = 5 # TODO: should be set during initialisation of the scope.
         self.full_code = 256 # TODO: should be set during initialisation of the scope.
         self.center_code = 127 # TODO: should be set during initialisation of the scope.
         self.max_code = self.full_code/2
-        self._hori_grid_size = 14
+        self._hori_grid_size = 14 # TODO: is this a fixed number for Siglent? Check this.
+        
+            
     def calculate_voltage(self, x, vdiv, voffset, code_per_div):
         if x > self.center_code:
             x -= self.full_code
@@ -90,52 +93,55 @@ class SDSChannel(object):
         :WAVeform:SOURce.
         See text output from a Siglent scope for reference. See Repo.
         """
+        WFP = self._WVT.getWVP()
         params = self._dev._inst.query_binary_values("C1:WaveForm? DESC", datatype='B', container=np.ndarray)
         instrument_name = struct.unpack("16s", params[76:92])[0] #string type parameter.
         instrument_number = struct.unpack("L", params[92:96])[0] #long int type parameter.
         temp = struct.unpack('4c', params[96:100])[0] #string type parameter.
         trace_label = str(temp)
-        total_points = struct.unpack('i', params[116:120])[0]
+        WFP._total_points = struct.unpack('i', params[116:120])[0]
+        
         probe = struct.unpack('f', params[328:332])[0]
         sweeps_per_acq = struct.unpack('L', params[148:152])[0] #for Long sized parameter, use 'L'
         #points_per_pair=struct.unpack('x', params[152:154])[0] #Word= kind of parameter, use 'x' for hex decoding?
         #pair_offset=struct.unpack('x', params[154:156])[0] #Word= kind of parameter, use 'x' for hex decoding?
-        vdiv = struct.unpack('f', params[156:160])[0] * probe
-        voffset = struct.unpack('f', params[160:164])[0] * probe
-        code_per_div = struct.unpack('f', params[164:168])[0] * probe
-        nom_bits = struct.unpack('H', params[172:174])[0]  # for Word sized parameter, use 'H'
-        horiz_interval = struct.unpack( 'f', params[176:180])[0]
-        delay = struct.unpack('d', params[180:188])[0]
-        pixel_offset = struct.unpack('d', params[188:196])[0]  #
-        verti_unit_str = str(struct.unpack('48s', params[196:244])[0])  # vertaling naar string lijkt niet ok.
-        hori_unit_str = str(struct.unpack('48s', params[244:292])[0])
+        WFP._vdiv = struct.unpack('f', params[156:160])[0] * probe
+        
+        WFP._voffset = struct.unpack('f', params[160:164])[0] * probe
+        WFP._maxGridVal = struct.unpack('f', params[164:168])[0] * probe
+        WFP._minGridVal = struct.unpack('f', params[168:172])[0] * probe
+        #nom_bits: an intrinsic measure of precision. Raw data is 8 bits, but averaging increases number of bits.
+        WFP._nrOfADCBits = struct.unpack('H', params[172:174])[0]  # for Word sized parameter, use 'H'
+        WFP._sampInterval = struct.unpack( 'f', params[176:180])[0]
+        WFP._delay = struct.unpack('d', params[180:188])[0]
+        WFP._pixelOffset = struct.unpack('d', params[188:196])[0]  #
+        WFP._vertUnit = str(struct.unpack('48s', params[196:244])[0])  # vertaling naar string lijkt niet ok.
+        WFP._horUnit = str(struct.unpack('48s', params[244:292])[0])
         # trigger_time=struct.unpack('time', params[296:312])[0] #time parameter? how to decode?
-        record_type = struct.unpack('H', params[316:318])[0]  # enum, 2 bytes use 'H' for now. need check!
-        processing_done = struct.unpack('H', params[318:320])[0]  # enum, 2 bytes use 'H' for now. need check!
+        WFP._recordType = struct.unpack('H', params[316:318])[0]  # enum, 2 bytes use 'H' for now. need check!
+        WFP._processingDone = struct.unpack('H', params[318:320])[0]  # enum, 2 bytes use 'H' for now. need check!
 
         #### timebase is a enum, need to convert first
         timebase_enum = struct.unpack('h', params[324:326])[0]
-        timebase = float(TIMEBASE_HASHMAP.get(str(timebase_enum)))
+        WFP._timebase = float(TIMEBASE_HASHMAP.get(str(timebase_enum)))
         #TODO: if hashmap doesn't  contain requested key:
         #   It's an error, but probably not a  showstopper, because script is not fit
         #   for the current connected sds, or scope is not a siglent.
         #   FIX: a. create a error class/enum with corresponding exception or combination of the two and
         #   need to classify the error based on more or better information
         #   For now: just print an error message and keep on!
-        if timebase == None:
+        if WFP._timebase == None:
             self._logger.error("ERROR TIMEBASE CONVERT: UNKNOWN KEY!\n")
         #### end timebase convert
 
-        vert_coupling=struct.unpack('H', params[326:328])[0] # enum, 2 bytes use 'H' for now. need check!
-        # fixed_vert_gain=struct.unpack('x', params[332:334])[0] # enum = kind of parameter, use 'x' for now.Don't what this really means need check!
-        BW_limit=struct.unpack('H', params[334:336])[0] #enum, 2 bytes use 'H' for now. need check!
+        WFP._vertCoupling = struct.unpack('H', params[326:328])[0] # enum, 2 bytes use 'H' for now. need check!
+        WFP._vertGain = struct.unpack('H', params[332:334])[0]
+        WFP._bwLimit = struct.unpack('H', params[334:336])[0] #enum, 2 bytes use 'H' for now. need check!
         # vert_vernier=struct.unpack('f', params[336:340])[0] # enum = kind of parameter, use 'x' for now.Don't what this really means need check!
         # acq_vert_offset=struct.unpack('f', params[340:344])[0] # enum = kind of parameter, use 'x' for now.Don't what this really means need check!
-        wave_src=struct.unpack('H', params[344:346])[0] # enum, 2 bytes use 'H' for now. need check!
+        WFP._waveSource=struct.unpack('H', params[344:346])[0] # enum, 2 bytes use 'H' for now. need check!
 
-        self._WFP.set(total_points, vdiv, voffset, code_per_div, timebase, delay, horiz_interval)
-        return (total_points, vdiv, voffset, code_per_div, timebase, delay, horiz_interval)
-    
+        
     def get_trigger_status(self):
         """The command query returns the current state of the trigger.
 
@@ -145,57 +151,27 @@ class SDSChannel(object):
         return self._dev.query(":TRIGger:STATus?")
 
     def capture(self):
-        """_summary_
-
-        :param src_channel: _description_
-        """
-        #while True:
-        #    res = self.get_trigger_status()
-        #    if res == SiglentSDSTriggerStatus.STOP.value:
-        #        break
-
-        # Send command that specifies the source waveform to be transferred
-    
+        
         #self._dev.write(":WAVeform:SOURce {}".format(self._name))
         #self._dev.write('WFSU SP,4,NP,0,FP,0')
         #self._dev.write('WFSU SP,1,NP,0,FP,0')
         #data = self._dev.query_raw(":WAVeform:DATA?")
         #data = self._dev.query_raw('C1:WF? DAT2')
         #data = data[11:-2]  # eliminate header and remove last two bytes
+        #datatype param: see https://docs.python.org/3/library/struct.html#format-characters. 'B' means unsigned char
   
         data = self._dev._inst.query_binary_values(f"{self._name}:WF? DAT2", datatype='B', is_big_endian=False, container=np.ndarray)
         try:
             trace = np.frombuffer(data, dtype=np.byte)
-            self._last_trace = self.convert_to_voltage(trace)
+            self._WVT.setTrace(self.convert_to_voltage(trace))
             #self._last_trace = data
         except Exception as e:
             self._logger.error(e)
 
-        return self._last_trace
+        return trace
 
     def getMaxOfTrace(self):
-        return max(self._last_trace)
-
-    def capture_raw(self):
-        """_summary_
-
-        :param src_channel: _description_
-        """
-        while True:
-            res = self.get_trigger_status()
-            if res == SiglentSDSTriggerStatus.STOP.value:
-                break
-
-            # Send command that specifies the source waveform to be transferred
-        self.write(":WAVeform:SOURce {}".format(self._name))
-        data = self.query_raw(":WAVeform:DATA?")
-        data = data[11:-2]  # eliminate header  and remove last two bytes
-        try:
-            self._last_trace = np.frombuffer(data, dtype=np.byte)
-        except Exception as e:
-            self._logger.error(e)
-
-        return self._last_trace
+        return max(self._WVT.getTraceData())
 
     def getTRDL(self):
         #need to check diff between this en hori 
@@ -204,27 +180,33 @@ class SDSChannel(object):
         delay_str = delay_str.strip("TRDL")
         delay_str = delay_str.strip() #remove leading zero
         return float(delay_str) #return a float
+
     def getVdiv(self):
-        VDIV = device.query('C1:VDIV?')
+        VDIV = self._dev.query(f"{self._name}:VDIV?")
         return VDIV
 
     def getVofs(self):
-        VOFS = device.query('C1:OFST?')
+        VOFS = self._dev.query(f"{self._name}:OFST?")
         return VOFS
 
     def getVcenterTV(self):
-        CENTERTV = device.query('TRDL?')
+        CENTERTV = self._dev.query('TRDL?')
         return CENTERTV
 
-    def getVofs(self):
-        TB = device.query('TDIV?')
+    def getTimeBase(self):
+        TB = self._dev.query('TDIV?')
         return TB
+    
     def getTimeAxisRange(self):
         #See programming manual sds, page 142:
         #first point = delay - (timebase*(hori_grid_size/2))
-        self._WFP._timeOfFirstSample = self._WFP._delay -(self._WFP._timebase*(self._hori_grid_size/2))
-        self._WFP._timeOfLastSample = self._WFP._interval * self._WFP._total_points
-        return (self._WFP._timeOfFirstSample,  self._WFP._timeOfLastSample)
+        
+        mydelay = self._WVT._WVP._delay
+        mytimebase = self._WVT._WVP._timebase
+        timeOfFirstSample = mydelay - (mytimebase*(self._hori_grid_size/2))
+        self._WVT._WVP._timeOfFirstValidSample = timeOfFirstSample
+        self._WVT._WVP._timeOfLastValidSample = timeOfFirstSample +(self._WVT._WVP._sampInterval * self._WVT._WVP._total_points)
+        return (self._WVT._WVP._timeOfFirstValidSample,  self._WVT._WVP._timeOfLastValidSample)
 
     def timebase_scale(self) -> float:
         """The query returns the current horizontal scale setting in seconds per
@@ -347,6 +329,22 @@ class SDSChannel(object):
     def getFrequency(self):
         response = self._dev._inst.query(f"{self._name}:PAVA? FREQ")
         return splitAndStripHz(response)
+    
+    def saveTrace(self, filename):
+        #saves the trace of this channel object, or performs a capture and 
+        #saves the trace.
+        if self._last_trace == None:
+            # get a trace
+            self.get_waveform_preamble()
+            self.capture()
+            #TODO: actualsave.
+        else:
+            #dump the WVP and trace data 
+            #see: https://docs.python-guide.org/scenarios/serialization/ use Pickle
+            pkl_wvp_file = f"{filename}_pkl_wvp.dat"
+            pkl_file = open('data.pkl', 'rb')
+            pickle.dump(self._WFP, pkl_file)
+                        
         
 class SiglentSDSTriggerStatus(Enum):
     ARM = "Arm"

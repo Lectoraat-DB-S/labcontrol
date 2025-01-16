@@ -13,7 +13,7 @@ from devices.siglent.sdg.Channels import SDGChannel
 from devices.siglent.sdg.util import IDN
 
 logger = logging.getLogger("SiglentGenerator")
-logging.basicConfig(filename='siglentgenerator.log', level=logging.INFO)
+#logging.basicConfig(filename='siglentgenerator.log', level=logging.INFO)
 
 
 class SiglentGenerator(object):

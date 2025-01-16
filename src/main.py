@@ -1,5 +1,6 @@
 
 import pyvisa
+import logging
 import measurements.weerstandsmetingDMM as measurement
 import measurements.transistorcurve as curfje
 
@@ -7,6 +8,21 @@ import tests.testSDG as sigTest
 import tests.testSiglent as dmmtest
 import tests.testSDS as scopeTest
 import control.gutter as gootje
+import tests.serialDumpTest as seriTest
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+def testPickle(mylog):
+    #seriTest.testChan(mylog)
+    seriTest.readTheChan()
+
+def initLog():
+    logging.basicConfig(filename='labcontrol.log',
+                            format='%(asctime)s %(module)s %(levelname)-8s %(message)s',
+                            level=logging.INFO,
+                            datefmt='%Y-%m-%d %H:%M:%S')
+
 
 def main():
     measurement.meetInterneWeerstandGenerator()
@@ -20,15 +36,31 @@ def performTransCurve():
 
 
 if __name__ == "__main__":
-    #main()
-    rm = pyvisa.ResourceManager()
+    
+    rm=pyvisa.ResourceManager("C:\\WINDOWS\\system32\\visa32.dll")
     print(rm.list_resources())
+    #logger = logging.getLogger(__name__)
+    #logger.setLevel(logging.DEBUG)
+
+    #testPickle(logger)
+    #initLog()
+    #logging.info('Main Started')
+    #rm = pyvisa.ResourceManager()
+    #myList=rm.list_resources()
+    #print(myList)
+    #mydev = rm.open_resource(myList[0])
+    #print(mydev.timeout)
     #dev=rm.open_resource("USB0::0x5345::0x1235::23390166::INSTR")
     #print(dev.query("*IDN?"))
     #print(dev.query("MMEMory:CATalog?"))
-    #gootje.controlBall()
+    #plt.figure(1)
+    #trace=gootje.aquireSamplesFromDistSensor()
+    #np.save("sanyo_dump.dat",trace)
+    #plt.plot(trace)
+    #plt.show()
     #testSiglent()
     #measurement.meetInterneWeerstandGenerator()
     #curfje.createTransCurve()
-    #scopeTest.testTheSDS()
-    dmmtest.testDMM()
+    scopeTest.testTheSDS()
+    #dmmtest.testDMM()
+    #logging.info('Finished') 

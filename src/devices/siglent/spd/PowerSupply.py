@@ -4,7 +4,7 @@ import socket
 from devices.siglent.spd.SupplyChannel import SPDChannel
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(filename='SiglentSupply.log', level=logging.INFO)
+#logging.basicConfig(filename='SiglentSupply.log', level=logging.INFO)
 logger.setLevel(logging.INFO)
 
 

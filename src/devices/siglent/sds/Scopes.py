@@ -11,9 +11,10 @@ import time
 import xdrlib
 #from .Channels import SDSChannel
 from devices.siglent.sds.Channels import SDSChannel
+from devices.siglent.sds.util import INR_HASHMAP
+import devices.siglent.sds.util as util
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(filename='Siglentscope.log', level=logging.INFO)
 logger.setLevel(logging.DEBUG)
 
 
@@ -113,13 +114,75 @@ class SiglentScope(object):
 
     @property
     def idn(self):
-        """The command query identifies the instrument type and software version. The
+        """The idn command query identifies the instrument type and software version. The
         response consists of four different fields providing information on the
         manufacturer, the scope model, the serial number and the firmware revision.
 
         :return: Siglent Technologies,<model>,<serial_number>,<firmware>
         """
-        return self.query("*IDN?")
+        return self._inst.query("*IDN?")
+    
+    def inr(self):
+        """The INR? query reads and clears the contents of the INternal state change Register (INR). 
+        The INR register (see table programming manual) records the completion of various internal operations 
+        and state transitions."""
+        inrResp = self._inst.query("*INR?")
+        return INR_HASHMAP[inrResp]        
+    
+    def rst(self):
+        """The *RST command initiates a device reset. The *RST sets recalls the default setup."""
+        self._inst.write("*RST")
+    
+    def sav(self, panelNr):
+        """The *SAV command stores the current state of the instrument in internal memory. The *SAV command stores the complete front-panel 
+        setup of the instrument at the time the command is issued."""
+        self._inst.write(f"*SAV{panelNr}")
+
+    def rcl(self, panelNr):
+        """The *RCL command sets the state of the instrument, using one of the ten non-volatile panel setups, by recalling the complete front-panel setup of the instrument. 
+        Panel setup 0 corresponds to the default panel setup."""
+        self._inst.write(f"*RCL{panelNr}")
+
+    def lock(self, enable):
+        """The *RCL command sets the state of the instrument, using one of the ten non-volatile panel setups, by recalling the complete front-panel setup of the instrument. 
+        Panel setup 0 corresponds to the default panel setup."""
+        if (enable):
+            self._inst.write(f"LOCK ON")
+        else:
+            self._inst.write(f"LOCK OFF")
+    
+    def isLocked(self):
+        retstr = self._inst.query(f"LOCK?")
+        if (retstr=="LOCK ON"):
+            return True
+        else:
+            return False
+        
+    def menu(self, enable):
+        if (enable):
+            self._inst.write(f"MENU ON")
+        else:
+            self._inst.write(f"MENU OFF")
+    
+    def define(self, funct, param):
+        match funct:
+            case util.MATH_FUNC_ADD:
+                self._inst.write(f"DEFine EQN,'C1+C2'")
+            case util.MATH_FUNC_SUB:
+                self._inst.write(f"DEFine EQN,'C1-C2'")
+            case util.MATH_FUNC_MUL:
+                self._inst.write(f"DEFine EQN,'C1*C2'")
+            case util.MATH_FUNC_DIF:
+                self._inst.write(f"DEFine EQN,'C1/C2'")
+            case util.MATH_FUNC_FFT:
+                self._inst.write(f"DEFine EQN,'FFT({param})'")
+            case util.MATH_FUNC_INT:
+                self._inst.write(f"DEFine EQN,'INTG({param})'")
+            case util.MATH_FUNC_DIF:
+                self._inst.write(f"DEFine EQN,'DIFF({param})'")
+            case util.MATH_FUNC_SQR:
+                self._inst.write(f"DEFine EQN,'SQRT({param})'")
+
 
     """
     def timebase_scale(self, new_timebase):
@@ -367,19 +430,6 @@ class SiglentScope(object):
                 return SiglentWaveformWidth.BYTE
             case "WORD":
                 return SiglentWaveformWidth.WORD
-
-    def calculate_voltage(self, x, vdiv, voffset, code_per_div):
-        if x > self.center_code:
-            x -= self.full_code
-
-        return x * (vdiv / code_per_div) - voffset
-
-    def convert_to_voltage(self, raw_array) -> np.ndarray:
-        # Get the parameters of the source
-        total_points, vdiv, voffset, code_per_div, timebase, delay, interval, delay = self.get_waveform_preamble()
-        vect_voltage = np.vectorize(self.calculate_voltage)
-
-        return vect_voltage(raw_array, vdiv, voffset, code_per_div)
 
     def arm(self):
         """Sets up the trigger signal to single

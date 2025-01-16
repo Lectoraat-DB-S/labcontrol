@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 #from siglent.sdg.Generator import SiglentGenerator
 #from siglent.spd.PowerSupply import SiglentPowerSupply
 import time
+import numpy as np
 #from tektronix.scope.Acquisitions import TekScopeEncodings
 #from tektronix.scope.TekLogger import TekLog
 
@@ -28,13 +29,15 @@ def testfunc(encoding: TekScopeEncodings):
 """
 #rm = pyvisa.ResourceManager()
 #print(rm.list_resources())
-scope = TekScope()
-scope.CH1.setVisible(True)
-scope.CH2.setVisible(False)
-scope.CH1.setAsSource()
-scope.CH1.setVperDiv(5.5)
-scope.CH1.capture()
-plt.plot(scope.CH1.getLastTrace().scaledXData, scope.CH1.getLastTrace().scaledYdata)
+#scope = TekScope()
+#scope.CH1.setVisible(True)
+#scope.CH2.setVisible(False)
+#scope.CH1.setAsSource()
+#scope.CH1.setVperDiv(5.5)
+#scope.CH1.capture()
+trace= np.fromfile("C:\github\labcontrol\sanyo_dump.dat.npy")
+#plt.plot(scope.CH1.getLastTrace().scaledXData, scope.CH1.getLastTrace().scaledYdata)
+plt.plot(trace)
 plt.show()
 """
 powersup = SiglentPowerSupply()

@@ -1,0 +1,70 @@
+INFO:root:Main Started
+INFO:root:Test starting
+INFO:root:Siglent SDM found
+INFO:root:Finished
+INFO:root:Main Started
+DEBUG:pyvisa:No visa library specified, trying to find alternatives.
+DEBUG:pyvisa:Environment variable PYVISA_LIBRARY is unset.
+DEBUG:pyvisa:No user defined configuration
+DEBUG:pyvisa:Automatically found library files: [None, 'C:\\WINDOWS\\system32\\visa32.dll', 'C:\\WINDOWS\\system32\\visa32.dll', 'C:\\WINDOWS\\system32\\visa64.dll', 'C:\\WINDOWS\\system32\\visa64.dll']
+DEBUG:pyvisa:No user defined library files
+DEBUG:pyvisa:The IVI implementation available
+DEBUG:pyvisa:No user defined configuration
+DEBUG:pyvisa:Automatically found library files: [None, 'C:\\WINDOWS\\system32\\visa32.dll', 'C:\\WINDOWS\\system32\\visa32.dll', 'C:\\WINDOWS\\system32\\visa64.dll', 'C:\\WINDOWS\\system32\\visa64.dll']
+DEBUG:pyvisa:No user defined library files
+DEBUG:pyvisa:Library signatures: 90 ok, 0 failed
+DEBUG:pyvisa:Created library wrapper for C:\WINDOWS\system32\visa32.dll
+DEBUG:pyvisa:viOpenDefaultRM('<ViObject object at 0x000001AFE84723D0>',) -> 0
+DEBUG:pyvisa:Created ResourceManager with session 4097
+DEBUG:pyvisa:viFindRsrc(4097, '?*::INSTR', '<ViObject object at 0x000001AFE84725D0>', 'c_ulong(4)', <ctypes.c_char_Array_256 object at 0x000001AFE84726D0>) -> 0
+DEBUG:pyvisa:viFindNext(<ViObject object at 0x000001AFE84725D0>, <ctypes.c_char_Array_256 object at 0x000001AFE84726D0>) -> 0
+DEBUG:pyvisa:viFindNext(<ViObject object at 0x000001AFE84725D0>, <ctypes.c_char_Array_256 object at 0x000001AFE84726D0>) -> 0
+DEBUG:pyvisa:viFindNext(<ViObject object at 0x000001AFE84725D0>, <ctypes.c_char_Array_256 object at 0x000001AFE84726D0>) -> 0
+DEBUG:pyvisa:viClose(<ViObject object at 0x000001AFE84725D0>,) -> 0
+INFO:root:Test starting
+DEBUG:pyvisa:No visa library specified, trying to find alternatives.
+DEBUG:pyvisa:Environment variable PYVISA_LIBRARY is unset.
+DEBUG:pyvisa:No user defined configuration
+DEBUG:pyvisa:Automatically found library files: [None, 'C:\\WINDOWS\\system32\\visa32.dll', 'C:\\WINDOWS\\system32\\visa32.dll', 'C:\\WINDOWS\\system32\\visa64.dll', 'C:\\WINDOWS\\system32\\visa64.dll']
+DEBUG:pyvisa:No user defined library files
+DEBUG:pyvisa:The IVI implementation available
+DEBUG:pyvisa:No user defined configuration
+DEBUG:pyvisa:Automatically found library files: [None, 'C:\\WINDOWS\\system32\\visa32.dll', 'C:\\WINDOWS\\system32\\visa32.dll', 'C:\\WINDOWS\\system32\\visa64.dll', 'C:\\WINDOWS\\system32\\visa64.dll']
+DEBUG:pyvisa:No user defined library files
+DEBUG:pyvisa:Reusing ResourceManager with session 4097
+DEBUG:pyvisa:viFindRsrc(4097, '?*::INSTR', '<ViObject object at 0x000001AFE8472F50>', 'c_ulong(4)', <ctypes.c_char_Array_256 object at 0x000001AFE8472FD0>) -> 0
+DEBUG:pyvisa:viFindNext(<ViObject object at 0x000001AFE8472F50>, <ctypes.c_char_Array_256 object at 0x000001AFE8472FD0>) -> 0
+DEBUG:pyvisa:viFindNext(<ViObject object at 0x000001AFE8472F50>, <ctypes.c_char_Array_256 object at 0x000001AFE8472FD0>) -> 0
+DEBUG:pyvisa:viFindNext(<ViObject object at 0x000001AFE8472F50>, <ctypes.c_char_Array_256 object at 0x000001AFE8472FD0>) -> 0
+DEBUG:pyvisa:viClose(<ViObject object at 0x000001AFE8472F50>,) -> 0
+DEBUG:pyvisa:viParseRsrcEx(4097, 'USB0::0xF4EC::0x1203::SDM34FBD5R3723::INSTR', 'c_ushort(7)', 'c_ushort(0)', <ctypes.c_char_Array_256 object at 0x000001AFE84736D0>, <ctypes.c_char_Array_256 object at 0x000001AFE84737D0>, <ctypes.c_char_Array_256 object at 0x000001AFE8473850>) -> 0
+DEBUG:pyvisa:USB0::0xF4EC::0x1203::SDM34FBD5R3723::0::INSTR - opening ...
+DEBUG:pyvisa:viOpen(4097, 'USB0::0xF4EC::0x1203::SDM34FBD5R3723::0::INSTR', <AccessModes.no_lock: 0>, 0, '<ViObject object at 0x000001AFE8473750>') -> 0
+DEBUG:pyvisa:USB0::0xF4EC::0x1203::SDM34FBD5R3723::0::INSTR - is open with session 1
+INFO:root:Siglent SDM found
+DEBUG:pyvisa:viSetAttribute(1, 1073676314, 10000000) -> 0
+DEBUG:pyvisa:viGetAttribute(1, 1073676314, 'c_ulong(10000000)') -> 0
+DEBUG:pyvisa:viSetAttribute(1, 1073676314, 2000) -> 0
+DEBUG:pyvisa:viWrite(1, b'MEAS:VOLT:DC?\r\n', 15, 'c_ulong(15)') -> 0
+DEBUG:pyvisa:USB0::0xF4EC::0x1203::SDM34FBD5R3723::0::INSTR - reading 20480 bytes (last status <StatusCode.success_max_count_read: 1073676294>)
+DEBUG:pyvisa:viRead(1, <ctypes.c_char_Array_20480 object at 0x000001AFE848C250>, 20480, 'c_ulong(16)') -> 0
+DEBUG:pyvisa:viWrite(1, b'MEAS:VOLT:DC?\r\n', 15, 'c_ulong(15)') -> 0
+DEBUG:pyvisa:USB0::0xF4EC::0x1203::SDM34FBD5R3723::0::INSTR - reading 20480 bytes (last status <StatusCode.success_max_count_read: 1073676294>)
+DEBUG:pyvisa:viRead(1, <ctypes.c_char_Array_20480 object at 0x000001AFE848C1D0>, 20480, 'c_ulong(16)') -> 0
+DEBUG:pyvisa:viWrite(1, b'MEAS:VOLT:DC?\r\n', 15, 'c_ulong(15)') -> 0
+DEBUG:pyvisa:USB0::0xF4EC::0x1203::SDM34FBD5R3723::0::INSTR - reading 20480 bytes (last status <StatusCode.success_max_count_read: 1073676294>)
+DEBUG:pyvisa:viRead(1, <ctypes.c_char_Array_20480 object at 0x000001AFE848C5D0>, 20480, 'c_ulong(16)') -> 0
+DEBUG:pyvisa:viWrite(1, b'CONF:VOLT:DC\r\n', 14, 'c_ulong(14)') -> 0
+DEBUG:pyvisa:viWrite(1, b'TRIG:SOUR IMM\r\n', 15, 'c_ulong(15)') -> 0
+DEBUG:pyvisa:viWrite(1, b'INIT\r\n', 6, 'c_ulong(6)') -> 0
+DEBUG:pyvisa:viWrite(1, b'FETCh?\r\n', 8, 'c_ulong(8)') -> 0
+DEBUG:pyvisa:USB0::0xF4EC::0x1203::SDM34FBD5R3723::0::INSTR - reading 20480 bytes (last status <StatusCode.success_max_count_read: 1073676294>)
+DEBUG:pyvisa:viRead(1, <ctypes.c_char_Array_20480 object at 0x000001AFE848C8D0>, 20480, 'c_ulong(16)') -> 0
+DEBUG:pyvisa:USB0::0xF4EC::0x1203::SDM34FBD5R3723::0::INSTR - closing
+DEBUG:pyvisa:viDisableEvent(1, <EventType.all_enabled: 1073709055>, <EventMechanism.all: 65535>) -> 1073676291
+DEBUG:pyvisa:viDiscardEvents(1, <EventType.all_enabled: 1073709055>, <EventMechanism.all: 65535>) -> 1073676292
+DEBUG:pyvisa:viClose(1,) -> 0
+DEBUG:pyvisa:USB0::0xF4EC::0x1203::SDM34FBD5R3723::0::INSTR - is closed
+INFO:root:Finished
+DEBUG:pyvisa:Closing ResourceManager (session: 4097)
+DEBUG:pyvisa:viClose(4097,) -> 0

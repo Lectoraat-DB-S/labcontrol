@@ -1,4 +1,4 @@
-
+\def\scl{0.5}
 \begin{circuitikz}
 \tikzset{fontscale/.style = {font=\relsize{#1}}}
 \draw [, rounded corners = 10.8] (2.25,9.25) rectangle (14.25,4.25);
@@ -37,25 +37,20 @@
 \draw [, line width=0.3pt , rounded corners = 1.8] (3.25,8.25) rectangle (7.25,5.25);
 \draw [ fill={rgb,255:red,228; green,227; blue,237} , line width=0.pt , rounded corners = 1.8] (8.5,6.85) rectangle (9,6.6) node[pos=.5,font=\fontsize{3}{3}\selectfont] {Pulse};
 %BNC connector
-\draw [ fill={rgb,255:red,228; green,227; blue,237} , line width=0.3pt ] (12,5.25) circle (0.25cm);
-\draw [ fill={rgb,255:red,228; green,227; blue,237} , line width=0.3pt ] (12,5.25) circle (0.22cm);
-\draw [ fill={rgb,255:red,228; green,227; blue,237} , line width=0.3pt ] (12,5.25) circle (0.2cm);
-\draw [ fill={rgb,255:red,228; green,227; blue,237} , line width=0.3pt ] (12,5.25) circle (0.15cm);
-\draw [ fill={rgb,255:red,228; green,227; blue,0} , line width=0.3pt ] (12,5.25) circle (0.075cm);
+\draw(12.15,5.25)node[bnc](B2){};
+ \node[scale={1.5*\scl}] at (12,5.6) {CH1};
 
 %BNC connect
-\draw [ fill={rgb,255:red,228; green,227; blue,237} , line width=0.3pt ] (13.25,5.25) circle (0.25cm);
-\draw [ fill={rgb,255:red,228; green,227; blue,237} , line width=0.3pt ] (13.25,5.25) circle (0.22cm);
-\draw [ fill={rgb,255:red,228; green,227; blue,237} , line width=0.3pt ] (13.25,5.25) circle (0.2cm);
-\draw [ fill={rgb,255:red,228; green,227; blue,237} , line width=0.3pt ] (13.25,5.25) circle (0.15cm);
-\draw [ fill={rgb,255:red,228; green,227; blue,0} , line width=0.3pt ] (13.25,5.25) circle (0.075cm);
+\draw(13.25,5.25)node[bnc](B2){};
+\node[scale={1.5*\scl}] at (13.1,5.6) {CH2};
 
-\draw [ fill={rgb,255:red,228; green,227; blue,237} , line width=0.3pt ] (12.65,8.25) circle (0.75cm);
+
+
 
 \draw [ fill={rgb,255:red,230; green,227; blue,209} , line width=0.3pt , rounded corners = 1.8] (2.5,6) rectangle (2.75,5.25);
 \draw [, line width=0.3pt , rounded corners = 1.8] (3,9)  rectangle (4.75,8.5);
 \draw [, line width=0.3pt , rounded corners = 1.8] (4.75,9) rectangle (7.75,8.5);
-\draw [, line width=0.3pt , rounded corners = 7.8] (11.5,5.75) rectangle (13.75,4.75) ;
+\draw [, line width=0.3pt , rounded corners = 7.8] (11.5,5.785) rectangle (13.75,4.95) ;
 \draw (3.9,8.75) node[]{SIGLENT};
 \draw (12.9,7) coordinate(here) \knoppie{one}{};
 \begin{scope}[xscale=-1,rotate=90,transform shape]
