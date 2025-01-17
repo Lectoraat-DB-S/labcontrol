@@ -1,15 +1,11 @@
 import time
-import vxi11
 import struct
 import numpy as np
 from enum import Enum
-import socket
 import pyvisa as visa
 import logging
 import time
-import xdrlib
 from devices.siglent.sds.util import splitAndStripHz, splitAndStripSec, splitAndStripV 
-from devices.siglent.sds.util import WaveFormPreamble
 from devices.siglent.sds.util import WaveFormTrace
 from devices.siglent.sds.util import TIMEBASE_HASHMAP
 import pickle
@@ -64,10 +60,10 @@ class SDSChannel(object):
         pass
     def convert_to_voltage(self, raw_array) -> np.ndarray:
         # Get the parameters of the source
-        total_points, vdiv, voffset, code_per_div, timebase, delay, interval = self.get_waveform_preamble()
+        self.get_waveform_preamble()
         vect_voltage = np.vectorize(self.calculate_voltage)
 
-        return vect_voltage(raw_array, vdiv, voffset, code_per_div)
+        return vect_voltage
 
     def setIimeBase(self, value):
         """The query returns the parameters of the source using by the command

@@ -381,34 +381,6 @@ class SiglentScope(object):
         else:
             raise ValueError("Add in string that contains .xml")
 
-    def channel_visibile(self, channel: int, visible: bool = True):
-        """The command is used to whether display the waveform of the specified
-        channel or not.
-
-        :param channel: 1 to (# analog channels)
-        :param visible: Diplay state, defaults to True
-        """
-        assert 1 <= channel <= 4  # probably need to change to specific
-        # oscope
-
-        visible = "ON" if visible else "OFF"
-
-        self.write(":CHANnel{}:VISible {}".format(str(channel), visible))
-
-    def is_channel_visible(self, channel: int):
-        """The query returns whether the waveform display function of the selected
-        channel is on or off.
-
-        :param channel: 1 to (# analog channels)
-        :return: bool
-        """
-        assert 1 <= channel <= 4  # probably need to change to specific
-        # oscope
-
-        resp = self.query("CHAN{}:VIS?".format(str(channel)))
-
-        return (True if resp == "ON" else False)
-
     def set_waveform_format_width(self, waveform_width: SiglentWaveformWidth):
         """The command sets the current output format for the transfer of waveform
         data.

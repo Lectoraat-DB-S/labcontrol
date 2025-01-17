@@ -37,7 +37,7 @@ def performTransCurve():
 
 if __name__ == "__main__":
     
-    rm=pyvisa.ResourceManager("C:\\WINDOWS\\system32\\visa32.dll")
+    rm=pyvisa.ResourceManager()
     print(rm.list_resources())
     #logger = logging.getLogger(__name__)
     #logger.setLevel(logging.DEBUG)
