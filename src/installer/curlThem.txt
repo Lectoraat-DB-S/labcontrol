@@ -1,0 +1,37 @@
+    hen I download with this way from github. I get xml file with some metadata, It does not download the actual file.
+    How to download the actual file ?
+
+@prasadkudav,
+You need to download the raw file which is kept at the domain raw.githubusercontent.com.
+So a URL like this:
+https://github.com/apolopena/gitpod-laravel8-starter/blob/main/README.md
+Would need to be curled from here:
+https://raw.githubusercontent.com/apolopena/gitpod-laravel8-starter/main/README.md
+
+AANVULLING HIEROP IN: https://bitlaunch.io/blog/how-to-download-a-file-with-curl/
+Fetching a File with cURL
+
+The basic structure of cURL is curl http://yoururl.filename.
+
+curl naturally invokes our command line tool, while the URL points to the location of the remote file you want to download with cURL. In the case of our readme, the complete command would like this:
+
+curl https://raw.githubusercontent.com/BitLaunchIO/blcli/master/README.md
+
+PROBEREN:
+orgineel https://github.com/Lectoraat-DB-S/labcontrol/tree/main/src/measurements
+wordt dan: >https://raw.githubusercontent.com/Lectoraat-DB-S/labcontrol/tree/main/src/measurements/transistorcurve.py
+
+
+
+
+Try with -L to follow redirects:
+
+curl -L -o openjdk11.tar.gz https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.1+13/OpenJDK11U-jdk_x64_linux_openj9_jdk-11.0.1_13_openj9-0.11.0_11.0.1_13.tar.gz
+
+
+
+In the header of the code on the page, you can see Raw. If you check the URL of it by, for example, clicking it, you will see https://raw.githubusercontent.com/llvm-mirror/compiler-rt/master/test/msan/stack-origin.cc and that's what you have to know to use wget.
+
+WINGET:
+WinGet is a command line tool enabling users to discover, install, upgrade, remove and configure applications on Windows 10, Windows 11, and Windows Server 2025 computers. This tool is the client interface to the Windows Package Manager service.
+bron: https://learn.microsoft.com/en-us/windows/package-manager/winget/

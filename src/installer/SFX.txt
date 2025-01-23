@@ -1,0 +1,17 @@
+Een aanpak om een install pakket te maken is:
+1. Extract WinPython in een map
+2. Voeg de NIVISA install toe
+3. zet de relevante python scripts in de notebook dir.
+4. Pak dit weer in een SFX bestand 
+
+Ad 3: dit kan met behulp van xcopy.
+xcopy .\devices\*.py c:\temp /s
+xcopy .\measurements\*.py c:\temp /S
+xcopy  __init__.py
+xcopy  main.py
+
+opmerkingen: 
+1. copy lijkt niet het bestand maar de inhoud ervan te kopiëren.
+2. Bovenstaande verwerkt in createSFX.bat => werkt
+3. Beter(?): de directory winpyxxx rename naar labcontrol, voordat je de sfx maakt.
+
