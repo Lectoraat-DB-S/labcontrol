@@ -28,42 +28,7 @@ class SDSChannel(object):
         self._logger = logger
         self._dev = dev
         self._WVT = WaveFormTrace()
-        self._nrOfDivs = 5 # TODO: should be set during initialisation of the scope.
-        self.full_code = 256 # TODO: should be set during initialisation of the scope.
-        self.center_code = 127 # TODO: should be set during initialisation of the scope.
-        self.max_code = self.full_code/2
-        self._hori_grid_size = 14 # TODO: is this a fixed number for Siglent? Check this.
         
-            
-    def calculate_voltage(self, x, vdiv, voffset, code_per_div):
-        if x > self.center_code:
-            x -= self.full_code
-        #FS=10 hokjes=top-top
-        #0->1.0 = 127 stapjes
-        #0->1.0 = 5 hokjes
-
-        """
-            Calculation of voltage value, as shown on scope, can only be performed if one has the limitations
-            of the oscilloscope in mind:
-                - screen of scope consists of 10 'divs', although the fysical scope only shows 8 of them. 
-                    The samples therefore  always represents a range of 5 'divs'. 
-                - The (vertical) resolution of the SDS1202X-E is 8 bits
-                - The center of the screen equals to a decimal sample value of 127 (self.center_code),
-                    assuming 0.0 Volt offset (voffset)
-                - The samples are coded as unsigned bytes, so one have to restore the sign in the code.
-                - The range of samples is therefore -128 .... + 127
-            So xnew = (xold * 5/128)-voffset                
-        """
-        return (x*self._nrOfDivs*vdiv/self.max_code) -voffset
-
-    def sampNr2TimeVect(self, hdiv, interval):
-        pass
-    def convert_to_voltage(self, raw_array) -> np.ndarray:
-        # Get the parameters of the source
-        self.get_waveform_preamble()
-        vect_voltage = np.vectorize(self.calculate_voltage)
-
-        return vect_voltage
 
     def setIimeBase(self, value):
         """The query returns the parameters of the source using by the command
@@ -96,6 +61,10 @@ class SDSChannel(object):
         temp = struct.unpack('4c', params[96:100])[0] #string type parameter.
         trace_label = str(temp)
         WFP._total_points = struct.unpack('i', params[116:120])[0]
+        WFP._sparsingFactor = struct.unpack('i', params[136:140])[0]
+        WFP._firstPoint = struct.unpack('i', params[140:144])[0]
+        WFP._segmentIndex = struct.unpack('i', params[144:148])[0]
+        
         
         probe = struct.unpack('f', params[328:332])[0]
         sweeps_per_acq = struct.unpack('L', params[148:152])[0] #for Long sized parameter, use 'L'
@@ -107,12 +76,14 @@ class SDSChannel(object):
         WFP._maxGridVal = struct.unpack('f', params[164:168])[0] * probe
         WFP._minGridVal = struct.unpack('f', params[168:172])[0] * probe
         #nom_bits: an intrinsic measure of precision. Raw data is 8 bits, but averaging increases number of bits.
-        WFP._nrOfADCBits = struct.unpack('H', params[172:174])[0]  # for Word sized parameter, use 'H'
-        WFP._sampInterval = struct.unpack( 'f', params[176:180])[0]
-        WFP._delay = struct.unpack('d', params[180:188])[0]
+        WFP._nomBits = struct.unpack('H', params[172:174])[0]  # for Word sized parameter, use 'H'
+        WFP._horizontalInterval = struct.unpack( 'f', params[176:180])[0]
+        WFP._delay = struct.unpack('d', params[180:188])[0]  # Equals HORIZ_OFFSET
+        WFP._horizontalOffset = struct.unpack('d', params[180:188])[0] 
         WFP._pixelOffset = struct.unpack('d', params[188:196])[0]  #
         WFP._vertUnit = str(struct.unpack('48s', params[196:244])[0])  # vertaling naar string lijkt niet ok.
         WFP._horUnit = str(struct.unpack('48s', params[244:292])[0])
+        WFP._horUncertainty =  struct.unpack( 'f', params[292:296])[0]
         # trigger_time=struct.unpack('time', params[296:312])[0] #time parameter? how to decode?
         WFP._recordType = struct.unpack('H', params[316:318])[0]  # enum, 2 bytes use 'H' for now. need check!
         WFP._processingDone = struct.unpack('H', params[318:320])[0]  # enum, 2 bytes use 'H' for now. need check!
@@ -136,6 +107,7 @@ class SDSChannel(object):
         # vert_vernier=struct.unpack('f', params[336:340])[0] # enum = kind of parameter, use 'x' for now.Don't what this really means need check!
         # acq_vert_offset=struct.unpack('f', params[340:344])[0] # enum = kind of parameter, use 'x' for now.Don't what this really means need check!
         WFP._waveSource=struct.unpack('H', params[344:346])[0] # enum, 2 bytes use 'H' for now. need check!
+        #TODO: if the object WFP really is the WaveForm object for this channel, then all values have now been set. THIS MUST BE CHECKED.
 
         
     def get_trigger_status(self):
@@ -155,17 +127,35 @@ class SDSChannel(object):
         #data = self._dev.query_raw('C1:WF? DAT2')
         #data = data[11:-2]  # eliminate header and remove last two bytes
         #datatype param: see https://docs.python.org/3/library/struct.html#format-characters. 'B' means unsigned char
+        WFT = self._WVT
+        WFP = WFT.getWVP()
+        if (WFP.isEmpty()):
+            self.get_waveform_preamble()
   
         data = self._dev._inst.query_binary_values(f"{self._name}:WF? DAT2", datatype='B', is_big_endian=False, container=np.ndarray)
         try:
+            
             trace = np.frombuffer(data, dtype=np.byte)
-            self._WVT.setTrace(self.convert_to_voltage(trace))
-            #self._last_trace = data
+            self._WVT.setRawTrace(trace)
+            WFT.convertRaw_to_voltage()
         except Exception as e:
             self._logger.error(e)
 
-        return trace
-
+    def getTrace(self):
+        #should only be used after a call to capture
+        return  self._WVT.getTrace()
+    
+    def getTimeAxis(self):
+        horOffset = self._WVT._WVP._horizontalOffset
+        sampleInterval = self._WVT._WVP._horizontalInterval
+        tdiv = self._WVT._WVP._timebase
+        nrOfPoints = self._WVT._WVP._total_points
+        FirstSampleTime = horOffset -tdiv*(14/2)
+        lastSampleTime = FirstSampleTime + nrOfPoints*sampleInterval
+        timeArr = np.arange(FirstSampleTime,lastSampleTime,sampleInterval)
+        
+        return timeArr
+    
     def getMaxOfTrace(self):
         return max(self._WVT.getTraceData())
 

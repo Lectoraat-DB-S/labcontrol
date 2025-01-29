@@ -7,6 +7,9 @@
 :: rename the created directory (WPYxx-xxxxx) to labcontrol
 :: then proceed with script below.
 
+curl -L https://sourceforge.net/projects/winpython/files/latest/download > winpython.exe
+winpython.exe
+
 set targetdir=C:\WPy64-31241\notebooks\labcontrol\
 set drivertargetdir=C:\WPy64-31241\VISAdrv\
 set driversourcedir=..\..\firmware\
@@ -18,7 +21,7 @@ xcopy %notebookSourceDir%\getStarted.ipynb %notebookTargetDir%
 xcopy  ..\main.py %targetdir%
 xcopy  ..\devices\*.py %targetdir% /s
 
-xcopy %driversourcedir%ni-visa_24.8_online.exe  %drivertargetdir%
+xcopy %driversourcedir%ni-488.2_25.0_online.exe  %drivertargetdir%
 
 set currentdirname=C:\WPy64-31241
 set renameddirname=labcontrol

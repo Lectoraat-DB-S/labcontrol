@@ -1,1 +1,0 @@
-start powershell -command "& '.\install_python_nogui.ps1'"

@@ -177,15 +177,66 @@ class IDN(object):
     def decode(self, idnstr):
         pass
 
+class Vertical(object):
+    """
+    Position
+    Coupling: DC, AC, and GND
+    Bandwidth: Limit and Enhancement
+    Termination: 1M ohm and 50 ohm
+    Offset
+    Invert: On/Off
+    Scale: Fixed Steps and Variable
+    probe?
+"""
+    def __init__(self):
+        pass
+    
+    def setVDiv(self, vdiv):
+        pass
+    
+class Horizontal(object):
+    """
+
+    Acquisition
+        Sample Mode: This is the simplest acquisition mode. The oscilloscope creates a waveform point by saving one sample point during each waveform interval.
+        Peak Detect Mode
+        Envelope Mode
+        Average Mode
+    Sample Rate
+    Position and Seconds per Division
+    Time Base
+    Zoom/Pan
+    Search
+    XY Mode
+
+"""
+    def __init__(self):
+        pass
+    
+    def setSecDiv(self, tdiv):
+        pass
+    
+    def setSampleRate(self, srate):
+        pass
+    
+class Trigger(object):
+    """
+        Trigger mode: normal, auto
+        Trigger position
+        Trigger level
+        Trigger slope
+        Trigger source
+        Trigger Coupling
+    """
+    def __init__(self):
+        pass
+    
+    
+
 class Scope(LabDevice):
-    @staticmethod
-    def decodeIDN(idnStr) -> str:
-        return "1111"   
-        
     def __init__(self, nrOfChan = 2) -> None:
         super().__init__()
         self._channels = []
-        self._idn = IDN()
         self._nrOfChan = nrOfChan
         self._visaInstr = None
         #Contains the first or first two letters designating a channel
