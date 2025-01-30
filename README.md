@@ -41,7 +41,5 @@ Hieronder zie je voorbeeld op een met de browser gedownloade executable:
 #Documentation
 
 ## References
-<a id="1">[1]</a> 
-https://www.hp9845.net/9845/tutorials/hpib/
 <a id="2">[2]</a> 
-https://www.hp9845.net/9845/tutorials/hpib/](https://winpython.github.io/
+https://winpython.github.io/
