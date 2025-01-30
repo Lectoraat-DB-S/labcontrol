@@ -1,5 +1,5 @@
 # Install on Windows.
-Er is op het moment alleen een installatiehandleiding met bijbehorende installer voor Windows. De installer is gebasseerd op WinPython  [[2]](#2) ,een speciaal voor Windows geconfigureerde Python distro, compleet met een rijke verzameling aan grafische (plotting) mogelijke, wiskundige pakketten en de nodig algoritmes voor ML en databewerking. 
+Er is op het moment alleen een installatiehandleiding met bijbehorende installer voor Windows. De installer is gebasseerd op WinPython  [[1]](#1) ,een speciaal voor Windows geconfigureerde Python distro, compleet met een rijke verzameling aan grafische (plotting) mogelijke, wiskundige pakketten en de nodig algoritmes voor ML en databewerking. 
 ## Installatiehandleiding labcontrol:
 1. Je krijgt van de practicumbegeleiding een downloadlink naar het bestand labcontrol.exe.
 2. Download het bestand labcontrol.exe naar jouw computer.
@@ -38,8 +38,6 @@ Hieronder zie je voorbeeld op een met de browser gedownloade executable:
 <img src="https://github.com/user-attachments/assets/721ef910-efdb-4a23-a032-3ea386005aa8" width="300">
 
 
-#Documentation
-
 ## References
-<a id="2">[2]</a> 
+<a id="1">[1]</a> 
 https://winpython.github.io/
