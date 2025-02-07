@@ -1,50 +1,43 @@
-# Labcontrol 
-Labcontrol is software for controlling typical lab devices such as functiongenerators, power supplies and oscilloscopes. Labcontrol uses VISA to access the instruments and will be written in Python. See: [VISA Product Page](https://www.ni.com/nl-nl/shop/product/ni-visa.html)  
+# Install on Windows.
+Er is op het moment alleen een installatiehandleiding met bijbehorende installer voor Windows. De installer is gebasseerd op WinPython  [[1]](#1) ,een speciaal voor Windows geconfigureerde Python distro, compleet met een rijke verzameling aan grafische (plotting) mogelijke, wiskundige pakketten en de nodig algoritmes voor ML en databewerking. 
+## Installatiehandleiding labcontrol:
+1. Je krijgt van de practicumbegeleiding een downloadlink naar het bestand labcontrol.exe.
+2. Download het bestand labcontrol.exe naar jouw computer.
+3. Verplaats labcontrol.exe naar de root van jouw HDD. Zeer waarschijnlijk is dat `c:\`.
+4. Dubbelklik op labcontrol.exe. De installer maakt als eerste een subdirectory `labcontrol` aan. Daarin wordt alle benodigde software gezet en relevante snelkoppelingen aangemaakt. Deze directory wordt vanaf nu kortweg root genoemd. Let op: het uitpakken van de software door de installer kan een poosje duren! Hoe je een eventuele blokkering van Windows kan oplossing lees je hier.
+4. Wacht tot installer klaar is met installeren. Open de zojuist aangemaakte `c:\labcontrol` map met de Windows Verkenner.
+5. Start, via de snelkoppelingen in de `labcontrol` map, Jupyter Notebook op. Eerst verschijnt er een CMD shell. Hiermee wordt een Jupyter Notebook Server instantie opgestart. Daarna wordt, via een webpagina, het startscherm van Jupyter Notebook getoond. Met dit startscherm kun je Jupyter Notebook pagina's openen.  **Let op: notebooks niet openen via de Windows Verkenner!! Alleen openen via het Jupyter Notebook startscherm!!!**
+6. Selecteer en open het bestand `getStarted.ipynb`. In een nieuw tabblad verschijnt een notebook waarmee het installeren van (a) een Windows device driver en (b) een Python binding wel heel eenvoudig wordt. Lees de instructies op deze notebook goed door.
+7. Labcontrol leunt voor de werking zwaar op National Instrument's VISA driver. Installeer deze driver als je dat nog niet gedaan hebt, door het uitvoeren van het codeblok
+8. Het laatste codeblok bevat de instructie om de Python binding te installeren. Voer dit codeblok pas uit, als de installatie van VISA volledig afgerond is.
 
-## Why Labcontrol
-Labcontrol is a system in development for circumventing some of today’s ‘educational trends ’ such as insufficient reading skills and having difficulties to memorize some important rules of thumbs. These problems prevent students from doing their labs the right way, yielding to incorrect measurements and there confusing results, preventing them to learn effectively. Labcontrol: a combination of “electronic laboratory” and “digital control”. It aims to  control test and measurement device to be found at a lab bench  of an educational institute and trying help the student during its lab, by forcing correct order of each step of the measurement, by assessing the results of each step and to check the final results and conclusions drawn by the student.
-VISA is the standard for configuring, programming, and troubleshooting instrumentation systems. It's owned and maintained by National Instrument. 
+## Achtergrond info
+De basis is WinPython, die ik heb uitgebreid door er een VISA installer en de relevante labcontrol python scripts eraan toe te voegen. Het mooie van WinPython: het is een zelfstandige, losdraaiende Python distro voor Windows. Registreren binnen Windows hoeft niet: pleur de WinPython directory ergens op je computer en runnen maar. Ben je er klaar mee, verwijder je de directory en je bent ervan af, zonder dat je blijft zitten met een nog zwaarder vervuilde WinReg. WinPython heeft naast plotting zo’n beetje alle leuke wiskundige en data-analytische pakketten aan boord met daarbij ook Jupyter. 
 
-## Background
-The desire to control equipment remotely goes back to the very early days of computing. Hewlett Packard (HP), not only creator of early computing systems, also designed and produced very nice measurement equipment those days, which HP wanted to interconnect by a standard bus system. By the late 1960s, HP had gained and enormous experience in connecting equipment via bus systems. This resulted in het design of the so called ‘Hewlett-Packard Interface Bus or HP-IB’ during the early 1970s, which led to the IEEE48.1 standard in 1975, for defining he hardware and the IEEE48.2 in 1987, for the protocol and messages specification. In 1990 the successor of IEEE48.2 was founded: the Standard Commands for Programmable Instruments (SCPI), which defined not only classes of controllable instruments but also gave a standard syntax and commands for all programmable test and measurement devices. Although originally created for the IEEE-488.1 (GPIB) bus, SCPI nowadays works seamlessly with all kinds of communication protocols such as RS-232, RS-422, Ethernet and USB. [[1]](#1).
+## Blokkering opheffen
+Als je zoiets als onderstaand scherm te zien krijgt, betekent dat Windows de executable die je wilt laten uitvoeren niet vertrouwt:
 
-## Windows Install.
-Using Labcontrol relies on third party software, some required other optional.
-### Required Software
-Labcontrol requires:
-- VISA driver software from National Instruments.
-- A recent Python interpreter.
-- Visual Studio Code with
-  - 'Microsoft Python' extension for Visual Studio Code
-- A clone of this repo.
-### Optional software
-Optional, but recommended software:
--  git-scm, if you like command line managing of git based repos.
--  'Python Auto Venv' extension for Visual Studio Code
+<img src="https://github.com/user-attachments/assets/19957f11-656b-4084-bcf4-0575152f7a50" width="248">
 
-### Install proces
-1. Install git-scm 
-2. Create a folder (no spaces in name) for cloning this repo into.
-3. Navigate to newly created folder and clone the repo by executing: git clone https://github.com/Lectoraat-DB-S/labcontrol.git
-4. Download and install VISA driver software from National Instruments.
-5. Download latest stable version of Python. 
-6. Install Python. Tap de checkbox for 'add to Path' and installation of 'py' with administrive rights.
-7. Download and install Visual Studio Code.
-8. Start Visual Studio Code
-9. Install the 'Microsoft Python' extension for Visual Studio Code. See: https://marketplace.visualstudio.com/items?itemName=ms-python.python for instructions.
-10. Install the 'Python Auto Venv' extension for Visual Studio Code. Add the folder of your virtual environment in the VSC settings.
-11. In VSC: open the 'labcontrol-python' folder of this labcontrol repository
-12. Press Ctrl + Shift + P and type 'Python: create environment'
-13. Select the latest python 'venv' environment.
-14. Select 'requirements.txt' to install required dependencies.
-15. After VCS finished creation of the virtual environment, labcontrol is ready to use!
-## Usage
-1. Open the C:\github\labcontrol\src\labcontrol-python folder in Visual Studio Code.
-2. Select the proper virtual environment through pressing the Pyhton-icon on the left in de VSCode main screen.
-3. Open one of the measurement python files in the labcontrol-python folder.  
+Omdat jij de installer van een externe locatie naar jouw laptop download, is de kans is groot dat Windows weigert die installer uit te voeren. Dit komt omdat Windows per definitie code die van buiten de computer komt, wantrouwt. Het gevolg: de uitvoering wordt geblokkeerd. Gelukkig kun je die blokkering eenvoudig opheffen:
+* rechtsklikken op het bestand waarvan je de blokkering wilt verwijderen (Tip: houd shift ingedrukt tijdens het klikken)
+* kies voor 'Eigenschappen'. Als die niet in de lijst staat, kies je voor meer opties.
+* Zet een vinkje in vierkantje bij 'Blokkering opheffen'.
 
-#Documentation
+Hieronder zie je voorbeeld op een met de browser gedownloade executable:
+1. Shift + rechtermuisklik op het bestand waarvan de blokkering verwijderd moet worden. Kies voor de optie 'Eigenschappen'
+
+<img src="https://github.com/user-attachments/assets/8e4e99bd-3e30-4967-9ff7-900b86454e42" width="300">
+
+2. Een popup verschijnt waarin diverse eigenschappen van het bestand worden weergegeven. Onder in het venster kun is te zien dat het vinkje mist: Windows vertrouwt dit bestand niet, omdat het van buiten de computer komt. Uitvoering wordt geblokt.
+
+<img src="https://github.com/user-attachments/assets/32f251ba-c506-4b17-8764-335477d18e31" width="300">
+
+3. Hef de blokkering op, door het vinkje te zetten middels klikken op het vierkantje. Klik op toepassen en dan op OK.
+ 
+<img src="https://github.com/user-attachments/assets/721ef910-efdb-4a23-a032-3ea386005aa8" width="300">
+
 
 ## References
 <a id="1">[1]</a> 
-https://www.hp9845.net/9845/tutorials/hpib/
+https://winpython.github.io/
