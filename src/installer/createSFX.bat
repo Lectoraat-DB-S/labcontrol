@@ -1,14 +1,14 @@
-:: TODO: enhancement to this .bat file
-:: download WinPython SFX from projectsite.
-::  site: https://sourceforge.net/projects/winpython/files/latest/download OR
-:: https://github.com/winpython/winpython/releases/download/11.2.20241228final/Winpython64-3.12.8.0slim.exe
-::  use curl?
-:: run SFX to extract it in a temperary directory
-:: rename the created directory (WPYxx-xxxxx) to labcontrol
-:: then proceed with script below.
+::remove old stuff
+@echo off
+del labcontrol.exe
+del winpython.exe
+del /s /q C:\WPy64-31241
+rd C:\WPy64-31241
 
+::download the winpython installer
 curl -L https://sourceforge.net/projects/winpython/files/latest/download > winpython.exe
-winpython.exe
+::run the installer
+winpython.exe -oc:\ -y
 
 set targetdir=C:\WPy64-31241\notebooks\labcontrol\
 set drivertargetdir=C:\WPy64-31241\VISAdrv\
@@ -18,8 +18,10 @@ set notebookTargetDir= C:\WPy64-31241\notebooks
 
 xcopy %notebookSourceDir%\getStarted.ipynb %notebookTargetDir%
 
-xcopy  ..\main.py %targetdir%
-xcopy  ..\devices\*.py %targetdir% /s
+xcopy  ..\labcontrol.py %targetdir%
+xcopy  ..\devices\*.py %targetdir%\devices\ /s
+xcopy  ..\examples\*.py %targetdir%\examples\ /s
+xcopy  ..\tests\*.py %targetdir\tests /s
 
 xcopy %driversourcedir%ni-488.2_25.0_online.exe  %drivertargetdir%
 
@@ -27,5 +29,4 @@ set currentdirname=C:\WPy64-31241
 set renameddirname=labcontrol
 set dir2compress=C:\labcontrol
 RENAME "%currentdirname%" "%renameddirname%"
-del labcontrol.exe
 start C:\PROGRA~1\7-Zip\7z.exe a -sfx labcontrol.exe %dir2compress%

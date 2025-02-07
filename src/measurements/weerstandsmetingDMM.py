@@ -25,15 +25,9 @@ def meetweerstandTW(labDev :multimeter.SiglentDMM):
     print(Rx-Rloss)
     return (Rx-Rloss)
     
-def meetfrequentie():
-    pass
-
-def checkResources():
-    pass
 
 def meetInterneWeerstandGenerator():
     #voor deze meting heb je een DMM, een funtiegenerator en een scoopnodig
-    checkResources()
     dmm = multimeter.SiglentDMM()
     scope = SiglentScope()
     #scope.CH1

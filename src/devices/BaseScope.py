@@ -1,3 +1,5 @@
+import pyvisa
+
 class BaseScope(object): # alt. VISA instrument.
     """BaseScope: base class for oscilloscope.
         try to implement Python's properties.
@@ -6,17 +8,27 @@ class BaseScope(object): # alt. VISA instrument.
     """
     def __init__(self):
         """abstract init function. A subclass should be override this function, which wil intitialize object below"""
-        self._visaInstr = None
+        self._visaInstr : pyvisa.Resource = None
+        self._urlPattern = None
         self._trigger = None
         self._horizontal = None
         self._vertical = None
         self._utility = None
         
     @property 
-    def visaInstr(self):
-        """The reference to a visaInstrument object has to be created only once @init, which is the reason for implement it as an
-            immutable property of this oscilloscope. One should not implement any kind of setter method for this property, not in this class,
-            nor in any derived class."""
+    def visaInstr(self) -> pyvisa.Resource: 
+        """The reference to a visaInstrument object has to be created during creation of the object @init, which is a reason for the 
+            programmer ot implement this as immutable property and not implement any kind of setter method for this property, nor in this class,
+            nor in any derived class.
+            The advisible logic is:
+                if _visaInstrument == None:
+                    theList = rm.list_resources()
+                    pattern = derivedClass.PATTERN
+                    for url in theList:
+                    if pattern in url:
+                        self._visaInstr = rm.open_resource(url)
+                        break
+            """
         return self._visaInstr
     
         
@@ -44,7 +56,7 @@ class BaseScope(object): # alt. VISA instrument.
             not implement a setter method  """
         return self._utility
     
-class Vertical(object):
+class BaseVertical(object):
     def __init__(self):
         self._channels = None # channels wordt een dict, array of vectorachtig ding.
     
@@ -54,7 +66,7 @@ class Vertical(object):
         return self._channels
     
 
-class Channel(object):
+class BaseChannel(object):
     def __init__(self):
         self._waveform = None # the waveform of this channel
         self._vdiv = None
@@ -67,7 +79,7 @@ class Channel(object):
     def vdiv(self, value):
         self._vdiv = value
             
-class TriggerUnit(object):
+class BaseTriggerUnit(object):
     def __init__(self):
         pass
     

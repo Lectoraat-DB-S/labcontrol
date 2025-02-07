@@ -1,3 +1,4 @@
+.vscode/
 .venv/
 venv/
 .idea/
@@ -10,3 +11,8 @@ testproject/
 *.zip
 **/build
 **/dist
+*.pyc
+__pycache__/
+winpython.exe
+WPy64-31241.exe
+labcontrol.exe
