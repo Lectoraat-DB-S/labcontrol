@@ -4,6 +4,7 @@ venv/
 .idea/
 logs/
 visualizations/
+*.log
 *.h5
 *.yml
 *.pyc
@@ -13,6 +14,8 @@ testproject/
 **/dist
 *.pyc
 __pycache__/
+~*.*
+~$*.*
 winpython.exe
 WPy64-31241.exe
 labcontrol.exe

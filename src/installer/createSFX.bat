@@ -10,7 +10,7 @@ curl -L https://sourceforge.net/projects/winpython/files/latest/download > winpy
 ::run the installer
 winpython.exe -oc:\ -y
 
-set targetdir=C:\WPy64-31241\notebooks\labcontrol\
+set targetdir=C:\WPy64-31241\notebooks\
 set drivertargetdir=C:\WPy64-31241\VISAdrv\
 set driversourcedir=..\..\firmware\
 set notebookSourceDir= ..\notebooks

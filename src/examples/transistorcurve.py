@@ -1,4 +1,3 @@
-import pyvisa
 import time
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,10 +5,6 @@ from devices.siglent.spd.PowerSupply import SiglentPowerSupply
 from devices.siglent.sdm.DigitalMultiMeter import SiglentDMM
 from devices.siglent.sds.Scopes import SiglentScope
 import pandas as pd
-
-WAITTIME = 0.1
-INPUTDEV = 1
-OUTPUTDEV = 2
 
 def makeCurveWithOnlySupply():
     supp = SiglentPowerSupply()
@@ -94,77 +89,3 @@ def createTransCurve():
     df.to_csv('myarray.csv', index=False, header=False)
     plt.plot(basevolt, ccurrent)
     plt.show()
-        
-
-class Measurement(object):
-    
-    def __init__(self) -> None:
-        self.source = None
-        self.meas   = None
-    
-    def setSourceDevice(self, labdevice, config):
-        self.source = labdevice
-    
-    def setMeasDevice (self, labdevice, config):
-        self.meas = labdevice
-        
-    def doSweepMeas(self):
-        pass
-    
-    def doSingleMeas(self, val):
-        pass
-
-def setStimulus(var1, var2):
-    pass
-
-def getResponse(var):
-    pass
-
-def performVoltageSweep(inputvalues:list, INPUTDEV, OUTPUTDEV):
-    outputlist = list()
-    for item in inputvalues:
-        setStimulus(item, INPUTDEV)
-        time.sleep(WAITTIME)
-        outputlist.append(getResponse(OUTPUTDEV))
-    return outputlist
-
-def doIt():
-    rm = pyvisa.ResourceManager()
-    print(rm.list_resources())
-    
-    supp = SiglentPowerSupply()
-    baseControl = supp.CH2
-    collControl = supp.CH1
-    collControl.set_voltage(25)
-    time.sleep(0.01)
-    baseControl.set_voltage(0)
-    time.sleep(0.01)
-    collControl.set_current(500e-3)
-    baseControl.set_current(10e-3)
-    input("druk toets")
-    collControl.set_output(True)    
-    input("druk toets")
-    baseControl.set_output(True)
-    time.sleep(0.01)
-    base_curr = list()
-    coll_curr = list()
-    base_vol = list()
-    for x in np.arange (0.6, 0.70, 0.01):
-        baseControl.set_voltage(x)
-        time.sleep(0.2)
-        curr1 = collControl.measure_current()
-        time.sleep(0.2)
-        coll_curr.append(curr1)
-        curr2 = baseControl.measure_current()
-        time.sleep(0.2)
-        base_curr.append(curr2)
-        base_vol.append(baseControl.measure_voltage())
-        time.sleep(0.2)
-    #maak plot
-    collControl.set_output(False)    
-    time.sleep(0.1)
-    baseControl.set_output(False)
-    time.sleep(0.1)
-    plt.plot(base_vol,coll_curr)
-    plt.show()
-    

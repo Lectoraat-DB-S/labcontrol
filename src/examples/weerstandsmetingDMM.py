@@ -1,16 +1,16 @@
 import devices.siglent.sdm.DigitalMultiMeter as multimeter
 from devices.siglent.sds.Scopes import SiglentScope
-printDebug = True
 
-def meetweerstandTW(labDev :multimeter.SiglentDMM):
+def meetweerstandTW():
+    dmm = multimeter.SiglentDMM()
     print("Meetprocedure voor het meten van weerstandswaarde (two-wire measurement)")
     print("Sluit de meetkabels aan en sluit ze kort.")
     input("Druk een toets om verder te gaan.")
-    Rloss=labDev.get_resistanceTW()
+    Rloss=dmm.get_resistanceTW()
     print(Rloss)
     print("Sluit de weerstand aan.")
     input("Druk een toets om verder te gaan.")
-    Rx=labDev.get_resistanceTW()
+    Rx=dmm.get_resistanceTW()
     print(Rx-Rloss)
     return (Rx-Rloss)
     
