@@ -4,7 +4,7 @@ Er is op het moment alleen een installatiehandleiding met bijbehorende installer
 1. Je krijgt van de practicumbegeleiding een downloadlink naar het bestand labcontrol.exe.
 2. Download het bestand labcontrol.exe naar jouw computer.
 3. Verplaats labcontrol.exe naar de root van jouw HDD. Zeer waarschijnlijk is dat `c:\`.
-4. Verwijder de blokkering, zie uitleg hier. Windows blokkeert uitvoerbare code, als deze van buiten de computer komt.
+4. Verwijder de blokkering, zie uitleg [hier](README.md#blokkering-opheffen). Windows blokkeert uitvoerbare code, als deze van buiten de computer komt.
 5. Dubbelklik op labcontrol.exe. De installer maakt als eerste een subdirectory `labcontrol` aan. Daarin wordt alle benodigde software gezet en relevante snelkoppelingen aangemaakt. Deze directory wordt vanaf nu kortweg root genoemd. Let op: het uitpakken van de software door de installer kan een poosje duren! Hoe je een eventuele blokkering van Windows kan oplossing lees je hier.
 4. Wacht tot installer klaar is met installeren. Open de zojuist aangemaakte `c:\labcontrol` map met de Windows Verkenner.
 5. Start, via de snelkoppelingen in de `labcontrol` map, Jupyter Notebook op. Eerst verschijnt er een CMD shell. Hiermee wordt een Jupyter Notebook Server instantie opgestart. Daarna wordt, via een webpagina, het startscherm van Jupyter Notebook getoond. Met dit startscherm kun je Jupyter Notebook pagina's openen.  **Let op: notebooks niet openen via de Windows Verkenner!! Alleen openen via het Jupyter Notebook startscherm!!!**
