@@ -1,5 +1,5 @@
 # Install on Windows.
-Er is op het moment alleen een installatiehandleiding met bijbehorende installer voor Windows. De installer is gebasseerd op WinPython  [[1]](#1) ,een speciaal voor Windows geconfigureerde Python distro, compleet met een rijke verzameling aan grafische (plotting) mogelijke, wiskundige pakketten en de nodig algoritmes voor ML en databewerking. 
+Er is op het moment alleen een installatiehandleiding met bijbehorende installer voor Windows. De installer is gebasseerd op WinPython  [[1]](#1) WinPython is een speciaal voor Windows geconfigureerde Python distro, compleet met een rijke verzameling aan grafische (plotting) mogelijke, wiskundige pakketten en de nodig algoritmes voor ML en databewerking. Een groot voordeel van WinPython is dat er geen wijziging aan de Windows Registry hoeven worden gedaan. Verwijderen van labcontrol is simpel: gewoon de directory verwijderen! 
 ## Installatiehandleiding labcontrol:
 1. Je krijgt van de practicumbegeleiding een downloadlink naar het bestand labcontrol.exe.
 2. Download het bestand labcontrol.exe naar jouw computer.
