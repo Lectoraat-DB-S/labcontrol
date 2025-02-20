@@ -31,9 +31,10 @@ class BaseScope(object):
         https://mathspp.com/blog/customising-object-creation-with-__new__ """
         rm = visa.ResourceManager()
         devUrls = rm.list_resources()
-        #deviceList = Devices.getRegisteredDevices()
         for scope in cls.scopeList:
             dev = scope.getDevice(devUrls)
+        
+        return dev
         #   dev = device.getDevice(devUrls, host) 
         #   if device.getDevice(devUrls, host)
         #       cls = device.__class__
