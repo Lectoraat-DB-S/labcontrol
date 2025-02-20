@@ -1,14 +1,15 @@
 
 import pyvisa
 import logging
-import measurements.weerstandsmetingDMM as measurement
-import measurements.transistorcurve as curfje
+#import measurements.weerstandsmetingDMM as measurement
+#import measurements.transistorcurve as curfje
 
 import tests.testSDG as sigTest
 import tests.testSiglent as dmmtest
 import tests.testSDS as scopeTest
 import control.gutter as gootje
 import tests.serialDumpTest as seriTest
+from devices.BaseScope import BaseScope, FakeScopie
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -39,6 +40,8 @@ if __name__ == "__main__":
     
     rm=pyvisa.ResourceManager()
     print(rm.list_resources())
+    BaseScope.register(FakeScopie)
+    scoopje = BaseScope()
     #logger = logging.getLogger(__name__)
     #logger.setLevel(logging.DEBUG)
 
