@@ -6,13 +6,15 @@ Pushen naar main branch is uitgezet. Ontwikkelaars die willen bijdragen moeten n
 Advies is om git-scm te gebruiken (https://git-scm.com/downloads). De stappen om (lokaal) een branch vanuit development te maken zijn:
 
 1. `git checkout develop`
+  
 2. 'git checkout -b feature_branch'
+
 3. Maak de aanpassing
 <...Dit kan even duren .....dagen of zo>   
 4. Test de aanpassing
 5. 'git add .'
-6. 'git commit -m "Geef hier een mooie omschrijving van wat je gedaan hebt, graag met ref naar de issue." '
-7. 'git push -u'
+7. 'git commit -m "Geef hier een mooie omschrijving van wat je gedaan hebt, graag met ref naar de issue." '
+8. 'git push -u'
 
 Wanneer je alleen werkt aan een feature, hoef je tussen punt 3. en 4. niet te pullen. Werk je niet alleen, pull dan altijd eerst voordat je weer verder gaat.
 
