@@ -5,7 +5,7 @@ Pushen naar main branch is uitgezet. Ontwikkelaars die willen bijdragen moeten n
 ## Aanbevolen workflow:
 Advies is om git-scm te gebruiken (https://git-scm.com/downloads). De stappen om (lokaal) een branch vanuit development te maken zijn:
 
-1. git checkout develop
+1. `git checkout develop`
 2. git checkout -b feature_branch
 3. Maak de aanpassing
 <...Dit kan even duren .....dagen of zo>   
