@@ -1,15 +1,11 @@
 # some info on module reference: see https://stackoverflow.com/questions/448271/what-is-init-py-for
 import time
-import vxi11
-import struct
 import numpy as np
 from enum import Enum
 import socket
 import pyvisa as visa
 import logging
 import time
-import xdrlib
-#from .Channels import SDSChannel
 from devices.siglent.sds.Channels import SDSChannel
 from devices.siglent.sds.util import INR_HASHMAP
 import devices.siglent.sds.util as util
@@ -52,7 +48,7 @@ class SiglentScope(object):
                 ip_addr = socket.gethostbyname(self._host)
             except socket.gaierror:
                 logger.error(f"Couldn't resolve host {self._host}")
-            mydev = rm.open_resource('TCPIP::'+str(ip_addr)+'::INSTR')
+            mydev = rm.open_resource("TCPIP::"+str(ip_addr)+"::INSTR")
             self._inst = mydev
         
         self.CH1 = SDSChannel(1, self, logger)
@@ -87,30 +83,10 @@ class SiglentScope(object):
     def query(self, cmd: str):
         return self._inst.query(cmd)
     
-    #opmerking 4/9/2024: wanneer je een SiglentScope object aanmaakt, wordt ook de __enter__ methode van  EthernetDevice aangeroepen.
-    # is dat een default Python gedrag bij de instructie @classmethod?
-    # het gedrag is ongewenst, dus onderstaande uitgecommentarieerd.
-    # #@classmethod
-    #def ethernet_device(cls, host: str):
-    #    return EthernetDevice(host)
-
 
     def __exit__(self, *args):
         self._inst.close()
 
-
-    #def query_raw(self, message, *args, **kwargs):
-    #    """
-    #    Write a message to the scope and read a (binary) answer.
-
-    #    This is the slightly modified version of :py:meth:`vxi11.Instrument.ask_raw()`.
-    #    It takes a command message string and returns the answer as bytes.
-
-    #    :param str message: The SCPI command to send to the scope.
-    #    :return: Data read from the device
-     #   """
-    #    data = message.encode('utf-8')
-    #    return self._inst.ask_raw(data, *args, **kwargs)
 
     @property
     def idn(self):
@@ -130,21 +106,21 @@ class SiglentScope(object):
         return INR_HASHMAP[inrResp]        
     
     def rst(self):
-        """The *RST command initiates a device reset. The *RST sets recalls the default setup."""
+        """The \*RST command initiates a device reset. The \*RST sets recalls the default setup."""
         self._inst.write("*RST")
     
     def sav(self, panelNr):
-        """The *SAV command stores the current state of the instrument in internal memory. The *SAV command stores the complete front-panel 
+        """The \*SAV command stores the current state of the instrument in internal memory. The \*SAV command stores the complete front-panel 
         setup of the instrument at the time the command is issued."""
         self._inst.write(f"*SAV{panelNr}")
 
     def rcl(self, panelNr):
-        """The *RCL command sets the state of the instrument, using one of the ten non-volatile panel setups, by recalling the complete front-panel setup of the instrument. 
+        """The \*RCL command sets the state of the instrument, using one of the ten non-volatile panel setups, by recalling the complete front-panel setup of the instrument. 
         Panel setup 0 corresponds to the default panel setup."""
         self._inst.write(f"*RCL{panelNr}")
 
     def lock(self, enable):
-        """The *RCL command sets the state of the instrument, using one of the ten non-volatile panel setups, by recalling the complete front-panel setup of the instrument. 
+        """The \*RCL command sets the state of the instrument, using one of the ten non-volatile panel setups, by recalling the complete front-panel setup of the instrument. 
         Panel setup 0 corresponds to the default panel setup."""
         if (enable):
             self._inst.write(f"LOCK ON")

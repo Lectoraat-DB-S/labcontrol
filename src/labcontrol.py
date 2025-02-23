@@ -5,18 +5,13 @@ import logging
 #import measurements.transistorcurve as curfje
 
 import tests.testSDG as sigTest
-import tests.testSiglent as dmmtest
 import tests.testSDS as scopeTest
 import control.gutter as gootje
-import tests.serialDumpTest as seriTest
 from devices.BaseScope import BaseScope, FakeScopie
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-def testPickle(mylog):
-    #seriTest.testChan(mylog)
-    seriTest.readTheChan()
 
 def initLog():
     logging.basicConfig(filename='labcontrol.log',
@@ -25,8 +20,6 @@ def initLog():
                             datefmt='%Y-%m-%d %H:%M:%S')
 
 
-def main():
-    measurement.meetInterneWeerstandGenerator()
 
 #def testSiglent():
 #    sigTest.doTheTest()
@@ -40,7 +33,7 @@ if __name__ == "__main__":
     
     rm=pyvisa.ResourceManager()
     print(rm.list_resources())
-    BaseScope.register(FakeScopie)
+    #BaseScope.register(FakeScopie)
     scoopje = BaseScope()
     #logger = logging.getLogger(__name__)
     #logger.setLevel(logging.DEBUG)

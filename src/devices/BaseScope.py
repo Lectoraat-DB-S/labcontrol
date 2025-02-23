@@ -1,6 +1,6 @@
 import socket
 import pyvisa as visa
-from  devices.siglent.sds.Scopes import SiglentScope
+#import devices.tektronix.scope.TekScopes #Gives circular import problem
 
 class BaseScope(object):
     """BaseScope: base class for oscilloscope.
@@ -10,67 +10,43 @@ class BaseScope(object):
     """
     scopeList = list()
     
-    @classmethod
-    def register(cls, newScopeClass):
-        if newScopeClass != None:
-            cls.scopeList.append(newScopeClass)
-    
-    @classmethod
-    def getRegisteredDevices(cls):
-        pass
-    
+    def __init_subclass__(cls, **kwargs):
+        """ Method for automatic registration of subclasses that have defined in Labcontrol (or will be defined)
+            This way of registration requires Python version >= 3.6.
+            For more info about this subject, see: https://peps.python.org/pep-0487/
+        """
+        super().__init_subclass__(**kwargs)
+        cls.scopeList.append(cls)
+         
     @classmethod
     def getDevice(cls, url):
         """ Tries to get (instantiate) the device, based on the url"""
-        return None
+        return None #Base class implementation: return None, because this class can't do shit.
     
         
     def __new__(cls, host=None):
-        """The new will be called first during object creation. It can be used to controll if an object will be
-        returned and if so, which type of object. See:
-        https://mathspp.com/blog/customising-object-creation-with-__new__ """
+        """
+        Only BaseScope may call this new methond as the first step in creation of a scope object. 
+        This is a way to controll if an object will be returned from a new method and if so, which type of object
+        it will have to return, as a form of factory pattern. 
+        See also:https://mathspp.com/blog/customising-object-creation-with-__new__ 
+        
+        This coding scheme requires (automatic) registration of subclasses according pep487:
+        see: https://peps.python.org/pep-0487/
+        
+        """
         rm = visa.ResourceManager()
         devUrls = rm.list_resources()
         for scope in cls.scopeList:
-            dev = scope.getDevice(devUrls)
+            dev = scope.getDevice(devUrls, host)
+            if dev != None:
+                return dev
         
-        return dev
-        #   dev = device.getDevice(devUrls, host) 
-        #   if device.getDevice(devUrls, host)
-        #       cls = device.__class__
-        ##  the deviceFound functions tries to match tokens of the url returned bij list_resources or tries to indentify
-        ## the divice bij issuing a "*idn" request.
-        if host is None:
-            theList = rm.list_resources()
-            #code below is applicable voor siglent sds, but for Tektronix, one must first check "USB" on the URL
-            #and the use the idn call. Maybe a single call to idn would be sufficient. 
-            pattern = "SDS"
-            for url in theList:
-                if pattern in url:
-                    mydev = rm.open_resource(url)
-                    if cls is BaseScope:
-                        cls = SiglentScope
-                        return super().__new__(cls)
-                    break
-                else:
-                    return None
-        else:
-            try:
-                #logger.info(f"Trying to resolve host {self._host}")
-                ip_addr = socket.gethostbyname(host)
-                mydev = rm.open_resource('TCPIP::'+str(ip_addr)+'::INSTR')
-                if cls is BaseScope:
-                        cls = SiglentScope
-                        return super().__new__(cls)
-            except socket.gaierror:
-                #logger.error(f"Couldn't resolve host {self._host}")
-                return None
-        
+        return None     
         
     def __init__(self, host=None):
         """abstract init function. A subclass should be override this function, which wil intitialize object below"""
         self._visaInstr : visa.Resource = None
-        self._urlPattern = None
         self._trigger = None
         self._horizontal = None
         self._vertical = None
@@ -82,14 +58,6 @@ class BaseScope(object):
         """The reference to a visaInstrument object has to be created during creation of the object @init, which is a reason for the 
             programmer ot implement this as immutable property and not implement any kind of setter method for this property, nor in this class,
             nor in any derived class.
-            The advisible logic is:
-                if _visaInstrument == None:
-                    theList = rm.list_resources()
-                    pattern = derivedClass.PATTERN
-                    for url in theList:
-                    if pattern in url:
-                        self._visaInstr = rm.open_resource(url)
-                        break
             """
         return self._visaInstr
     
@@ -150,9 +118,9 @@ class BaseTriggerUnit(object):
 class FakeScopie(BaseScope):
     
     @classmethod
-    def getDevice(cls, url):
+    def getDevice(cls, url, host):
         """ Tries to get (instantiate) the device, based on the url"""
-        return cls
+        return None
         
     def __init__(self, host=None):
         super().__init__(host)

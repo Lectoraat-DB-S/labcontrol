@@ -1,5 +1,4 @@
 import time
-import vxi11
 import struct
 import numpy as np
 from enum import Enum
@@ -7,7 +6,6 @@ import socket
 import pyvisa as visa
 import logging
 import time
-import xdrlib
 from devices.siglent.sdg.Channels import SDGChannel
 #from sdg.util import IDN
 from devices.siglent.sdg.util import IDN

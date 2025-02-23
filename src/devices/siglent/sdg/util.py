@@ -1,13 +1,13 @@
 import numpy as np
 import pyvisa
 
-testUrlSDG = 'USB0::0xF4ED::0xEE3A::SDG00002140803::INSTR'
-urlSDS = 'USB0::0xF4ED::0xEE3A::SDS1EEFX6R6638::INSTR'
+testUrlSDG = "USB0::0xF4ED::0xEE3A::SDG00002140803::INSTR"
+urlSDS = "USB0::0xF4ED::0xEE3A::SDS1EEFX6R6638::INSTR"
 
 """
 copy paste from sdg programming manual:
 RESPONSE FORMAT
-Format 1: *IDN, <device id>,<model>,<serial number>,<firmware version>, <hardware version>
+Format 1: \*IDN, <device id>,<model>,<serial number>,<firmware version>, <hardware version>
 Format 2: <manufacturer>,<model>,<serial number>,<firmware version>, <device id> := “SDG”.
 <manufacturer> := “Siglent Technologies”.
 <model> := A model identifier less than 14 characters, should not contain the word “MODEL”.

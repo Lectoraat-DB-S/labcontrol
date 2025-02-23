@@ -1,12 +1,53 @@
 import pyvisa as visa
 import numpy as np
+import socket
+from devices.BaseScope import BaseScope
 from devices.tektronix.scope.Acquisitions import TekScopeEncodings, WaveformPreamble
 from devices.tektronix.scope.Channel import TekChannel
 
 from devices.tektronix.scope.TekLogger import TekLog
 
-class TekScope(object):
-    def __init__(self):
+class TekScope(BaseScope):
+    
+    @classmethod
+    def getDevice(cls, urls, host):
+        """
+            Tries to get (instantiate) this device, based on matched url or idn response
+            This method will ONLY be called by the BaseScope class, to instantiate the proper object during
+            creation by the __new__ method of BaseScope.     
+        """    
+        urlPattern = "USB" #fix for now, TODO: make more robust e.g. able to connect to TCP or serial.
+        if host == None:
+            for url in urls:
+                if urlPattern in url:
+                    rm = visa.ResourceManager()
+                    mydev = rm.open_resource(url)
+                    mydev.timeout = 10000  # ms
+                    mydev.read_termination = '\n'
+                    mydev.write_termination = '\n'
+                    desc = mydev.query("*idn?")
+                    if desc.find("TEKTRONIX,TDS") > -1: #Tektronix device found via IDN.
+                        cls.visaInstr = mydev
+                        return cls        
+        else:
+            try:
+                ip_addr = socket.gethostbyname(host)
+                addr = 'TCPIP::'+str(ip_addr)+'::INSTR'
+                mydev = rm.open_resource('TCPIP::'+str(ip_addr)+'::INSTR')
+                cls.visaInstr = mydev
+                return cls
+            except socket.gaierror:
+                
+                return None
+        
+        return None
+
+    def __init__(self, host = None):
+        """ 
+            Constructor for Tektronix TDS oscilloscoop. This class is a subclass of BaseScope. BaseScope implements
+            the autoregristration scheme for subclasses of PEP487 which is available since python 3.6. 
+        """
+    
         self._channels = []
         self.log = TekLog()
         rm = visa.ResourceManager()
@@ -41,10 +82,6 @@ class TekScope(object):
                     break
             else:
                 self.log.addToLog("Tekscope: no Tektronix found on USB.")        
-
-    #Returns the handle to the connected (VISA) instrument or None if no instrument found.
-    def getDevice(self):
-        return self._inst
     
     def setToDefault(self):
         self.setBinEncoding()

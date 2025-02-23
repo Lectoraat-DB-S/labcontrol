@@ -9,17 +9,7 @@ MATH_FUNC_FFT = 4
 MATH_FUNC_INT = 5
 MATH_FUNC_DIF = 6
 MATH_FUNC_SQR = 7
-
-def rawSave():
-    #wat opslaan?
-    #Soort apparaat, merk, model(nummer), datum registratie.
-    #conversieinfo (hangt van apparaat af): 
-    # Generieke info: aantal samples, aantal kanalen, samplerate, eenheid van horizontale en vertical as 
-    # kanaal instellingen: verticale en horizontale offset, gain instelling
-    # Tijdbasis en trigger instellingen
-    columnName =f"sampleCH{channr}"
-    nrOfSamp = 0
-    
+ 
 
 def saveTrace():
     columnNames ={"s"}

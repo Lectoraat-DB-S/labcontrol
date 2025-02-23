@@ -1,0 +1,1 @@
+from devices.tektronix.scope.TekScopes import TekScope # Necessary import for BaseScope fore auto registration of Tektronix class
