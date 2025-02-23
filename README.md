@@ -7,7 +7,7 @@ Advies is om git-scm te gebruiken (https://git-scm.com/downloads). De stappen om
 
 1. `git checkout develop`
   
-2. 'git checkout -b feature_branch'
+2. 'git checkout -b feature_branch`
 
 3. Maak de aanpassing
 <...Dit kan even duren .....dagen of zo>   
