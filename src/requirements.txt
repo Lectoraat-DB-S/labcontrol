@@ -5,3 +5,4 @@ sphinx
 sphinx-rtd-theme
 pandas
 lmfit
+scipy

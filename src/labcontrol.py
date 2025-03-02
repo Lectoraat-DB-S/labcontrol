@@ -7,7 +7,9 @@ import logging
 import tests.testSDG as sigTest
 import tests.testSDS as scopeTest
 import control.gutter as gootje
-from devices.BaseScope import BaseScope, FakeScopie
+from devices.BaseScope import BaseChannel, BaseScope, BaseHorizontal, BaseVertical
+from devices.siglent.sds.Scopes import  SiglentScope
+from devices.tektronix.scope.TekScopes import TekScope, TekHorizontal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -35,6 +37,10 @@ if __name__ == "__main__":
     print(rm.list_resources())
     #BaseScope.register(FakeScopie)
     scoopje = BaseScope()
+    print(scoopje)
+    hori= scoopje.horizontal
+    print(hori.getTimeDivs())   
+    
     #logger = logging.getLogger(__name__)
     #logger.setLevel(logging.DEBUG)
 
@@ -57,6 +63,6 @@ if __name__ == "__main__":
     #testSiglent()
     #measurement.meetInterneWeerstandGenerator()
     #curfje.createTransCurve()
-    scopeTest.testTheSDS()
+    #scopeTest.testTheSDS()
     #dmmtest.testDMM()
     #logging.info('Finished') 

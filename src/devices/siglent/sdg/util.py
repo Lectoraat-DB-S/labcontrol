@@ -4,17 +4,6 @@ import pyvisa
 testUrlSDG = "USB0::0xF4ED::0xEE3A::SDG00002140803::INSTR"
 urlSDS = "USB0::0xF4ED::0xEE3A::SDS1EEFX6R6638::INSTR"
 
-"""
-copy paste from sdg programming manual:
-RESPONSE FORMAT
-Format 1: \*IDN, <device id>,<model>,<serial number>,<firmware version>, <hardware version>
-Format 2: <manufacturer>,<model>,<serial number>,<firmware version>, <device id> := “SDG”.
-<manufacturer> := “Siglent Technologies”.
-<model> := A model identifier less than 14 characters, should not contain the word “MODEL”.
-<serial number> := The serial number.
-<firmware version> := The firmware version number.
-<hardware version> := The hardware level field, containing information about all separately revisable subsystems.
-"""
 class TestClass():
     dummystr_frmt1 = "*IDN, devidxxxx,SDG6052X, SDG6XBAX1R0034, 6.01.01.28, 00000.x.x"
     dummystr_frmt2 = "Siglent Technologies,SDG6052X, SDG6XBAX1R0034, 6.01.01.28, 00000.x.x"

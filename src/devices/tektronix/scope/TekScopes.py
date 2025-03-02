@@ -1,11 +1,14 @@
 import pyvisa as visa
 import numpy as np
 import socket
-from devices.BaseScope import BaseScope
+from devices.BaseScope import BaseScope, BaseVertical, BaseHorizontal
 from devices.tektronix.scope.Acquisitions import TekScopeEncodings, WaveformPreamble
-from devices.tektronix.scope.Channel import TekChannel
+from devices.tektronix.scope.Horizontal import TekHorizontal
+from devices.tektronix.scope.Vertical import TekVertical
 
 from devices.tektronix.scope.TekLogger import TekLog
+
+debug=True
 
 class TekScope(BaseScope):
     
@@ -16,6 +19,10 @@ class TekScope(BaseScope):
             This method will ONLY be called by the BaseScope class, to instantiate the proper object during
             creation by the __new__ method of BaseScope.     
         """    
+        if debug:
+            if cls is TekScope:
+                cls.__init__(cls, None)
+                return cls
         urlPattern = "USB" #fix for now, TODO: make more robust e.g. able to connect to TCP or serial.
         if host == None:
             for url in urls:
@@ -27,14 +34,16 @@ class TekScope(BaseScope):
                     mydev.write_termination = '\n'
                     desc = mydev.query("*idn?")
                     if desc.find("TEKTRONIX,TDS") > -1: #Tektronix device found via IDN.
-                        cls.visaInstr = mydev
-                        return cls        
+                        if cls is TekScope:
+                            cls.__init__(cls,mydev)
+                            return cls
+                        else:
+                            return None        
         else:
             try:
                 ip_addr = socket.gethostbyname(host)
                 addr = 'TCPIP::'+str(ip_addr)+'::INSTR'
                 mydev = rm.open_resource('TCPIP::'+str(ip_addr)+'::INSTR')
-                cls.visaInstr = mydev
                 return cls
             except socket.gaierror:
                 
@@ -42,47 +51,30 @@ class TekScope(BaseScope):
         
         return None
 
-    def __init__(self, host = None):
+    def __init__(self, dev):
         """ 
             Constructor for Tektronix TDS oscilloscoop. This class is a subclass of BaseScope. BaseScope implements
             the autoregristration scheme for subclasses of PEP487 which is available since python 3.6. 
         """
-    
-        self._channels = []
         self.log = TekLog()
         rm = visa.ResourceManager()
-        self._inst = None # None means unconnected state of the scope.
-        theList = rm.list_resources()
-        pattern = "USB" #fix for now, TODO: make more robust e.g. able to connect to TCP or serial.
-        for url in theList:
-            if pattern in url:
-                self.log.addToLog("VISA device found on USB")
-                mydev = rm.open_resource(url)
-                mydev.timeout = 10000  # ms
-                mydev.read_termination = '\n'
-                mydev.write_termination = '\n'
-                desc = mydev.query("*idn?")
-                if desc.find("TEKTRONIX,TDS") > -1:
-                    self._inst = mydev
-                    self.log.addToLog("Tektronix TDS found, assuming a two Channel TDS2002B")
-                    # self._idn.decodeIDN(desc)
-                    #TODO: based on IDN detect type/model scope and based on that instantiate number of channel
-                    #code below assumes TDS2002B/C with 2 channels
-                    myCH1 = TekChannel(1, mydev)#TODO:code has te be removed, because of list of Channels.
-                    self.CH1 = myCH1            #TODO:code has te be removed, because of list of Channels.
-                    self.CH1.setVisible(True)
-                    self._channels.append(myCH1)
-                    myCH2 = TekChannel(2, mydev)#TODO:code has te be removed, because of list of Channels.
-                    self.CH2 = myCH2            #TODO:code has te be removed, because of list of Channels.
-                    self.CH2.setVisible(True)
-                    self._channels.append(myCH2)
-                    self.setToDefault()
-                    self.preamble = WaveformPreamble(mydev)
-                    self.preamble.queryPreamble()
-                    break
-            else:
-                self.log.addToLog("Tekscope: no Tektronix found on USB.")        
-    
+        self._inst = dev # None means unconnected state of the scope.
+        ##### OUDE CODE MOET ER NOG UIT #####
+        #myCH1 = TekChannel(1, dev)#TODO:code has te be removed, because of list of Channels.
+        #self.CH1 = myCH1            #TODO:code has te be removed, because of list of Channels.
+        #self.CH1.setVisible(True)
+        #self._channels.append(myCH1)
+        #myCH2 = TekChannel(2, dev)#TODO:code has te be removed, because of list of Channels.
+        #self.CH2 = myCH2            #TODO:code has te be removed, because of list of Channels.
+        #self.CH2.setVisible(True)
+        #self._channels.append(myCH2)
+        #self.setToDefault()
+        #self.preamble = WaveformPreamble(dev)
+        #self.preamble.queryPreamble()
+        ###### EINDE OUDE CODE ######
+        self.horizontal:TekHorizontal = TekHorizontal(dev)
+        self.vertical = TekVertical(dev)
+       
     def setToDefault(self):
         self.setBinEncoding()
         self.setNrOfByteTransfer(2)

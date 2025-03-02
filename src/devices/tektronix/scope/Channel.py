@@ -3,10 +3,45 @@ import numpy as np
 import time
 import struct
 
+from devices.BaseScope import BaseVertical
+
 from devices.tektronix.scope.Acquisitions import TekTrace, WaveformPreamble
 
 from devices.tektronix.scope.TekLogger import TekLog
 from devices.tektronix.scope.Acquisitions import TekScopeEncodings
+
+class TekVertical(BaseVertical):
+    """"Subclass of BaseVertical for Tektronix TDS1000 scope series. This class implements the baseclass, which is
+    considered to be virual."""
+    
+    @classmethod
+    def getVertical(cls, dev):
+        """
+            Tries to get (instantiate) this device, based on matched cls
+            This method will ONLY be called by the BaseScope class or other Scope related Baseclasses, 
+            to instantiate the proper object during creation by the __new__ method according to PEP487.     
+        """    
+        if cls is TekVertical:
+            cls.__init__(cls, 2, dev)
+            return cls
+        else:
+            return None        
+
+    def __init__(self, nrOfChan, dev):
+        super().__init__(nrOfChan, dev)
+        self.nrOfChan = nrOfChan
+        
+        for i in nrOfChan:
+            self.channels.append({i:TekChannel(i, dev)})
+        
+    @property 
+    def getChan(self, chanNr):
+        return self.channels.index(chanNr)
+    
+    def getMath(self):
+        return None
+        
+    
 
 class TekChannel(object):
     
@@ -23,7 +58,7 @@ class TekChannel(object):
         self.log = TekLog()
         #if scope != None:
         #    self._parentScope = scope
-        self._wfp = WaveformPreamble()
+        self._wfp = WaveformPreamble(visaInstr)
         self._wfp.queryPreamble()
         self._last_trace = self._wfp.getTrace()
         self._nrOfDivs = 5  # TODO: should be set during initialisation of the scope.

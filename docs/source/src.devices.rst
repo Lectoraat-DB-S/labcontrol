@@ -19,6 +19,7 @@ src.devices.BaseScope module
 
 .. automodule:: src.devices.BaseScope
    :members:
+   :special-members:
    :show-inheritance:
    :undoc-members:
 
