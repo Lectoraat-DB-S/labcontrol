@@ -11,10 +11,12 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
 from scipy.integrate import odeint
 
-# specify number of steps
-ns = 120
-# define time points
-t = np.linspace(0,ns/10.0,ns+1)
+def initProces():
+    # specify number of steps
+    ns = 120
+    # define time points
+    t = np.linspace(0,ns/10.0,ns+1)
+    return t
 
 class model(object):
     # default process model
@@ -85,6 +87,7 @@ def addAWGN(target_snr_db = 20, x_in=0):
 
 def doSecOrderStep():
     # underdamped step response
+    t = initProces()
     (pv,op) = calc_response(t,model)
 
     # rename parameters

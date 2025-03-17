@@ -6,7 +6,7 @@ import socket
 import pyvisa as visa
 import logging
 import time
-from devices.BaseScope import BaseScope
+#from devices.BaseScope import BaseScope
 from devices.siglent.sds.Channels import SDSChannel
 from devices.siglent.sds.util import INR_HASHMAP
 import devices.siglent.sds.util as util
@@ -33,13 +33,12 @@ class SiglentScope(object):
     }
     
     @classmethod
-    def getDevice(cls, urls, host):
+    def getDevice(cls, rm, urls, host):
         """
             Tries to get (instantiate) this device, based on matched url or idn response
             This method will ONLY be called by the BaseScope class, to instantiate the proper object during
             creation by the __new__ method of BaseScope.     
         """  
-        rm = visa.ResourceManager()
         if host is None:
             pattern = "SDS"
             for url in urls:

@@ -1,0 +1,63 @@
+   """
+Syntax WFMPre?
+Related Commands
+Returns The format of the response when the DATa:SOUrce waveform is activated is:
+BYT_Nr <NR1>;BIT_Nr <NR1>;ENCdg { ASC | BIN }; BN_Fmt { RI | RP
+};BYT_Or { LSB | MSB };NR_Pt <NR1>; WFID <Qstring>;PT_FMT {ENV |
+Y};XINcr <NR3>; PT_Off <NR1>;XZERo <NR3>;XUNit<QString>;YMUlt
+<NR3>; YZEro <NR3>;YOFF <NR3>;YUNit <QString>
+
+Hieronder een output van de scoop na aanzetten en autoscale
+2;16;BIN;RP;MSB;2500;"Ch1, DC coupling, 5.0E-1 V/div, 5.0E-5 s/div,
+ 2500 points, Sample mode";Y;2.0E-7;0;-2.5E-4;"s";7.8125E-5;0.0E0;3.2768E4;"Volts"
+
+Nogmaals maar dan met de fmt:
+BYT_Nr <NR1> = 2;
+BIT_Nr = 16;
+ENCdg = BIN;
+BN_Fmt = RP;
+BYT_Or = MSB;
+NR_Pt  = 2500;
+WFID = "Ch1, DC coupling, 5.0E-1 V/div, 5.0E-5 s/div, 2500 points, 
+Sample mode";
+;PT_FMT  = Y;
+;XINcr = 2.0E-7;
+ PT_Off = 0;
+ XZERo = -2.5E-4;
+ XUNit = "s";
+ YMUlt = 7.8125E-5;
+ YZEro = 0.0E0;
+ YOFF = 3.2768E4
+ YUNit = "Volts"
+        
+        
+        """
+
+
+    
+    """
+    scope.query('WFMPRE?')) #Same as above, but with more information 
+
+XZERO_CH1 = float(scope.query('WFMPRE:XZERO?')) #Requesting Horizontal Position value in s
+XINCR_CH1 = float(scope.query('WFMPRE:XINCR?')) #Requesting multiplier for scaling time data
+PT_OFF_CH1 = float(scope.query('WFMPRE:PT_OFF?')) #Requesting Trigger Offset in sample values
+
+YZERO_CH1 = float(scope.query('WFMPRE:YZERO?')) #Requesting waveform conversion factor (Not sure what this is)
+YMULT_CH1 = float(scope.query('WFMPRE:YMULT?')) #Requesting multiplier for scaling voltage data
+YOFF_CH1 = float(scope.query('WFMPRE:YOFF?')) #Requesting vertical offset in V for calculating voltage
+
+V_DIV_CH1 = float(scope.query('CH1:SCALE?')) #Requesting the vertical scale of CH1 in V/DIV
+
+debug output.
+'1;8;BIN;RI;MSB;2500;"Ch1, DC coupling, 2.0E0 V/div, 2.5E-4 s/div, 2500 points, Sample mode";Y;1.0E-6;0;-1.25E-3;"s";8.0E-2;0.0E0;0.0E0;"Volts"'
+    
+    """
+    
+    
+    
+    """
+        getTrace
+        immediate measurement of channel trace 
+        see: https://forum.tek.com/viewtopic.php?t=136954
+    """
+

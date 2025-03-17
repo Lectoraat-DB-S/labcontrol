@@ -1,31 +1,24 @@
 import pyvisa as visa
 import numpy as np
 from devices.BaseScope import BaseVertical
+from devices.tektronix.scope.Channel import TekChannel
 
 class TekVertical(BaseVertical):
-         
-    @classmethod
-    def getVertical(cls, nrOfChan, dev):
-        """ Tries to get (instantiate) the device, based on the url"""
-        if cls is TekVertical:
-            cls.__init__(cls, 2, dev)
-            return cls
-        else:
-            return None            
-        
+    """"Subclass of BaseVertical for Tektronix TDS1000 scope series. This class implements the baseclass."""
 
-    def __init__(self, nrOfChan = 0, dev = None):
-        self._channels = list()           
-        self._nrOfChan = nrOfChan      
-        self._visaDev = dev             # default value = None, see param
-    
-    @property
-    def channels(self):
-        """Getter for retrieving the available channels of this oscilloscope"""
-        return self._channels
-    
-    @property
-    def nrOfChan(self):
-        """Getter for retrieving number of the available channels of this oscilloscope"""
-        return self._nrOfChan
-    
+    def __init__(self, nrOfChan, dev):
+        super().__init__(nrOfChan, dev) # visa dev will be initted by the Baseclass
+        self.nrOfChan = nrOfChan
+        
+        for i in range(1, nrOfChan+1):
+            self.channels.append({i:TekChannel(i, dev)})
+            
+    def chan(self, chanNr): 
+        """Gets a channel, based on its index: 1, 2 etc."""
+        try: 
+            for  i, val in enumerate(self.channels):
+                if (chanNr) in val.keys():
+                    return val[chanNr]
+        except ValueError:
+            print("Requested channel not available")
+            return None     
