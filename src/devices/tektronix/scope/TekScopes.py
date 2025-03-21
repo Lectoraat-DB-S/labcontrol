@@ -86,15 +86,22 @@ class TekScope(BaseScope):
     
     def setDataTransferWidth(self,width):
         #TODO: check validity of width param     
-        self._visaInstr.write(f"DATA:WIDTH {width}")
+        self.visaInstr.write(f"DATA:WIDTH {width}")
         
+    def time(self):
+        """Queries this TDS oscilloscope current time setting. Returns a string in hh:mm:ss format."""
+        return str(self.visaInstr.query("TIMe?"))
+    
+    def time(self, timeVal):
+        """Set this TDS oscilloscope time setting. timeVal must be a string in hh:mm:ss format."""
+        self.visaInstr.write(f"TIMe {timeVal}")
         
     def setStartSampleNr(self, startNr):
         #TODO check if startNr is correct
-        self._visaInstr.write(f"DATA:START {startNr}") #Sets start of sample data 
-        self._visaInstr.write("DATA:STOP 2500") #Sets end of sample data
+        self.visaInstr.write(f"DATA:START {startNr}") #Sets start of sample data 
+        self.visaInstr.write("DATA:STOP 2500") #Sets end of sample data
     
     def setStopSampleNr(self, stopNr):
         #TODO check if startNr is correct
-        self._visaInstr.write(f"DATA:STOP {stopNr}") #Sets end of sample data
+        self.visaInstr.write(f"DATA:STOP {stopNr}") #Sets end of sample data
     

@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from devices.siglent.spd.PowerSupply import SiglentPowerSupply
 from devices.siglent.sdm.DigitalMultiMeter import SiglentDMM
 from devices.siglent.sds.Scopes import SiglentScope
+from devices.BaseScope import BaseScope
 import pandas as pd
 
 WAITTIME = 0.1
@@ -51,10 +52,10 @@ def makeCurveWithOnlySupply():
 def createTransCurve():
     supply = SiglentPowerSupply()
     dmm    = SiglentDMM()
-    scope  = SiglentScope()
+    scope  = BaseScope()
     #set supply
     
-    supply.CH1.set_voltage(5)
+    supply.CH1.set_voltage(15)
     supply.CH2.set_voltage(0)
     supply.CH1.set_current(1)
     supply.CH2.set_current(0.5)
@@ -71,6 +72,8 @@ def createTransCurve():
     coll_vol = list()
     coll_curr = list()
     base_vol = list()
+    basechan =  scope.vertical.chan(1)
+    collchan = scope.vertical.chan(2)
     
     for x in np.arange (0, 3, 0.1):
         baseControl.set_voltage(x)
@@ -78,10 +81,10 @@ def createTransCurve():
         val = dmm.get_current() 
         time.sleep(0.5)
         coll_curr.append(val)
-        basevolval = scope.CH1.getMean()
+        basevolval = basechan.getMean()
         time.sleep(0.5)
         base_vol.append(basevolval)
-        colvolval = scope.CH1.getMean()
+        colvolval = collchan.getMean()
         coll_vol.append(colvolval)
         
     

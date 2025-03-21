@@ -3,7 +3,7 @@ import logging
 #import core.Settings as setting
 #import core.myconfig as configje
 #import measurements.weerstandsmetingDMM as measurement
-#import measurements.transistorcurve as curfje
+import measurements.transistorcurve as curfje
 
 import tests.testSDG as sigTest
 import tests.testSDS as scopeTest
@@ -43,14 +43,15 @@ def dummyUse():
 def performTransCurve():
     rm = pyvisa.ResourceManager()
     print(rm.list_resources())
+    curfje.createTransCurve()
 
 
 if __name__ == "__main__":
     
     #m=pyvisa.ResourceManager()
     #print(rm.list_resources()*****************************)  
-    dummyUse()
-    
+    #dummyUse()
+    performTransCurve()
     
     #logger = logging.getLogger(__name__)
     #logger.setLevel(logging.DEBUG)

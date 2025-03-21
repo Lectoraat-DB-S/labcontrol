@@ -152,8 +152,77 @@ class TekChannel(BaseChannel):
     def queryWaveFormPreamble(self):
         #TODO add intern state for ascii or binary. Defines query or binary_query
         self.setAsSource()
-        response = self._visaInstr.query('WFMPRE?')
+        response = self.visaInstr.query('WFMPRE?')
+        self.WFP.decode(response)
         
+    def getImmedMeasParam(self):
+        """Returns all immediate measurement setup parameters. Immediate queries
+        and commands are the preferred methods for programming. An immediate
+        measurement selection is not visible or accessible through the display screen
+        or front panel."""
+        response = self.visaInstr.query("MEASUrement:IMMed?")
+        return response
+    
+    def immedMeasType(self):
+        """Queries the immediate type of measurement configured for this TDS oscilloscope"""
+        return str(self.visaInstr.query(f"MEASUREMENT:IMMED:TYPE?"))
+
+    def immedMeasType(self, measType):
+        """Sets the immediate type of measurement to be executed by this TDS oscilloscope.
+        The parameeter measType must be one of:
+        CRMs        : calculate true Root Mean Square voltage of the first complete cycle in the
+                        waveform
+        CURSORRms   : Same as CRMs but between start and end point.
+        DELay       : the delay from one waveform's edge event to another
+        FALL        : is the fall time between 90% and 10% of the first falling edge of the waveform. 
+                        Falling edge must be displayed to measure. The oscilloscope automatically 
+                        calculates the 10% and 90% measurement points.
+        FREQuency   : the reciprocal of the period measured in Hertz.
+        MAXImum     : the value of the largest point in the waveform.
+        MEAN        : the arithmetic mean over the entire waveform.
+        MINImum     : the value of the smallest point in the waveform.
+        NONe        : disables the measurement specified by <x>
+        NWIdth      : the negative pulse width between the first falling edge and the next rising edge 
+                        at the waveform 50% level. Falling and rising edges must be displayed to measure. 
+                        The oscilloscope automatically calculates the 50% measurement point.
+        PDUty       :
+        PERIod      : the duration, in seconds, of the first complete cycle in the waveform.
+        PHAse 
+        PK2pk       : the absolute difference between the maximum and minimum amplitude.
+        PWIdth      : the positive pulse width between the first rising edge and the next falling edge at
+                        the waveform 50% level. Rising and falling edges must be displayed to measure. 
+                        The oscilloscope automaticall0 calculates the 50% measurement point.
+        RISe"""     : vthe rise time between 10% and
+90% of the first rising edge of the waveform. Rising edge must be displayed
+to measure. The oscilloscope automatically calculates the 10% and 90%
+measurement points.
+        self.visaInstr.write(f"MEASUREMENT:IMMED:TYPE {measType}")
+        
+    def doImmedMeas(self):
+        """Starts immediate measurements of a prior setted measurement type to be performed periodically by this TDS oscilloscope
+        Remark: this method does not check ESR of events setted or fired, as noted by the programmers manual on page 162:
+        NOTE. If the channel specified by MEASUrement:IMMed:SOUrce is not currently
+        displayed, the oscilloscope generates event 2225 and returns 9.9E37.
+        If Trigger View is active, Scan mode is in effect, or the display format is set to XY,
+        this query returns 9.9E37 and generates event 221 (Settings conflict)
+        When math is FFT, turned on, and used as a measurement source, attempting to
+        query the measurement value returns 9.9e37 and raises error 2225 (no waveform
+        to measure)."""
+        self.visaInstr.write("MEASUrement:IMMed:VALue?")
+        
+    def getMean(self):
+        """Sets and executes the immediate MEAN type measurement, by subsequent:
+        - set type to mean
+        - set the source to this channel 
+        - and start MEAS1 to be executed immediately
+        Remarks of doImmedMeas() also applies here. """
+        self.visaInstr.write("MEASUREMENT:IMMED:TYPE MEAN")
+        self.visaInstr.write(f"MEASUREMENT:IMMED:SOURCE {self.name}")
+        response = self.visaInstr.query(f"MEASUREMENT: MEAS1:VALUE?")        
+        return float(response)
+        
+        
+
             
     
     
