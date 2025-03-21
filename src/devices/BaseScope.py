@@ -166,7 +166,7 @@ class BaseWaveFormPreample(object):
     """A WaveFormPreamble (WFP) is a kind of struct which holds relevant data about a channel capture. Based on WFP data, the WaveForm object is able to convert raw samples to
     measured voltages (vertical data) and samplenumbers to time of frequency instances. (x, t or f data)"""
     def __init__(self, dev):
-        self._visaInstr = dev
+        self.visaInstr = dev
         
 
 ###################################### BASETRIGGERUNIT #########################################################

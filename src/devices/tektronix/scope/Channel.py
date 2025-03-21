@@ -16,6 +16,9 @@ class TekScopeEncodings(Enum):
       
 
 class TekChannel(BaseChannel):
+    IMMEDMEASTYPES =["CRMs","CURSORRms","DELay","FALL",
+                        "FREQuency","MAXImum","MEAN","MINImum","NONe","NWIdth","PDUty","PERIod","PHAse", 
+                        "PK2pk","PWIdth","RISe"]
     #def __init__(self, chan_no: int, scope=None):
         # 25/6/24: Got a partially imported or circular import error. A way to prevent the circular is explained here:
         # https://stackoverflow.com/questions/64807163/importerror-cannot-import-name-from-partially-initialized-module-m
@@ -122,6 +125,7 @@ class TekChannel(BaseChannel):
         trace = self.WF
         self.setAsSource()
         wfp.queryPreamble()
+        trace.setWaveFormID(wfp)
         self.log.addToLog("start querying scope")
         bin_wave = self.visaInstr.query_binary_values('curve?', datatype='b', container=np.array)
         self.log.addToLog("scope query ended")
@@ -192,13 +196,15 @@ class TekChannel(BaseChannel):
         PWIdth      : the positive pulse width between the first rising edge and the next falling edge at
                         the waveform 50% level. Rising and falling edges must be displayed to measure. 
                         The oscilloscope automaticall0 calculates the 50% measurement point.
-        RISe"""     : vthe rise time between 10% and
-90% of the first rising edge of the waveform. Rising edge must be displayed
-to measure. The oscilloscope automatically calculates the 10% and 90%
-measurement points.
-        self.visaInstr.write(f"MEASUREMENT:IMMED:TYPE {measType}")
-        
-    def doImmedMeas(self):
+        RISe        : vthe rise time between 10% and 90% of the first rising edge of the waveform. Rising 
+                        edge must be displayed to measure. The oscilloscope automatically calculates the 
+                        10% and 90% measurement points.
+        """
+        for hulp in TekChannel.IMMEDMEASTYPES:
+            if measType == hulp or measType == hulp.upper() or measType == hulp.lower():
+                self.visaInstr.write(f"MEASUREMENT:IMMED:TYPE {measType}")        
+            
+    def doImmedMeas(self, measType):
         """Starts immediate measurements of a prior setted measurement type to be performed periodically by this TDS oscilloscope
         Remark: this method does not check ESR of events setted or fired, as noted by the programmers manual on page 162:
         NOTE. If the channel specified by MEASUrement:IMMed:SOUrce is not currently
@@ -208,53 +214,22 @@ measurement points.
         When math is FFT, turned on, and used as a measurement source, attempting to
         query the measurement value returns 9.9e37 and raises error 2225 (no waveform
         to measure)."""
-        self.visaInstr.write("MEASUrement:IMMed:VALue?")
+        self.immedMeasType(measType)
+        self.visaInstr.write(f"MEASUREMENT:IMMED:SOURCE {self.name}")
+        return self.visaInstr.query("MEASUrement:IMMed:VALue?")
         
     def getMean(self):
-        """Sets and executes the immediate MEAN type measurement, by subsequent:
-        - set type to mean
-        - set the source to this channel 
-        - and start MEAS1 to be executed immediately
-        Remarks of doImmedMeas() also applies here. """
-        self.visaInstr.write("MEASUREMENT:IMMED:TYPE MEAN")
-        self.visaInstr.write(f"MEASUREMENT:IMMED:SOURCE {self.name}")
-        response = self.visaInstr.query(f"MEASUREMENT: MEAS1:VALUE?")        
+        """Gets the mean of this channel's waveform by doing an Immediate Measurement"""
+        response = self.doImmedMeas("MEAN")        
         return float(response)
-        
-        
-
-            
     
-    
-class TekWaveForm(BaseWaveForm):
-    def __init__(self):
-        super().__init__()
-        
-        ####TEKTRONIX TDS SPECIFIC WAVEFORM PARAMS ########
-        self.rawYdata    = None #data wi thout any conversion or scaling taken from scope
-        self.rawXdata    = None 
-        self.scaledYdata = None #data converted to correct scale e.g untis
-        self.scaledXdata = None 
-        #Horizontal data settings of scope
-        self.secDiv      = None # see TDS prog.guide table2-17: (horizontal)scale = (horizontal) secdev 
-        self.V_DIV       = None # probably the same as Ymult.
-        self.XZERO       = None # Horizontal Position value
-        self.XUnitStr    = None # unit of X-as/xdata
-        self.XINCR       = None # multiplier for scaling time data, time between two sample points.
-        self.NR_PT       = None # the number of points of trace.
-        self.sampleTime  = None # same as XINCR, Ts = time between to samples.
+    def getMax(self):
+        """Gets the maximum value of highest point in this channel's waveform by doing an Immediate 
+        Measurement"""
+        response = self.doImmedMeas("MAXImum")        
+        return float(response)
 
-        self.YZERO       = None 
-        self.YMULT       = None # vertical step scaling factor. Needed to translate binary value of sample to real stuff.
-        self.YOFF        = None # vertical offset in V for calculating voltage
-        self.YUnitStr    = None
-        self.couplingstr = None
-        self.acqModeStr  = None
-        
-    def dump(self):
-        line = f"self.rawYdata    = {self.rawXdata}\n"
-        line += f"self.rawYdata    = {self.rawYdata}"
-        print(line)
+    
 
 class TekWaveFormPreamble(BaseWaveFormPreample):
     """Class for holding the Tektronix TDS1000 scope series preamble. Extends BaseWaveFormPreamble.
@@ -298,6 +273,7 @@ class TekWaveFormPreamble(BaseWaveFormPreample):
         self.timeDiv               = None
         self.acqModeStr            = None
         self.sourceChanStr         = None
+        self.vdiv                  = None
         
         
     def decode(self, strToDecode):
@@ -321,11 +297,14 @@ class TekWaveFormPreamble(BaseWaveFormPreample):
         self.decodeChanPreamble(paramlist[6])
         
     def queryPreamble(self):
-        response = self._visaInstr.query('WFMPRE?')
+        """Method for getting the preamble of the scope and set the correct data members
+        of this preamble"""
+        response = self.visaInstr.query("WFMPRE?")
         self.decode(response)
     
     def decodeChanPreamble(self, chanStrToDecode):
-        """Method for decoding the query data of the scope and set the correct data member of this preamble"""
+        """Method for decoding the query data of the scope and set the correct data members
+        of this preamble"""
         #6th element in channellist of TDS
         channelParamList = chanStrToDecode.strip('"')
         channelParamList=channelParamList.strip("'")
@@ -342,3 +321,46 @@ class TekWaveFormPreamble(BaseWaveFormPreample):
         hulp = (channelParamList[5].strip())
         self.acqModeStr = str(hulp)
 
+class TekWaveForm(BaseWaveForm):
+    def __init__(self):
+        super().__init__()
+        
+        ####TEKTRONIX TDS SPECIFIC WAVEFORM PARAMS ########
+        self.rawYdata       = None #data without any conversion or scaling taken from scope
+        self.rawXdata       = None #just an integer array
+        self.scaledYdata    = None #data converted to correct scale e.g untis
+        self.scaledXdata    = None #An integer array representing the fysical instants of the scaledYData.
+        #Horizontal data settings of scope
+        self.chanstr        = None
+        self.couplingstr    = None
+        self.timeDiv        = None # see TDS prog.guide table2-17: (horizontal)scale = (horizontal) secdev 
+        self.vDiv           = None # probably the same as Ymult.
+        self.xzero          = None # Horizontal Position value
+        self.xUnitStr       = None # unit of X-as/xdata
+        self.xincr          = None # multiplier for scaling time data, time between two sample points.
+        self.nrOfSamples    = None # the number of points of trace.
+        self.sampleTime     = None # same as XINCR, Ts = time between to samples.
+        self.yzero          = None 
+        self.ymult          = None # vertical step scaling factor. Needed to translate binary value of sample to real stuff.
+        self.yoff           = None # vertical offset in V for calculating voltage
+        self.yUnitStr       = None
+        
+    def setWaveFormID(self, wfp: TekWaveFormPreamble):
+        self.chanstr = wfp.sourceChanStr
+        self.couplingstr = wfp.couplingstr
+        self.timeDiv = wfp.timeDiv
+        self.vDiv = wfp.vdiv
+        self.xzero          = wfp.xzero
+        self.xUnitStr       = wfp.xUnitStr
+        self.xincr          = wfp.xincr
+        self.nrOfSamples    = wfp.nrOfSamples
+        self.sampleTime     = wfp.sampleTime
+        self.yzero          = wfp.yzero
+        self.yoff           = wfp.yoff
+        self.ymult          = wfp.ymult
+        self.yUnitStr       = wfp.yUnitStr
+         
+    def dump(self):
+        line = f"self.rawYdata    = {self.rawXdata}\n"
+        line += f"self.rawYdata    = {self.rawYdata}"
+        print(line)
