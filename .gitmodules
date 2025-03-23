@@ -1,0 +1,3 @@
+[submodule "src/devices/Hantek6022API"]
+	path = src/devices/Hantek6022API
+	url = https://github.com/Ho-Ro/Hantek6022API.git
