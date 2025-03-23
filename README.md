@@ -9,7 +9,7 @@ Labcontrol draait op Python en leunt enorm op VISA, meer informatie vind je [hie
 Naast ondersteuning van studenten in een lab, zou labcontrol ook gebruikt kunnen worden als basis voor sensordata-acquisitie systeem.
 
 # Installeren op Windows.
-Voor diegene die labcontrol alleen willen gebruiken, is er een installatiehandleiding voor Windows beschikbaar.  Deze handleiding staat in de [wiki](https://github.com/Lectoraat-DB-S/labcontrol/wiki/Labcontroll-installatiehandleiding) van deze repo.
+Voor diegene die labcontrol alleen willen gebruiken (en niet zelf code willen schrijven of bij willen dragen), is er een installatiehandleiding voor Windows beschikbaar.  Deze handleiding staat in de [wiki](https://github.com/Lectoraat-DB-S/labcontrol/wiki/Labcontroll-installatiehandleiding) van deze repo.
 
 # Bijdragen aan labcontrol
 Pushen naar main branch is uitgezet. Ontwikkelaars die willen bijdragen moeten niet de master branch, maar de development branch gebruiken. Geadviseerd wordt om eerst een branch van de development te trekken en daarop de aanpassing aan de code te maken en als dat gedaan is, inclusief test, de branch naar origin te pushen en eventueel te mergen met de development branch. 
