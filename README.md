@@ -1,25 +1,5 @@
 # Labcontrol
 Labcontrol is educatieve software, gericht op het aansturen van meetappartuur via een (Windows) computer. Labcontrol's uiteindelijk doel is studenten te helpen hun meetopdrachten correct uit te voeren. Ondersteuning van een practicum door Labcontrol zou op verschillende manieren kunnen: het uitvoeren van de complete meting door een script, zodat student zijn/haar manueel verkregen meetwaarden of plots vergelijken kan met die van de computer. Labcontrol zou ook metingen tijdens het opbouwen van de schakeling kunnen uitvoeren, zoals het controleren van instellingen, waarbij de student wordt gewaarschuwd als er bepaalde limieten worden overschreden. Maar ook verkeerde of missende verbindingen zouden gecontroleerd kunnen worden, zoals een missende referentie aansluiting. Labcontrol draait op Python en leunt enorm op VISA, meer informatie vind je [hier](https://github.com/Lectoraat-DB-S/labcontrol/wiki/Labcontrol:-wat-haal-ik-in-huis%3F). Het waarom van labcontrol wordt [hier](https://github.com/Lectoraat-DB-S/labcontrol/wiki/Waarom-Labcontrol) nader beschreven.   
-# Bijdragen aan labcontrol
-Pushen naar main branch is uitgezet. Ontwikkelaars die willen bijdragen moeten niet de master branch, maar de development branch gebruiken. Geadviseerd wordt om eerst een branch van de development te trekken en daarop de aanpassing aan de code te maken en als dat gedaan is, inclusief test, de branch naar origin te pushen en eventueel te mergen met de development branch. 
-## Aanbevolen workflow:
-Advies is om git-scm te gebruiken (https://git-scm.com/downloads). De stappen om (lokaal) een branch vanuit development te maken zijn:
-
-1. `git checkout develop`
-  
-2. `git checkout -b feature_branch`
-
-3. Maak de aanpassing
-<...Dit kan even duren .....dagen of zo>   
-4. Test de aanpassing
-
-5. `git add .`
-
-7. `git commit -m "Geef hier een mooie omschrijving van wat je gedaan hebt, graag met ref naar de issue." `
-
-8. `git push -u`
-
-Wanneer je alleen werkt aan een feature, hoef je tussen punt 3. en 4. niet te pullen. Werk je niet alleen, pull dan altijd eerst voordat je weer verder gaat.
 
 # Installeren op Windows.
 Er is op het moment alleen een installatiehandleiding voor Windows. De installer maakt een map 'labcontrol' aan, waarin een Python runtime en een VISA driver installer wordt gekopieerd. WinPython  [[1]](#1) wordt binnen labcontrol gebruikt als de runtime. WinPython is een Windows geconfigureerde Python distro, compleet met een rijke verzameling aan grafische (plotting) mogelijke, wiskundige pakketten en de nodig algoritmes voor ML en databewerking. Een groot voordeel van WinPython is dat er geen wijziging aan de Windows Registry gedaan hoeft te worden. Verwijderen van labcontrol is simpel: gewoon de directory verwijderen! 
@@ -56,6 +36,26 @@ Hieronder zie je voorbeeld op een met de browser gedownloade executable:
  
 <img src="https://github.com/user-attachments/assets/721ef910-efdb-4a23-a032-3ea386005aa8" width="300">
 
+# Bijdragen aan labcontrol
+Pushen naar main branch is uitgezet. Ontwikkelaars die willen bijdragen moeten niet de master branch, maar de development branch gebruiken. Geadviseerd wordt om eerst een branch van de development te trekken en daarop de aanpassing aan de code te maken en als dat gedaan is, inclusief test, de branch naar origin te pushen en eventueel te mergen met de development branch. 
+## Aanbevolen workflow:
+Advies is om git-scm te gebruiken (https://git-scm.com/downloads). De stappen om (lokaal) een branch vanuit development te maken zijn:
+
+1. `git checkout develop`
+  
+2. `git checkout -b feature_branch`
+
+3. Maak de aanpassing
+<...Dit kan even duren .....dagen of zo>   
+4. Test de aanpassing
+
+5. `git add .`
+
+7. `git commit -m "Geef hier een mooie omschrijving van wat je gedaan hebt, graag met ref naar de issue." `
+
+8. `git push -u`
+
+Wanneer je alleen werkt aan een feature, hoef je tussen punt 3. en 4. niet te pullen. Werk je niet alleen, pull dan altijd eerst voordat je weer verder gaat.
 
 ## References
 <a id="1">[1]</a> 
