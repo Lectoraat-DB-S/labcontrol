@@ -48,10 +48,10 @@ def performTransCurve():
 
 if __name__ == "__main__":
     
-    #m=pyvisa.ResourceManager()
-    #print(rm.list_resources()*****************************)  
+    rm=pyvisa.ResourceManager()
+    print(rm.list_resources())  
     #dummyUse()
-    performTransCurve()
+    #performTransCurve()
     
     #logger = logging.getLogger(__name__)
     #logger.setLevel(logging.DEBUG)

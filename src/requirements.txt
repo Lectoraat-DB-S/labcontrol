@@ -6,3 +6,6 @@ sphinx-rtd-theme
 pandas
 lmfit
 scipy
+zeroconf
+psutil
+pyusb
