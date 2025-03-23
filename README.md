@@ -3,7 +3,7 @@ Labcontrol is educatieve software, gericht op het aansturen van meetappartuur vi
 * het uitvoeren van de complete meting door een script, zodat student zijn/haar manueel verkregen meetwaarden of plots vergelijken kan met die van de computer.
 * Labcontrol zou kunnen controleren op instellingen die de student tijdens het opbouwen van een schakeling moet (of had moeten) maken, zoals het instellen van de juiste stroombegrenzing voor een specifiek labopdracht. Hiermee zou Labcontrol het breadboard en de componenten van de student kunnen beschermen, door de voeding onmiddelijk weer uit te schakelen, als student een meting probeert uitvoeren met de verkeerde instellingen voor het desbetreffende practicum.
 * Labcontrol zou ook verkeerde of missende verbindingen zouden gecontroleerd kunnen worden, zoals een missende referentie aansluiting, door het (FFT) spectrum te controleren op een (zeer) dominante 50 Hz component.
-
+Naast ondersteuning van de student, zou labcontrol ook ingezet kunnen worden als meetplatform voor partijen in de 
 Labcontrol draait op Python en leunt enorm op VISA, meer informatie vind je [hier](https://github.com/Lectoraat-DB-S/labcontrol/wiki/Labcontrol:-wat-haal-ik-in-huis%3F). Waarom labcontrol wordt ontwikkeld lees je [hier](https://github.com/Lectoraat-DB-S/labcontrol/wiki/Waarom-Labcontrol).
 
 # Installeren op Windows.
