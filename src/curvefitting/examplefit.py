@@ -44,4 +44,4 @@ def curvTheFit():
     plt.xlabel('Time (sec)')
     plt.ylabel('Stress (kPa)')
     plt.plot(t, A * np.exp(-lambdas*t)*np.cos(omega*t+phi),c='red',ls='-',lw=5)
-    plt.show();
+    plt.show()
