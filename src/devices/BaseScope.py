@@ -1,4 +1,4 @@
-import pyvisa as visa
+import pyvisa
 #import labcontrol
 #import devices.tektronix.scope.TekScopes #Gives circular import problem
 
@@ -41,7 +41,7 @@ class BaseScope(object):
 
         
         #rm = visa.ResourceManager("@sim")
-        rm = visa.ResourceManager()
+        rm = pyvisa.ResourceManager()
         urls = rm.list_resources()
         host = None
 
@@ -54,7 +54,7 @@ class BaseScope(object):
         
     def __init__(self, dev=None):
         """abstract init function. A subclass should be override this function, which wil intitialize object below"""
-        self.visaInstr : visa.Resource = dev
+        self.visaInstr : pyvisa.Resource = dev
         self.horizontal = None
         self.vertical = None
         self.trigger = None
@@ -62,12 +62,12 @@ class BaseScope(object):
         self.host = None
         
     #@property 
-    def visaInstr(self) -> visa.Resource: 
+    def visaInstr(self) -> pyvisa.Resource: 
         """The reference to a visaInstrument object has to be created during creation of the object @init, which is a reason for the 
         programmer not to implement this as immutable property and not implement any kind of setter method for this property, nor in this class,
         nor in any derived class.
             """
-        return self._visaInstr
+        return self.visaInstr
     
         
 ########## BASEVERTICAL ###########

@@ -1,3 +1,6 @@
 [submodule "src/devices/Hantek6022API"]
 	path = src/devices/Hantek6022API
 	url = https://github.com/Ho-Ro/Hantek6022API.git
+[submodule "src/tests/pyvisa-mock"]
+	path = src/tests/pyvisa-mock
+	url = https://github.com/microsoft/pyvisa-mock.git

@@ -14,6 +14,11 @@ from devices.siglent.sds.Scopes import  SiglentScope
 
 import matplotlib.pyplot as plt
 import numpy as np
+import unittest
+#from src.tests.MockResMan import MockerRM
+from unittest.mock import patch, MagicMock
+from pyvisa import ResourceManager
+
 
 def initLog():
     logging.basicConfig(filename='labcontrol.log',
@@ -44,14 +49,29 @@ def performTransCurve():
     rm = pyvisa.ResourceManager()
     print(rm.list_resources())
     curfje.createTransCurve()
+    
+
+#assert: if true, then nothing. If false, assertion
+class TestTDS(unittest.TestCase):
+    @patch('pyvisa.RescourceManager')
+    def testCreate(self, MockResMan: MagicMock):
+        mock_rm = MockResMan.return_value
+        mock_rm.list_resources.return_value = ["MOCK0:bla", "INSTR:xxx:USB"]
+        
+        scope = BaseScope()
+        self.assertEqual(scope, type(BaseScope))
+        
+
 
 
 if __name__ == "__main__":
-    
-    rm=pyvisa.ResourceManager()
-    print(rm.list_resources())  
+    #rc = ResourceManager(visa_library="@mock")
+    #rm=pyvisa.ResourceManager()
+    #print(rm.list_resources())  
     #dummyUse()
     #performTransCurve()
+    print("start testing.")
+    unittest.main()
     
     #logger = logging.getLogger(__name__)
     #logger.setLevel(logging.DEBUG)

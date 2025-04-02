@@ -111,7 +111,10 @@ class TekChannel(BaseChannel):
         self.visaInstr.write(f"HORizontal:MAIn:SCAle {time}")
     
     def setAsSource(self):
-        self.visaInstr.write(f"DATA:SOURCE {self.name}") #Sets the channel as data source for transimitting data   
+        self.visaInstr.write(f"DATA:SOURCE {self.name}") #Sets the channel as data source for transimitting data
+    
+    def getSource(self):   
+        return self.visaInstr.query(f"DATA:SOURCE?")
     
     def getNrOfPoints(self):
         #TODO:

@@ -1,61 +1,17 @@
 from devices.tektronix.scope.TekScopes import TekScope
 from devices.tektronix.scope.Channel import TekChannel
+from devices.BaseScope import BaseScope
 
-#assert: if true, then nothing. If false, assertion
-class TestTDS():
-    
-    def __init__(self):
-        self.scope = TekScope()
-        pass
-    
-    def testAll(self):
-        """Test functional correctness of TDS oscilloscope."""
-        assert self.scope.__class__ != None, "TDS oscilloscoop object is empty"
-        assert self.scope.__class__ == TekScope, "Oscilloscope object is of wrong type"
-        self.testHorizontal()
-        self.testVertical()
-        self.testTrigger()
-    
-    def testTrigger(self):
-        """Test functional correctness of TDS oscilloscope Triggerunit."""
-        
-        pass
-    def testHorizontal(self):
-        """"Test correct function of TDS horizontal functionality"""
-        #test timedivs
-        pass
-
-    def testTimeDiv(self):
-        """Test correct configuration of the horizontal timebased setting of TDS"""
-        #Aanpak: zet een timediv waarde en controleer of deze waarde ook teugkomt. Als niet: error!
-        #Aanpak: controleer robustheid: scoop mag niet op hol bij verkeerde setting.
-        pass
-
-    def testVertical(self):
-        """Test functional correctness of vertical oscilloscope part.
-        1. getting channels
-        2. setting and checkingvertical sensitivity per channel
-        3. Capturing
-        4. check of correct axis ranges (horizontal en vertical axis, as check of content of preamble)
-        5. ....
-        """
-        vert = self.scope.vertical
-        nrOfChannels = vert.nrOfChan()
-        assert nrOfChannels == 2, "Number of available channels for this TDS scope should be two!!"
-        for scopeChanIndex in range(nrOfChannels):
-            assert vert.chan(scopeChanIndex) != None, f"channel with index = {scopeChanIndex} is empty"
-            assert vert.chan(scopeChanIndex).__class__ == TekChannel, f"channel with index = {scopeChanIndex} is wrong type"
-            
-class TestTekSChannel():
+""" 
+class TestTekChannel(unittest.TestCase):
     #checken hoe je zo automatisch mogelijk kan testen met Python, dus autogeneratie van test-body-skeleton code.
-    def TestqueryNrOfSamples(self):
-       # NR_PT =  int(self._visaInstr.query('WFMPRE:NR_PT?')) #Requesting the number of samples
-       # return NR_PT
-       pass
+    def testqueryNrOfSamples(self, chan: TekChannel):
+        nrpoints = chan.getNrOfPoints()
+        self.assertEqual(nrpoints,2500)       
         
    
-    def TestsetAsSource(self):
-        #check if channel is valid 
+    def TestsetAsSource(self, chan: TekChannel):
+        #first set source than read backl mustbe same.
         #self.visaInstr.write(f"DATA:SOURCE {self._name}") #Sets the channel as data source    
         pass 
 
@@ -65,14 +21,12 @@ class TestTekSChannel():
         pass
      
     def TestsetVisible(self, state:bool):
-        """
         if state:
             self.visaInstr.write(f"SELECT:{self._name} ON")
             self.isVisible = True
         else:
             self.visaInstr.write(f"SELECT:{self._name} OFF")
             self.isVisible = False
-       """
             
     def TestisVisible(self):
         return self.isVisible
@@ -191,7 +145,7 @@ class TestTekSChannel():
         response = self.doImmedMeas("MAXImum")        
         return float(response)
             
-    
+"""     
     
 """Interface van Basescope:
 

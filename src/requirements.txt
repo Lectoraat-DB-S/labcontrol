@@ -9,3 +9,4 @@ scipy
 zeroconf
 psutil
 pyusb
+pyserial
