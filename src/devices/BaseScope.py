@@ -43,6 +43,7 @@ class BaseScope(object):
         #rm = visa.ResourceManager("@sim")
         rm = pyvisa.ResourceManager()
         urls = rm.list_resources()
+        print(rm.session)
         host = None
 
         for scope in cls.scopeList:

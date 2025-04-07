@@ -48,7 +48,7 @@ class TekScope(BaseScope):
                 
                 return None
         
-        return None
+                return None
 
     def __init__(self, dev):
         """ 

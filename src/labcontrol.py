@@ -5,19 +5,21 @@ import logging
 #import measurements.weerstandsmetingDMM as measurement
 import measurements.transistorcurve as curfje
 
-import tests.testSDG as sigTest
-import tests.testSDS as scopeTest
-import control.gutter as gootje
+#import tests.testSDG as sigTest
+#import tests.testSDS as scopeTest
+#import control.gutter as gootje
 from devices.BaseScope import BaseChannel, BaseScope, BaseHorizontal, BaseVertical, BaseWaveForm, BaseWaveFormPreample
 from devices.siglent.sds.Scopes import  SiglentScope
-#from devices.tektronix.scope.TekScopes import TekScope, TekHorizontal, TekTrigger
+from devices.tektronix.scope.TekScopes import TekScope, TekHorizontal, TekTrigger
 
 import matplotlib.pyplot as plt
 import numpy as np
 import unittest
+
 #from src.tests.MockResMan import MockerRM
-from unittest.mock import patch, MagicMock
+from unittest.mock import call, patch, MagicMock
 from pyvisa import ResourceManager
+from pyvisa import ResourceManager as rm
 
 
 def initLog():
@@ -51,28 +53,14 @@ def performTransCurve():
     curfje.createTransCurve()
     
 
-#assert: if true, then nothing. If false, assertion
-class TestTDS(unittest.TestCase):
-    @patch('pyvisa.RescourceManager')
-    def testCreate(self, MockResMan: MagicMock):
-        mock_rm = MockResMan.return_value
-        mock_rm.list_resources.return_value = ["MOCK0:bla", "INSTR:xxx:USB"]
-        
-        scope = BaseScope()
-        self.assertEqual(scope, type(BaseScope))
-        
-
-
 
 if __name__ == "__main__":
     #rc = ResourceManager(visa_library="@mock")
     #rm=pyvisa.ResourceManager()
     #print(rm.list_resources())  
     #dummyUse()
-    #performTransCurve()
-    print("start testing.")
-    unittest.main()
-    
+    performTransCurve()
+   
     #logger = logging.getLogger(__name__)
     #logger.setLevel(logging.DEBUG)
 

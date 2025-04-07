@@ -1,6 +1,35 @@
 from devices.tektronix.scope.TekScopes import TekScope
 from devices.tektronix.scope.Channel import TekChannel
 from devices.BaseScope import BaseScope
+import unittest
+from unittest.mock import call, patch, MagicMock
+
+#assert: if true, then nothing. If false, assertion
+#blog : https://www.toptal.com/python/an-introduction-to-mocking-in-python
+
+class TestTDSCreate(unittest.TestCase):
+    
+    def __init__(self, methodName = "runTDSTests"):
+        super().__init__(methodName)
+        self.myrm = None
+
+
+    @patch('pyvisa.ResourceManager')
+    def testNewTDS(self, RMMock: MagicMock):
+        RMMock.mock_calls 
+        self.myrm = RMMock.return_value
+        self.myrm.list_resources.return_value = ["INSTR::xxx::USB"]
+        mydev = self.myrm.open_resource.return_value
+        mydev.return_value = ["USBINSTR"]
+        mydev.query.return_value = "TEKTRONIX,TDS"
+        expected = call.query("*IDN?").call_list()
+        scope = BaseScope()
+        
+        print(RMMock.mock_calls)
+        print(mydev.mock_calls)
+        self.assertTrue(expected==mydev.mock_calls)
+        self.assertTrue(scope.__module__==TekScope.__module__)
+
 
 """ 
 class TestTekChannel(unittest.TestCase):
