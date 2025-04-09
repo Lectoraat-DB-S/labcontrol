@@ -9,6 +9,10 @@ del /S /Q %notebookTargetDir%
 xcopy %notebookSourceDir%\getStarted.ipynb %notebookTargetDir%
 xcopy %notebookSourceDir%\helloWorld.ipynb %notebookTargetDir%
 xcopy %notebookSourceDir%\LabcontrolsComp.ipynb %notebookTargetDir%
+xcopy %notebookSourceDir%\bjtCurveMeter.ipynb %notebookTargetDir%
+xcopy %notebookSourceDir%\images\meting_HFE.png %notebookTargetDir%\images
+xcopy %notebookSourceDir%\images\HFE_meetschema_compleet.png %notebookTargetDir%\images
+
 xcopy %notebookSourceDir%\image.png %notebookTargetDir%
 
 xcopy  ..\labcontrol.py %notebookTargetDir%

@@ -42,11 +42,6 @@ class TekHorizontal(BaseHorizontal):
     def __init__(self, dev = None):
         super().__init__(dev)
     
-        
-    def setRoll(self, flag:bool):
-        print("Let's Roll")
-        return None
-    
     def getTimeDivs(self):
         """Method for getting available timebase, or samething, horizontal resolution settings of the TDS2000x oscilloscope series.
         According to the Tektronix datasheet, the TDS series timbase ranges from 5 ns/div to 50 s/div, in a 1, 2.5, 5 sequence. 

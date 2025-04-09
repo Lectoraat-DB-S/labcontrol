@@ -161,6 +161,11 @@ class TekChannel(BaseChannel):
         self.setAsSource()
         response = self.visaInstr.query('WFMPRE?')
         self.WFP.decode(response)
+
+
+    #### IMMED MEASUREMENT METHODS #####
+    def getAvailableMeasurements(self):
+        return TekChannel.IMMEDMEASTYPES
         
     def getImmedMeasParam(self):
         """Returns all immediate measurement setup parameters. Immediate queries

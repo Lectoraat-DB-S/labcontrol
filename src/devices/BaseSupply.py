@@ -32,7 +32,7 @@ class BaseSupply(object):
         cls.supplyList.append(cls)
          
     @classmethod
-    def getDevice(cls, url):
+    def getDevice(cls, rm, urls, host):
         """ Tries to get (instantiate) the device, based on the url"""
         return None #Base class implementation: return None, because this class can't do shit.
     
@@ -51,7 +51,7 @@ class BaseSupply(object):
         rm = visa.ResourceManager()
         devUrls = rm.list_resources()
         for supply in cls.supplyList:
-            dev = supply.getDevice(devUrls, host)
+            dev = supply.getDevice(rm, devUrls, host)
             if dev != None:
                 return dev
         
@@ -59,13 +59,17 @@ class BaseSupply(object):
         
     def __init__(self, host=None, nrOfChan=1): #For now, init should get the nrOfChan for this scope as a param.
         """abstract init function. A subclass should be override this function, which wil intitialize object below"""
-        self._visaInstr : visa.Resource = None
-        self._host = None
-        self._nrOfChan = nrOfChan
+        self.visaInstr : visa.Resource = None
+        self.host = None
+        self.nrOfChan = nrOfChan
+        self.channels = list()
+
+    def idn(self):
+        pass
     
 class BaseChannel(object):
-    def __init__(self):
-        pass
+    def __init__(self, dev = None):
+        self.visaInstr = None
     
         
     def enable(self, state):

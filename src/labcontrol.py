@@ -1,9 +1,12 @@
 import pyvisa
 import logging
+import serial
 #import core.Settings as setting
 #import core.myconfig as configje
 #import measurements.weerstandsmetingDMM as measurement
-import measurements.transistorcurve as curfje
+import measurements.transistorcurve as curfje4
+
+from devices.Korad.KoradSupply import Korad3305P
 
 #import tests.testSDG as sigTest
 #import tests.testSDS as scopeTest
@@ -53,19 +56,26 @@ def performTransCurve():
     curfje.createTransCurve()
     
 
+def testKorad():
+    #ser = serial.Serial('COM10', 9600, timeout=0, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=8)
+    #ser.write(b"*IDN?\r")
+    #ser.write(b"OUT0\r")
+    supply = Korad3305P()
+    #line = ser.readline()
+    #print(line)
 
 if __name__ == "__main__":
     #rc = ResourceManager(visa_library="@mock")
-    #rm=pyvisa.ResourceManager()
-    #print(rm.list_resources())  
+    rm=pyvisa.ResourceManager()
+    print(rm.list_resources())  
     #dummyUse()
-    performTransCurve()
+    testKorad()
    
     #logger = logging.getLogger(__name__)
     #logger.setLevel(logging.DEBUG)
 
     #testPickle(logger)
-    #initLog()
+    #initLog()0
     #logging.info('Main Started')
     #rm = pyvisa.ResourceManager()
     #myList=rm.list_resources()

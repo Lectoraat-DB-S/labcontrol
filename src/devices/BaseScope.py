@@ -98,7 +98,10 @@ class BaseVertical(object):
         self.nrOfChan = nrOfChan       # A virtual Baseclass: so no channels available.
         self.visaInstr = dev             # default value = None, see param
               
-    
+    def chan(self, chanNr): 
+        """Get the channel obejct based on the number. This method should be overridden by the 
+        inherting subclass, as this BaseVertical implementation is empty."""
+        pass
     
 ############ BaseHorizontal ###########
 class BaseHorizontal(object):
@@ -131,17 +134,29 @@ class BaseHorizontal(object):
                 return dev
         
         return instance     
- 
-    
-         
+          
     def __init__(self, dev = None):
         self.visaInstr = dev             # default value = None, see param
         self.TB = 0.0                  # current value of timebase, unit sec/div
         self.SR = 0                    # samplerate
         self.POS = 0                   # Horizontal position in screen (of the waveforms)
         self.ZOOM = 0                  # Horizontal magnifying.
-        
+
+    def setRoll(self, flag:bool):
+        """Method for setting horizontal roll (true/false). This method should be overridden by the 
+        inherting subclass, as this BaseHorizontal implementation is empty."""
+        pass       
     
+    def getTimeDivs(self):
+        """Method for getting available timebase setting. This method should be overridden by the 
+        inherting subclass, as this BaseHorizontal implementation is empty."""    
+        pass
+
+    def setTimeDiv(self, value):
+        """Method for setting a timebase vaule. This method should be overridden by the 
+        inherting subclass, as this BaseHorizontal implementation is empty."""    
+        pass
+
 ###################################### BASECHANNEL #########################################################
 class BaseChannel(object):
     def __init__(self, visaInstr):
@@ -156,6 +171,14 @@ class BaseChannel(object):
         in order need to a. get waveform descriptors, b. get the raw data and take care for store it into the proper datastructures"""
         pass
 
+    def getAvailableMeasurements(self):
+        pass
+    
+    def getMean(self):
+        pass
+
+    def getMax(self):
+        pass
 ######################################## BASEWAVEFORM #########################################################
 class BaseWaveForm(object):
     

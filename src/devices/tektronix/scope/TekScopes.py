@@ -47,9 +47,7 @@ class TekScope(BaseScope):
             except socket.gaierror:
                 
                 return None
-        
-                return None
-
+    
     def __init__(self, dev):
         """ 
             Constructor for Tektronix TDS oscilloscoop. This class is a subclass of BaseScope. BaseScope implements
