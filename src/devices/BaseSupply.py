@@ -33,7 +33,8 @@ class BaseSupply(object):
          
     @classmethod
     def getDevice(cls, rm, urls, host):
-        """ Tries to get (instantiate) the device, based on the url"""
+        """ Tries to get (instantiate) the device, based on the url. REMARK: this baseclass implementation is empty.
+        Inheriting subclasses must implement this functionality."""
         return None #Base class implementation: return None, because this class can't do shit.
     
         
@@ -41,10 +42,11 @@ class BaseSupply(object):
         """
         Only BaseSupply may call this new methond as the first step in creation of a scope object. 
         This is a way to controll if an object will be returned from a new method and if so, which type of object
-        it will have to return, as a form of factory pattern. 
+        it will have to return, as a form of factory pattern. This method will call the getDevice implementation of each 
+        registered subclass.
         See also:https://mathspp.com/blog/customising-object-creation-with-__new__ 
         
-        This coding scheme relies on the (automatic) registration of subclasses according pep487:
+        This coding scheme relies on the (automatic) registration of subclasses according to pep487:
         see: https://peps.python.org/pep-0487/
         
         """
@@ -65,34 +67,58 @@ class BaseSupply(object):
         self.channels = list()
 
     def idn(self):
+        """Method for retrieving the indentification string of the GPIB instrument. REMARK: this is an empty baseclass
+        implementation. Subclass will have to provide for the asked functionality."""
         pass
     
+    def __exit__(self, *args):
+        """Method for closing the visa instrument handle at deletion of this object."""
+        if self.visaInstr != None:
+            self.visaInstr.close()
+    
+
 class BaseChannel(object):
     def __init__(self, dev = None):
         self.visaInstr = None
     
         
-    def enable(self, state):
+    def enable(self, state: bool):
         """
             Turns this channel on or off
         """
         pass    
     
     def setOCP(self, val):
+        """
+            Sets this channel's overc urrent protection (OCP)
+        """
         pass
     
     def setOVP(self, val):
+        """
+            Sets this channel's over voltage protection (OVP)
+        """
         pass
     
     def measV(self):
+        """
+            Measures this channel's actual output voltage
+        """
         return None
     
     def measI(self):
+        """
+            Measures this channel's actual output current.
+        """
         return None
     
     def setV(self, val):
-        pass
+        """
+            Sets this channel's output voltage setpoint
+        """
     
     def setI(self, val):
-        pass
+         """
+            Sets this channel's output current setpoint
+        """
     
