@@ -81,6 +81,11 @@ class KoradChannel(BaseChannel):
     def iDown(self):
         self.visaInstr.write(f"IDOWN{self.name}")    
 
+"""
+VI_ERROR_SYSTEM_ERROR (-1073807360): Unknown system error (miscellaneous error).
+
+"""
+
 class Korad3305P(BaseSupply):
 
         
@@ -93,12 +98,20 @@ class Korad3305P(BaseSupply):
         targetCom = "COM10"
         for url in urls: # traverse al urls
             if serialUrlPattern in url:
-                mydev = rm.open_resource(url)
-                if targetCom!=mydev.resource_info.alias:
-                    mydev.close() #keep going
-                    mydev = None
-                else:
-                    break # stop searching.
+                try:
+                    mydev = rm.open_resource(url)
+                    if targetCom!=mydev.resource_info.alias:
+                        mydev.close() #keep going
+                        mydev = None
+                    else:
+                        break # stop searching.
+                except pyvisa.errors.Error as pyerr:
+                    print(f"VISA Error")
+                    mydev = None #let's go for the next one.
+                except Exception as err:
+                    print(f"Unexpected {err=}, {type(err)=}")
+                    raise
+
         if  mydev == None:
             return None  
         mydev.timeout = 5000  # ms

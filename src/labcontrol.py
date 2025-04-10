@@ -4,7 +4,7 @@ import serial
 #import core.Settings as setting
 #import core.myconfig as configje
 #import measurements.weerstandsmetingDMM as measurement
-import measurements.transistorcurve as curfje4
+import measurements.transistorcurve as curfje
 
 from devices.Korad.KoradSupply import Korad3305P
 
