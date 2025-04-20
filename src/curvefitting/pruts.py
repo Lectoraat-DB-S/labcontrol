@@ -15,14 +15,15 @@ def underdamped_system(K,w0,damping,t:np.array, offset):
     y_out[t<0]=0
     return y_out
 
-start = 0
-stop=40
-aantal=100
-t=np.linspace(start,stop, num=aantal)
-z=truncIt(t)
-y=underdamped_system(1,1,0.5,t,20)
-#t=t-10
-plt.plot(t)
-plt.figure(2)
-plt.plot(y)
-plt.show()
+def mainPruts():
+    start = 0
+    stop=40
+    aantal=100
+    t=np.linspace(start,stop, num=aantal)
+    z=truncIt(t)
+    y=underdamped_system(1,1,0.5,t,20)
+    #t=t-10
+    plt.plot(t)
+    plt.figure(2)
+    plt.plot(y)
+    plt.show()

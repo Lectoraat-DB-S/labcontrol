@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 from devices.siglent.spd.PowerSupply import SiglentPowerSupply
 from devices.siglent.sdm.DigitalMultiMeter import SiglentDMM
 from devices.siglent.sds.Scopes import SiglentScope
+from devices.BaseScope import BaseScope
+from devices.BaseSupply import BaseSupply, BaseSupplyChannel
 import pandas as pd
 
 WAITTIME = 0.1
@@ -49,28 +51,30 @@ def makeCurveWithOnlySupply():
     plt.show()
 
 def createTransCurve():
-    supply = SiglentPowerSupply()
+    supply = BaseSupply()
     dmm    = SiglentDMM()
-    scope  = SiglentScope()
+    scope  = BaseScope()
     #set supply
     
-    supply.CH1.set_voltage(5)
-    supply.CH2.set_voltage(0)
-    supply.CH1.set_current(1)
-    supply.CH2.set_current(0.5)
+    supply.chan(1).set_voltage(15)
+    supply.chan(2).set_voltage(0)
+    supply.chan(1).set_current(1)
+    supply.chan(1).set_current(0.5)
    
     
-    baseControl = supply.CH2
-    collControl = supply.CH1
+    baseControl = supply.chan(2)
+    collControl = supply.chan(1)
     
-    baseControl.set_output(True)
-    collControl.set_output(True)
+    baseControl.enable(True)
+    collControl.enable(True)
     time.sleep(0.5)
     
         
     coll_vol = list()
     coll_curr = list()
     base_vol = list()
+    basechan =  scope.vertical.chan(1)
+    collchan = scope.vertical.chan(2)
     
     for x in np.arange (0, 3, 0.1):
         baseControl.set_voltage(x)
@@ -78,10 +82,10 @@ def createTransCurve():
         val = dmm.get_current() 
         time.sleep(0.5)
         coll_curr.append(val)
-        basevolval = scope.CH1.getMean()
+        basevolval = basechan.getMean()
         time.sleep(0.5)
         base_vol.append(basevolval)
-        colvolval = scope.CH1.getMean()
+        colvolval = collchan.getMean()
         coll_vol.append(colvolval)
         
     

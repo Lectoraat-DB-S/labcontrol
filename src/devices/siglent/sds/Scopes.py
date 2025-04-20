@@ -1,15 +1,12 @@
 # some info on module reference: see https://stackoverflow.com/questions/448271/what-is-init-py-for
 import time
-import vxi11
-import struct
 import numpy as np
 from enum import Enum
 import socket
 import pyvisa as visa
 import logging
 import time
-import xdrlib
-#from .Channels import SDSChannel
+#from devices.BaseScope import BaseScope
 from devices.siglent.sds.Channels import SDSChannel
 from devices.siglent.sds.util import INR_HASHMAP
 import devices.siglent.sds.util as util
@@ -23,6 +20,7 @@ class SiglentWaveformWidth(Enum):
     WORD = "WORD"
 
 class SiglentScope(object):
+
     KNOWN_MODELS = [
         "SDS2504X Plus",
         "SDS1202X",
@@ -33,9 +31,36 @@ class SiglentScope(object):
         "SDS2504X Plus": "Siglent",
         "SDS1202X": "Siglent",
     }
+    
+    @classmethod
+    def getDevice(cls, rm, urls, host):
+        """
+            Tries to get (instantiate) this device, based on matched url or idn response
+            This method will ONLY be called by the BaseScope class, to instantiate the proper object during
+            creation by the __new__ method of BaseScope.     
+        """  
+        if host is None:
+            pattern = "SDS"
+            for url in urls:
+                if pattern in url:
+                    mydev = rm.open_resource(url)
+                    cls.__init__(cls,**kwargs)
+                    return cls
+        else:
+            try:
+                logger.info(f"Trying to resolve host {host}")
+                ip_addr = socket.gethostbyname(host)
+            except socket.gaierror:
+                logger.error(f"Couldn't resolve host {host}")
+                return None
+            mydev = rm.open_resource("TCPIP::"+str(ip_addr)+"::INSTR")
+            return cls
+        
 
-    def __init__(self, host=None):
-        self._inst = None
+    def __init__(self, host = None):
+        
+        #self._inst = dev
+        
         rm = visa.ResourceManager()
         if host is None:
             theList = rm.list_resources()
@@ -52,7 +77,7 @@ class SiglentScope(object):
                 ip_addr = socket.gethostbyname(self._host)
             except socket.gaierror:
                 logger.error(f"Couldn't resolve host {self._host}")
-            mydev = rm.open_resource('TCPIP::'+str(ip_addr)+'::INSTR')
+            mydev = rm.open_resource("TCPIP::"+str(ip_addr)+"::INSTR")
             self._inst = mydev
         
         self.CH1 = SDSChannel(1, self, logger)
@@ -87,65 +112,55 @@ class SiglentScope(object):
     def query(self, cmd: str):
         return self._inst.query(cmd)
     
-    #opmerking 4/9/2024: wanneer je een SiglentScope object aanmaakt, wordt ook de __enter__ methode van  EthernetDevice aangeroepen.
-    # is dat een default Python gedrag bij de instructie @classmethod?
-    # het gedrag is ongewenst, dus onderstaande uitgecommentarieerd.
-    # #@classmethod
-    #def ethernet_device(cls, host: str):
-    #    return EthernetDevice(host)
-
 
     def __exit__(self, *args):
         self._inst.close()
 
 
-    #def query_raw(self, message, *args, **kwargs):
-    #    """
-    #    Write a message to the scope and read a (binary) answer.
-
-    #    This is the slightly modified version of :py:meth:`vxi11.Instrument.ask_raw()`.
-    #    It takes a command message string and returns the answer as bytes.
-
-    #    :param str message: The SCPI command to send to the scope.
-    #    :return: Data read from the device
-     #   """
-    #    data = message.encode('utf-8')
-    #    return self._inst.ask_raw(data, *args, **kwargs)
-
     @property
     def idn(self):
-        """The idn command query identifies the instrument type and software version. The
-        response consists of four different fields providing information on the
-        manufacturer, the scope model, the serial number and the firmware revision.
+        """
+            The idn command query identifies the instrument type and software version. The
+            response consists of four different fields providing information on the
+            manufacturer, the scope model, the serial number and the firmware revision.
 
-        :return: Siglent Technologies,<model>,<serial_number>,<firmware>
+            return: Siglent Technologies,<model>,<serial_number>,<firmware>
         """
         return self._inst.query("*IDN?")
     
     def inr(self):
-        """The INR? query reads and clears the contents of the INternal state change Register (INR). 
-        The INR register (see table programming manual) records the completion of various internal operations 
-        and state transitions."""
+        """
+            The INR? query reads and clears the contents of the INternal state change Register (INR). 
+            The INR register (see table programming manual) records the completion of various internal operations 
+            and state transitions.
+        """
         inrResp = self._inst.query("*INR?")
         return INR_HASHMAP[inrResp]        
     
     def rst(self):
-        """The *RST command initiates a device reset. The *RST sets recalls the default setup."""
+        """
+            The RST command initiates a device reset. The RST sets recalls the default setup.
+        """
         self._inst.write("*RST")
     
     def sav(self, panelNr):
-        """The *SAV command stores the current state of the instrument in internal memory. The *SAV command stores the complete front-panel 
-        setup of the instrument at the time the command is issued."""
+        """
+            The SAV command stores the current state of the instrument in internal memory. The SAV command stores 
+            the complete front-panel setup of the instrument at the time the command is issued."""
         self._inst.write(f"*SAV{panelNr}")
 
     def rcl(self, panelNr):
-        """The *RCL command sets the state of the instrument, using one of the ten non-volatile panel setups, by recalling the complete front-panel setup of the instrument. 
-        Panel setup 0 corresponds to the default panel setup."""
+        """
+            The RCL command sets the state of the instrument, using one of the ten non-volatile panel setups, by 
+            recalling the complete front-panel setup of the instrument. Panel setup 0 corresponds to the default panel 
+            setup.
+        """
         self._inst.write(f"*RCL{panelNr}")
 
     def lock(self, enable):
-        """The *RCL command sets the state of the instrument, using one of the ten non-volatile panel setups, by recalling the complete front-panel setup of the instrument. 
-        Panel setup 0 corresponds to the default panel setup."""
+        """
+            The LOCK command enables or disables the panel keyboard of the instrument.
+        """
         if (enable):
             self._inst.write(f"LOCK ON")
         else:

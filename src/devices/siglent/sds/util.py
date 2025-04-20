@@ -9,17 +9,7 @@ MATH_FUNC_FFT = 4
 MATH_FUNC_INT = 5
 MATH_FUNC_DIF = 6
 MATH_FUNC_SQR = 7
-
-def rawSave():
-    #wat opslaan?
-    #Soort apparaat, merk, model(nummer), datum registratie.
-    #conversieinfo (hangt van apparaat af): 
-    # Generieke info: aantal samples, aantal kanalen, samplerate, eenheid van horizontale en vertical as 
-    # kanaal instellingen: verticale en horizontale offset, gain instelling
-    # Tijdbasis en trigger instellingen
-    columnName =f"sampleCH{channr}"
-    nrOfSamp = 0
-    
+ 
 
 def saveTrace():
     columnNames ={"s"}
@@ -127,42 +117,104 @@ TIMEBASE_HASHMAP = {
                     }
 class WaveFormTrace(object):
     def __init__(self):
+        self._nrOfDivs = 5 # TODO: should be set during initialisation of the scope.
+        self.full_code = 256 # TODO: should be set during initialisation of the scope.
+        self.center_code = 127 # TODO: should be set during initialisation of the scope.
+        self.max_code = self.full_code/2
+        self._hori_grid_size = 14 # TODO: is this a fixed number for Siglent? Check this.
+        self._rawdata = None
         self._tracedata = None
         self._WVP = WaveFormPreamble()
         
-    def getTraceData(self):
-        return self._tracedata
+    def calculate_voltage(self):
+        x = self.getRawTrace()
+        fc =self.full_code
+        #np.where(x>5, x, temp)
+        np.where(x > self.center_code , x, x - self.full_code)
+        #FS=10 hokjes=top-top
+        #0->1.0 = 127 stapjes
+        #0->1.0 = 5 hokjes
+
+        """
+            To Calculate the voltage value, as shown on scope, can only be performed if one has the limitations
+            of the oscilloscope in mind:
+                - screen of scope consists of 10 'divs', although the fysical scope only shows 8 of them. 
+                    The samples therefore  always represents a range of 5 'divs'. 
+                - The (vertical) resolution of the SDS1202X-E is 8 bits
+                - The center of the screen equals to a decimal sample value of 127 (self.center_code),
+                    assuming 0.0 Volt offset (voffset)
+                - The samples are coded as unsigned bytes, so one have to restore the sign in the code.
+                - The range of samples is therefore -128 .... + 127
+            So xnew = (xold * 5/128)-voffset                
+        """
+        voltfactor = self._WVP._vdiv/25
+        tempVolt = np.multiply(x,voltfactor)
+        res = np.subtract(tempVolt, self._WVP._voffset)
+        
+        return res
     
+    def convertRaw_to_voltage(self):
+        # Get the parameters of the source
+        raw_array = self.getRawTrace()
+        vect_voltage = self.calculate_voltage()
+        self.setTrace(vect_voltage)
+        
     def getWVP(self):
         return self._WVP
     
+    def getTrace(self):
+        return self._tracedata
+    
     def setTrace(self, data):
         self._tracedata = data
+        
+    def getRawTrace(self):
+        return self._rawdata
+    
+    def setRawTrace(self, data):
+        self._rawdata = data
 
 class WaveFormPreamble(object):
     def __init__(self):
-        self._total_points = None
-        self._vdiv  = None
-        self._voffset  = None
-        self._maxGridVal  = None
-        self._minGridVal  = None
-        self._timebase  = None
-        self._delay = None
-        self._interval = None
-        self._timeOfFirstValidSample = None
-        self._timeOfLastValidSample = None
+        #TODO: put subsequent in order of the waveform template.
+        self._total_points = None               #Number of points of (last) acquired waveform
+        self._vdiv  = None                      #Number of units (e.g. V) per division 
+        self._voffset  = None                   #Vertical offset. Calc floating values from raw data : VERTICAL_GAIN * data - VERTICAL_OFFSET
+        self._maxGridVal  = None                #Maximum allowed value. It corresponds to the upper edge of the grid.
+        self._minGridVal  = None                #Minimum allowed value. It corresponds to the lower edge of the grid.
+        self._nomBits = None                    #Measure of the intrinsic precision of the observation: ADC data is 8 bit, 
+                                                #when averaged it is 10-12 bit, etc. TODO: implement 
+        self._timebase  = None                  #TDIV: the amount of time per division. SEE TIMEBASE_HASHMAP.
+        self._delay = None                      #HORIZ_OFFSET: trigger offset, seconds between the trigger and the first data point
+        self._interval = None                   #HORIZ_INTERVAL: float sampling interval for time domain waveforms. 
+                                                    #TODO: check if is same as sample interval.
+        self._timeOfFirstValidSample = None     #FIRST_VALID_PNT count of number of points to skip before first good point
+                                                #   FIRST_VALID_POINT = 0
+                                                #   for normal waveforms.
+        self._timeOfLastValidSample = None      #Index of last good data point in record before padding (blanking) was started. 
+                                                #   LAST_VALID_POINT = WAVE_ARRAY_COUNT-1
+                                                #   except for aborted sequence and rollmode acquisitions
         self._firstPoint = None
         self._sparsingFactor = None
-        self._segmentIndex = None
+        #The definition of subsequent parameter is somewhat vague: it should be the same as the SN param of the WFSU command, but the
+        #programming manual does not mentions such a param. Probably the NP param is referred.
+        self._segmentIndex = None               #SEGMENT_INDEX: see Above
+        
+        
         self._subArrayCount = None #For sequences acquisitions
         self._nrOfSweepsPerAcq = None
         self._pairPoints = None
         self._pairOffset = None
-        self._nrOfADCBits = None
-        self._sampInterval = None
-        self._pixelOffset = None
-        self._vertUnit = None
-        self._horUnit = None
+        self._horizontalInterval = None         #HORIZ_INTERVAL: sampling interval for time domain waveforms
+        self._horizontalOffset =  None              #HORIZ_OFFSET: trigger offset for the first sweep of the trigger
+                                                #   seconds between the trigger and the first data point
+        self._pixelOffset = None                #PIXEL_OFFSET: needed to know how to display the waveform
+        self._vertUnit = None                   #VERTUNIT: units of the vertical axis
+
+        self._horUnit = None                    #HORUNIT: units of the horizontal axis
+        self._horUncertainty = None             #uncertainty from one acquisition to the  next, of the horizontal offset in seconds
+        self._triggerTime = None                #TRIGGER_TIME: time of the trigger
+        
         self._recordType = None
         self._processingDone = None
         self._vertCoupling = None
@@ -190,6 +242,11 @@ class WaveFormPreamble(object):
         # VERTICAL_VERNIER: float#
         # ACQ_VERT_OFFSET: float
         # WAVE_SOURCE: enum
+    def isEmpty(self):
+        if ((self._total_points == None) and  (self._vdiv  == None) and (self._voffset == None)):
+            return True
+        else:
+            return False
 
     def set(self, total_points, vdiv, voffset, code_per_div, timebase, delay, interval):
         self._total_points = total_points

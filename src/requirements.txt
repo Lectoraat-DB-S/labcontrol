@@ -1,0 +1,12 @@
+pyvisa
+numpy
+matplotlib
+sphinx
+sphinx-rtd-theme
+pandas
+lmfit
+scipy
+zeroconf
+psutil
+pyusb
+pyserial

@@ -1,14 +1,15 @@
-import pyvisa as visa
+import pyvisa
 import logging
 import socket
 from devices.siglent.spd.SupplyChannel import SPDChannel
+from devices.BaseSupply import BaseSupply
 
 logger = logging.getLogger(__name__)
 #logging.basicConfig(filename='SiglentSupply.log', level=logging.INFO)
 logger.setLevel(logging.INFO)
 
 
-class SiglentPowerSupply(object):
+class SiglentPowerSupply(BaseSupply):
     KNOWN_MODELS = [
         "SPD3303X",
     ]
@@ -17,46 +18,58 @@ class SiglentPowerSupply(object):
         "SPD3303X": "Siglent",  
     }
 
-    def __init__(self, host=None):
-        rm = visa.ResourceManager()
-        self._inst = None
-        #self._idn = IDN()
+    @classmethod
+    def getDevice(cls, rm, urls, host):
+        mydev = None
         if host is None:
-         theList = rm.list_resources()
-         pattern = "SPD"
-         for url in theList:
-            if pattern in url:
-               mydev = rm.open_resource(url)
-               self._inst = mydev
-               #
-               mydev.timeout = 10000  # ms
-               mydev.read_termination = '\n'
-               mydev.write_termination = '\n'
-               #resp = self._inst.query("*IDN?")
-               #print(resp)
-               #self._idn.decodeIDN(resp)
-               break
+            pattern = "SPD"
+            for url in urls:
+                if pattern in url:
+                    mydev = rm.open_resource(url)
+                    mydev.timeout = 10000  # ms
+                    mydev.read_termination = '\n'
+                    mydev.write_termination = '\n'
+                    break
         else:
-            self._host = host
             try:
-                logger.info(f"Trying to resolve host {self._host}")
-                ip_addr = socket.gethostbyname(self._host)
+                logger.info(f"Trying to resolve host {host}")
+                ip_addr = socket.gethostbyname(host)
                 mydev = rm.open_resource('TCPIP::'+str(ip_addr)+'::INSTR')
-                self._inst = mydev
             except socket.gaierror:
-                logger.error(f"Couldn't resolve host {self._host}")
+                logger.error(f"Couldn't resolve host {host}")
+                mydev = None
+        
+        if mydev != None:
+            if cls is SiglentPowerSupply:
+                cls.__init__(cls,dev=mydev)
+                return cls
+            else:
+                return None  
 
-        self.CH1 = SPDChannel(1, self._inst)
-        self.CH2 = SPDChannel(2, self._inst)
+        return mydev #always return something even it is None.
 
-    
+    def __init__(self, dev= None, host=None, nrOfChan=2):
+        self.visaInstr : pyvisa.Resource = dev
+        
+        self.host = host
+        self.nrOfChan = nrOfChan
+        self.channels:SPDChannel = list()
+        for i in range(1, self.nrOfChan+1):
+            self.channels.append({i:SPDChannel(i, dev)})
+        
     def __exit__(self, *args):
-        self._inst.close()
-
-    def query(self, cmd: str):
-        return self._inst.query(cmd)
-
-    @property
+        self.visaInstr.close()
+    
+    def chan(self, chanNr)-> SPDChannel:
+        """Gets a channel, based on its index: 1, 2 etc."""
+        try: 
+            for  i, val in enumerate(self.channels):
+                if (chanNr) in val.keys():
+                    return val[chanNr]
+        except ValueError:
+            print("Requested channel not available")
+            return None     
+    
     def idn(self):
         """The command query identifies the instrument type and software version. The
         response consists of four different fields providing information on the
@@ -64,5 +77,5 @@ class SiglentPowerSupply(object):
 
         :return: Siglent Technologies,<model>,<serial_number>,<firmware>
         """
-        return self.query("*IDN?")
+        return self.visaInstr.query("*IDN?")
    
