@@ -3,7 +3,7 @@ import usb.util
 from pyvisa import ResourceManager as rm
 import unittest
 from unittest.mock import patch, MagicMock
-from tests.testTDS import TestTDSCreate
+from tests.testKorad import TestKoradSupply
 
 if __name__ == "__main__":
     #rc = ResourceManager(visa_library="@mock")

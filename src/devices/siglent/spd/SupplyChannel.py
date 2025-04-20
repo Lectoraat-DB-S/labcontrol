@@ -1,34 +1,52 @@
-import pyvisa as visa
+import pyvisa
 
 class SPDChannel(object):
-    def __init__(self, chan_no: int, dev):
+    def __init__(self, chan_no: int, dev :  pyvisa.resources.Resource):
         self._name = f"CH{chan_no}"
         self.visaInstr = dev
 
     ####BaseClass methods######
     def enable(self, state: bool):
         """
-            Turns this channel on or off
+            Turns this SupplyChannel object on or off
         """
         self.set_output(self, state)
     
-    def setOCP(self, val):
-        pass
-    
-    def setOVP(self, val):
-        pass
-    
     def measV(self):
-        return self.get_voltage()
+        """
+            Measures the actual voltage over the terminals of this channel.
+        """
+        return self.measure_voltage()
     
     def measI(self):
-        return self.get_current()
+        """
+            Measures the actual current delivered by this channel.
+        """
+        return self.measure_current()
     
     def setV(self, val):
+        """
+            Sets the desired voltage level of this channel.
+        """
         self.set_voltage(val)
     
+    def setV(self):
+        """
+            Gets the voltage setpoint of this channel.
+        """
+        self.get_voltage(val)
+    
     def setI(self, val):
+        """
+            Sets the desired current level to be supplied bythis channel.
+        """
         self.set_current(val)
+
+    def setI(self):
+        """
+            Gets the current setpoint of this channel.
+        """       
+        self.get_current(val)
 
     #### SPD dedicated methods ######
 

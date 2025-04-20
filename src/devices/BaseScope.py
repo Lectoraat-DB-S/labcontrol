@@ -10,15 +10,13 @@ class BaseScope(object):
     
     def __init_subclass__(cls, **kwargs):
         """BaseScope: base class for oscilloscope implementation.
-        Implementation of real supplies have to inherit from this class:
+        Implementations for oscilloscopes have to inherit from this class:
         1. This base class takes care for subclass auto registration, according to pep487, See:  
         https://peps.python.org/pep-0487/
         2. Implementing subclasses HAVE TO implement the getDevice method of this class, which has subsequent signature:
-        @classmethod 
-        def getDevice(cls, url):
-        4. Be sure BaseSupply's constructor has access to the inheriting subclass during instantion. If not, the
-        subclass will not be registated and the correct supply object won't be instantiated. 
-        3. Use Python's properties, for the getter-setter mechanisme, See: https://realpython.com/python-property/"""
+        @classmethod def getDevice(cls, url):
+        3. Be sure BaseScope's constructor has access to the inheriting subclass during instantion. If not, the
+        subclass will not be registated and the correct supply object won't be instantiated. """
         super().__init_subclass__(**kwargs)
         cls.scopeList.append(cls)
          

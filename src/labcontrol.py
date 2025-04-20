@@ -1,8 +1,8 @@
 import pyvisa
 import logging
 import serial
-#import core.Settings as setting
-#import core.myconfig as configje
+import configparser
+
 #import measurements.weerstandsmetingDMM as measurement
 import measurements.transistorcurve as curfje
 
@@ -24,6 +24,10 @@ from unittest.mock import call, patch, MagicMock
 from pyvisa import ResourceManager
 from pyvisa import ResourceManager as rm
 
+def readConfig():
+    config = configparser.ConfigParser()
+    config.sections()
+    config.read('labcontrol.ini')
 
 def initLog():
     logging.basicConfig(filename='labcontrol.log',
@@ -67,10 +71,17 @@ def testKorad():
 if __name__ == "__main__":
     #rc = ResourceManager(visa_library="@mock")
     rm=pyvisa.ResourceManager()
-    print(rm.list_resources())  
+    #print(rm.list_resources_info())
+    infos = rm.list_resources_info()
+    for k, v in infos.items():
+        #print("key: ",k, " value: ",v)
+        print(v.resource_name,v.alias)
+
+    #print(rm.list_resources_info())  
+    
     #dummyUse()
-    testKorad()
-   
+    #testKorad()
+    #performTransCurve()
     #logger = logging.getLogger(__name__)
     #logger.setLevel(logging.DEBUG)
 

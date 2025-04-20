@@ -1,12 +1,17 @@
 import pyvisa
-from devices.BaseSupply import BaseSupply, BaseChannel
+from devices.BaseSupply import BaseSupply,BaseSupplyChannel
 import socket
 import serial
 import time
+from serial.tools.list_ports import comports
+import configparser
+import os
 
 
-class KoradChannel(BaseChannel):
+
+class KoradChannel(BaseSupplyChannel):
     def __init__(self, chan_no, dev):
+        super().__init__(chan_no, dev=dev)
         self.name = f"{chan_no}"
         self.visaInstr:pyvisa.resources.MessageBasedResource = dev
         
@@ -81,26 +86,35 @@ class KoradChannel(BaseChannel):
     def iDown(self):
         self.visaInstr.write(f"IDOWN{self.name}")    
 
-"""
-VI_ERROR_SYSTEM_ERROR (-1073807360): Unknown system error (miscellaneous error).
-
-"""
-
 class Korad3305P(BaseSupply):
-
-        
+    VISAInsterface = "ASRL"
+    targetCom = "COM10"
+    prefMethod = None
+    
     @classmethod
-    def getDevice(cls, rm, urls, host):
-        """ Tries to get (instantiate) the device, based on the url"""
-        #The KORAD3305P supply only supports serial communication.
-        mydev = None
-        serialUrlPattern = "ASRL"
-        targetCom = "COM10"
+    def readConfig(cls):
+        config = configparser.ConfigParser()
+        print(os.getcwd())
+        config.read('.\\src\\labcontrol.ini')
+        if "Korad3305P" in config.sections():
+                if 'VisaInterface' in config['Korad3305P']:
+                    Korad3305P.VISAInsterface=config['Korad3305P']['VisaInterface']
+                if 'ComPort' in config['Korad3305P']:
+                    Korad3305P.targetCom=config['Korad3305P']['ComPort']
+                if 'PrefSearchMethod' in config['Korad3305P']:
+                    Korad3305P.prefMethod = config['Korad3305P']['PrefSearchMethod']
+        else:
+            Korad3305P.VISAInsterface = "ASRL"
+            Korad3305P.prefMethod = "IDN"
+
+    @classmethod
+    def findVISADeviceOnComPortNr(cls, rm, urls):
+
         for url in urls: # traverse al urls
-            if serialUrlPattern in url:
-                try:
+            if cls.VISAInsterface in url: #select only applicable interface for this device
+                try: # the open_resource might fail therefore a try/exept clause.
                     mydev = rm.open_resource(url)
-                    if targetCom!=mydev.resource_info.alias:
+                    if cls.targetCom!=mydev.resource_info.alias: #if alias is not the desired comport value, skip it.
                         mydev.close() #keep going
                         mydev = None
                     else:
@@ -112,26 +126,95 @@ class Korad3305P(BaseSupply):
                     print(f"Unexpected {err=}, {type(err)=}")
                     raise
 
+        #if search has been ended, two option: found a possible Korad device or found None.
+        # When found an option: check the idn and if ok: find 
         if  mydev == None:
-            return None  
-        mydev.timeout = 5000  # ms
-        mydev.read_termination = '\n'
-        mydev.write_termination = '\n'
-        desc = mydev.query("*IDN?")
-        if desc.find("KA3305P") > -1: #Korad 3305 device found in IDN response.
-            if cls is Korad3305P:
-                cls.__init__(cls,mydev)
-                return cls
-            else:
-                return None        
+            return None 
+        else: 
+            try: # the query call might fail therefore a try/exept clause.
+                mydev.timeout = 2000  # ms
+                mydev.read_termination = '\n'
+                mydev.write_termination = '\n'
+                desc = mydev.query("*IDN?")
+                if desc.find("KA3305P") > -1: #Korad KA3305P device found in IDN response.
+                    if cls is Korad3305P:
+                        cls.__init__(cls,mydev)
+                    return cls
+                else:
+                    mydev.close()
+                    mydev = None
+                    return None
+
+            except pyvisa.errors.Error as pyerr:
+                print(f"VISA Error")
+                mydev = None #let's go for the next one.
+            except Exception as err:
+                print(f"Unexpected {err=}, {type(err)=}")
+                return None
+
+    @classmethod
+    def findDeviceOnIDN(cls, rm, urls):
+        mydev = None
+        for url in urls: # traverse al urls
+            if cls.VISAInsterface in url: #select only applicable interface for this device
+                try: # the open_resource might fail therefore a try/exept clause.
+                    mydev = rm.open_resource(url)
+                    mydev.timeout = 5000  # ms
+                    mydev.read_termination = '\n'
+                    mydev.write_termination = '\n'
+                    desc = mydev.query("*IDN?")
+                    if desc.find("KA3305P") > -1: #Korad 3305 device found in IDN response.
+                        if cls is Korad3305P:
+                            cls.__init__(cls,mydev)
+                        return cls
+                    else:
+                        mydev.close()
+                        mydev = None    
+                except pyvisa.errors.Error as pyerr:
+                    print(f"VISA Error")
+                    mydev = None #let's go for the next one.
+                except Exception as err:
+                    print(f"Unexpected {err=}, {type(err)=}")
+                    raise
         
     
+        
+    @classmethod
+    def getDevice(cls, rm, urls, host):
+        """ Tries to get (instantiate) the device, based on the url"""
+        #The KORAD3305P supply only supports serial communication.
+        #11-4-25:
+        #code for listing comports in Pyhton:
+        #for port in comports():
+        #    print(port)
+        cls.readConfig()
+        retval = None
+        if Korad3305P.prefMethod == "IDN" or Korad3305P.prefMethod == None:
+            retval = cls.findDeviceOnIDN(rm, urls)
+        else:
+            retval = Korad3305P.findVISADeviceOnComPortNr(cls, rm, urls)
+
+        return retval
+        
     def __init__(self, dev= None, host=None, nrOfChan=2):
+        super().__init__(dev,host,2)
         self.visaInstr : pyvisa.Resource = dev
         self.host = host
         self.nrOfChan = nrOfChan
+        self.channels = list()
         for i in range(1, self.nrOfChan+1):
             self.channels.append({i:KoradChannel(i, dev)})
+
+    def chan(self, chanNr)-> KoradChannel:
+        """Gets a channel, based on its index: 1, 2 etc."""
+        try: 
+            for  i, val in enumerate(self.channels):
+                if (chanNr) in val.keys():
+                    return val[chanNr]
+        except ValueError:
+            print("Requested channel not available")
+            return None     
+    
 
     def idn(self):
         return self.visaInstr.query("*IDN?")

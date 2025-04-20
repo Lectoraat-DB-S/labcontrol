@@ -50,6 +50,8 @@ class BaseDMM(object):
         see: https://peps.python.org/pep-0487/
         
         """
+        instance = super().__new__(cls) #to have Pylance detect the proper type of a variable, call this!
+
         rm = visa.ResourceManager()
         devUrls = rm.list_resources()
         for supply in cls.supplyList:
@@ -57,7 +59,7 @@ class BaseDMM(object):
             if dev != None:
                 return dev
         
-        return None     
+        return instance  #needed for codecompletion by Pylance      
         
     def __init__(self, host=None, nrOfChan=1): #For now, init should get the nrOfChan for this scope as a param.
         """abstract init function. A subclass should be override this function, which wil intitialize object below"""

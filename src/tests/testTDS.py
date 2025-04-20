@@ -13,7 +13,6 @@ class TestTDSCreate(unittest.TestCase):
         super().__init__(methodName)
         self.myrm = None
 
-
     @patch('pyvisa.ResourceManager')
     def testNewTDS(self, RMMock: MagicMock):
         RMMock.mock_calls 

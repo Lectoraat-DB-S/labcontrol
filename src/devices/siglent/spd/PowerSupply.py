@@ -53,12 +53,22 @@ class SiglentPowerSupply(BaseSupply):
         
         self.host = host
         self.nrOfChan = nrOfChan
+        self.channels:SPDChannel = list()
         for i in range(1, self.nrOfChan+1):
             self.channels.append({i:SPDChannel(i, dev)})
         
-    
     def __exit__(self, *args):
         self.visaInstr.close()
+    
+    def chan(self, chanNr)-> SPDChannel:
+        """Gets a channel, based on its index: 1, 2 etc."""
+        try: 
+            for  i, val in enumerate(self.channels):
+                if (chanNr) in val.keys():
+                    return val[chanNr]
+        except ValueError:
+            print("Requested channel not available")
+            return None     
     
     def idn(self):
         """The command query identifies the instrument type and software version. The
