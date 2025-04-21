@@ -11,6 +11,22 @@ class BaseSupplyChannel(object):
     """BaseSupplyChannel: a base abstraction of a controllable channel of a power supply. Problably, an inheriting subclass
     will override all methods of this baseclass, as this baseclass hasn't got any functional implementation. 
     """
+    supplyChannelList = list()
+    
+    def __init_subclass__(cls, **kwargs):
+        """ __init_subclass__: method for autoregistration, according to pep487, See:  
+        https://peps.python.org/pep-0487/. This way of registration requires a Python environment with version >= 3.6.
+        
+        Implementation of real supplies have to inherit from this class:
+        1. This base class takes care for subclass auto registration, 
+        2. Implementing subclasses HAVE TO implement the getDevice method of this class, which has subsequent signature:
+        @classmethod def getDevice(cls, url):
+        3. Be sure BaseScope's constructor has access to the inheriting subclass during instantion. If not, the
+        subclass will not be registated and the correct supply object won't be instantiated. """
+        super().__init_subclass__(**kwargs) 
+        cls.supplyChannelList.append(cls)
+    
+    
     def __init__(self, chanNr : int = None, dev : pyvisa.resources.Resource = None):
         """__init__: This method will be called after creation of a channel object. 
         Parameters: 
@@ -150,10 +166,10 @@ class BaseSupply(object):
         self.nrOfChan = nrOfChan
         self.channels = None
 
-    def chan(self, chanNr)->BaseSupplyChannel:
-        """Method for getting the channel based on index 1, 2 etc. REMARK: this is an empty baseclass
-        implementation. Subclass implementations will have to provide this kind of functionality."""
-        pass
+    #def chan(self, chanNr:int)->BaseSupplyChannel:
+    #    """Method for getting the channel based on index 1, 2 etc. REMARK: this is an empty baseclass
+    #    implementation. Subclass implementations will have to provide this kind of functionality."""
+    #    pass
 
     def idn(self):
         """Method for retrieving the indentification string of the GPIB instrument. REMARK: this is an empty baseclass

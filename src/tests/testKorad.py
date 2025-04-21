@@ -1,5 +1,5 @@
 from devices.BaseSupply import BaseSupply, BaseSupplyChannel
-from devices.Korad.KoradSupply import Korad3305P
+from devices.Korad.KoradSupply import Korad3305P, KoradChannel
 import unittest
 from unittest.mock import call, patch, MagicMock
 
@@ -7,11 +7,13 @@ from unittest.mock import call, patch, MagicMock
 #blog : https://www.toptal.com/python/an-introduction-to-mocking-in-python
 
 class TestKoradSupply(unittest.TestCase):
+
+    theSupply = None
     
-    def __init__(self, methodName = "runKoradTest"):
+    def __init__(self, methodName = "runTest"):
         super().__init__(methodName)
-        self.myrm = None
-        self.mysupply = self.testCreateNewKorad()
+        self.mysupply = list()
+
 
     @patch('pyvisa.ResourceManager')
     def testCreateNewKorad(self, RMMock: MagicMock):
@@ -24,12 +26,31 @@ class TestKoradSupply(unittest.TestCase):
         mydev.return_value = ["Serial INSTR"]
         mydev.query.return_value = "KORAD KA3305P"
         expected = call.query("*IDN?").call_list()
-        supply = BaseSupply(None)
+        mysupply = BaseSupply(None)
+        TestKoradSupply.theSupply = mysupply
+        
         print("RMMock")
         print(RMMock.mock_calls)
         print("mydev")
         print(mydev.mock_calls)
-        self.assertTrue(supply.__module__==Korad3305P.__module__)
-        self.mysupply = supply
+        self.assertTrue(mysupply.__module__==Korad3305P.__module__)
         
+    @patch('pyvisa.ResourceManager')
+    def testNrOfChanKorad(self, RMMock: MagicMock):
+        
+        supply = TestKoradSupply.theSupply
+
+        aantalKan = supply.nrOfChan
+        self.assertTrue(aantalKan==2)
+
+    @patch('pyvisa.ResourceManager')
+    def testKoradChanObject(self, RMMock: MagicMock):
+        
+        supply = TestKoradSupply.theSupply
+
+        aantalKan = supply.nrOfChan
+        chanNr = 1
+        #chan1= TestKoradSupply.theSupply.chan(chanNr)
+        chan2 = supply.chan(2)
+        #self.assertTrue(chan1.__module__==KoradChannel.__module__)
 

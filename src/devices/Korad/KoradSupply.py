@@ -1,3 +1,4 @@
+from ast import literal_eval
 import pyvisa
 from devices.BaseSupply import BaseSupply,BaseSupplyChannel
 import socket
@@ -98,11 +99,11 @@ class Korad3305P(BaseSupply):
         config.read('.\\src\\labcontrol.ini')
         if "Korad3305P" in config.sections():
                 if 'VisaInterface' in config['Korad3305P']:
-                    Korad3305P.VISAInsterface=config['Korad3305P']['VisaInterface']
+                    Korad3305P.VISAInsterface=literal_eval(config['Korad3305P']['VisaInterface'])
                 if 'ComPort' in config['Korad3305P']:
-                    Korad3305P.targetCom=config['Korad3305P']['ComPort']
+                    Korad3305P.targetCom=literal_eval(config['Korad3305P']['ComPort'])
                 if 'PrefSearchMethod' in config['Korad3305P']:
-                    Korad3305P.prefMethod = config['Korad3305P']['PrefSearchMethod']
+                    Korad3305P.prefMethod = literal_eval(config['Korad3305P']['PrefSearchMethod'])
         else:
             Korad3305P.VISAInsterface = "ASRL"
             Korad3305P.prefMethod = "IDN"
@@ -138,7 +139,7 @@ class Korad3305P(BaseSupply):
                 desc = mydev.query("*IDN?")
                 if desc.find("KA3305P") > -1: #Korad KA3305P device found in IDN response.
                     if cls is Korad3305P:
-                        cls.__init__(cls,mydev)
+                        cls.__init__(cls, dev=mydev, host=None, nrOfChan=2)
                     return cls
                 else:
                     mydev.close()
@@ -165,7 +166,7 @@ class Korad3305P(BaseSupply):
                     desc = mydev.query("*IDN?")
                     if desc.find("KA3305P") > -1: #Korad 3305 device found in IDN response.
                         if cls is Korad3305P:
-                            cls.__init__(cls,mydev)
+                            cls.__init__(cls, dev=mydev, host=None, nrOfChan=2)
                         return cls
                     else:
                         mydev.close()
@@ -192,12 +193,12 @@ class Korad3305P(BaseSupply):
         if Korad3305P.prefMethod == "IDN" or Korad3305P.prefMethod == None:
             retval = cls.findDeviceOnIDN(rm, urls)
         else:
-            retval = Korad3305P.findVISADeviceOnComPortNr(cls, rm, urls)
+            retval = Korad3305P.findVISADeviceOnComPortNr(rm, urls)
 
         return retval
         
     def __init__(self, dev= None, host=None, nrOfChan=2):
-        super().__init__(dev,host,2)
+        super().__init__(self, dev=dev,host=host,nrOfChan=2)
         self.visaInstr : pyvisa.Resource = dev
         self.host = host
         self.nrOfChan = nrOfChan
@@ -205,7 +206,7 @@ class Korad3305P(BaseSupply):
         for i in range(1, self.nrOfChan+1):
             self.channels.append({i:KoradChannel(i, dev)})
 
-    def chan(self, chanNr)-> KoradChannel:
+    def chan(self, chanNr:int)-> KoradChannel:
         """Gets a channel, based on its index: 1, 2 etc."""
         try: 
             for  i, val in enumerate(self.channels):
