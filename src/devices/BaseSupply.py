@@ -12,6 +12,20 @@ class BaseSupplyChannel(object):
     will override all methods of this baseclass, as this baseclass hasn't got any functional implementation. 
     """
     supplyChannelList = list()
+
+    
+    #def __new__(cls):
+    #    instance = super().__new__(cls) #to have Pylance detect the proper type of a variable, call this!
+    #    if cls is BaseSupplyChannel:
+    #TODO: 22 april, gerealiseerd dat ik de volgorde van calls bij creatie van objecten nog niet helemaal gesnopen heb.
+    # De vraag: wie, waar en wanneer wordt __init__ aangeroepen? Doet Python dat? Moet de programmeur doen: in de init van de 
+    # overgeorven klasse door __super__ te gebruiken? 
+    # Nu doe ik maar wat. Bij autoregistratie, roept de baseclass in zijn __new__ functie de getDevice functie aan van de 
+    # subklassen. Deze functie roept de init aan van de bijbehorende subklasse. Maar ik roep niet altijd __super__ aan in de 
+    # init functie van de subklasse. En aangezien de testunit niet helemaal lekker werkt (resetting en/of verdwijnen van 
+    # datamembers) vraag ik mij af of ik ook niet __new__ consequent moet implementeren en wat daar dan (minimaal) in moet 
+    # komen en waarom. En ook wat de invloed is van de eis: python => 3.6
+
     
     def __init_subclass__(cls, **kwargs):
         """ __init_subclass__: method for autoregistration, according to pep487, See:  
