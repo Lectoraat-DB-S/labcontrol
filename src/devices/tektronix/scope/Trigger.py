@@ -3,11 +3,20 @@ from devices.BaseScope import BaseTriggerUnit
 from devices.tektronix.scope.Vertical import TekVertical, TekChannel
 
 class TekTrigger(BaseTriggerUnit):
+
+    @classmethod
+    def getTriggerUnitObject(cls, vertical, dev):
+        """ Tries to get (instantiate) the correct object."""
+        if cls is TekTrigger:
+            cls.__init__(cls, vertical, dev)
+            return cls
+        else:
+            return None      
     
-    def __init__(self, vertical = None, dev=None):
-        super().__init__(vertical, dev)
-        self.vertical: TekVertical = vertical
+    def __init__(self, vertical: TekVertical = None, dev=None):
+        self.vertical = vertical
         self.source = 1
+        self.visaInstr = dev
         
     def level(self):
         self.visaInstr.query("TRIGger:MAIn:LEVel?")

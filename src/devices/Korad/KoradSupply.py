@@ -198,7 +198,6 @@ class Korad3305P(BaseSupply):
         return retval
         
     def __init__(self, dev= None, host=None, nrOfChan=2):
-        super().__init__(self, dev=dev,host=host,nrOfChan=2)
         self.visaInstr : pyvisa.Resource = dev
         self.host = host
         self.nrOfChan = nrOfChan

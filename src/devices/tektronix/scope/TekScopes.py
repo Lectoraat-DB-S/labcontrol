@@ -19,9 +19,7 @@ class TekScope(BaseScope):
             This method will ONLY be called by the BaseScope class, to instantiate the proper object during
             creation by the __new__ method of BaseScope.     
         """    
-        #rm.close()
-        #rm2 = visa.ResourceManager("@sim")
-        #urls = rm2.list_resources()
+        
         urlPattern = "USB" 
         if host == None:
             for url in urls:
@@ -33,7 +31,7 @@ class TekScope(BaseScope):
                     desc = mydev.query("*IDN?")
                     if desc.find("TEKTRONIX,TDS") > -1: #Tektronix device found via IDN.
                         if cls is TekScope:
-                            cls.__init__(cls,mydev)
+                            cls.__init__(cls, mydev)
                             return cls
                         else:
                             return None        
@@ -53,10 +51,12 @@ class TekScope(BaseScope):
             Constructor for Tektronix TDS oscilloscoop. This class is a subclass of BaseScope. BaseScope implements
             the autoregristration scheme for subclasses of PEP487 which is available since python 3.6. 
         """
-        super().__init__(dev) #baseclass will store referentie to the device.
-        self.horizontal:TekHorizontal = TekHorizontal(dev)
-        self.vertical:TekVertical = TekVertical(2, dev)
-        self.trigger:TekTrigger = TekTrigger(self.vertical,dev)
+        #Edit 26-04-2025: commented line below. Calling super at this state will mess up the scope object creation
+        #process.
+        #super().__init__(dev) #baseclass will store referentie to the device.
+        self.horizontal = TekHorizontal(dev)
+        self.vertical = TekVertical(2, dev)
+        self.trigger = TekTrigger(self.vertical,dev)
        
        
     def setToDefault(self):

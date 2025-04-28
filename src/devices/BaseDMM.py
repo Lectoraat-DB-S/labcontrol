@@ -61,13 +61,10 @@ class BaseDMM(object):
         
         return instance  #needed for codecompletion by Pylance      
         
-    def __init__(self, host=None, nrOfChan=1): #For now, init should get the nrOfChan for this scope as a param.
+    def __init__(self, dev=None): #For now, init should get the nrOfChan for this scope as a param.
         """abstract init function. A subclass should be override this function, which wil intitialize object below"""
-        self.visaInstr : visa.Resource = None
-        self.host = None
-        self.nrOfChan = nrOfChan
-        self.channels = list()
-
+        self.visaInstr : visa.Resource = dev
+        
     def idn(self):
         """Method for retrieving the indentification string of the GPIB instrument. REMARK: this is an empty baseclass
         implementation. Subclass will have to provide for the asked functionality."""
@@ -79,48 +76,3 @@ class BaseDMM(object):
             self.visaInstr.close()
     
 
-class BaseChannel(object):
-    def __init__(self, dev = None):
-        self.visaInstr = None
-    
-        
-    def enable(self, state: bool):
-        """
-            Turns this channel on or off
-        """
-        pass    
-    
-    def setOCP(self, val):
-        """
-            Sets this channel's overc urrent protection (OCP)
-        """
-        pass
-    
-    def setOVP(self, val):
-        """
-            Sets this channel's over voltage protection (OVP)
-        """
-        pass
-    
-    def measV(self):
-        """
-            Measures this channel's actual output voltage
-        """
-        return None
-    
-    def measI(self):
-        """
-            Measures this channel's actual output current.
-        """
-        return None
-    
-    def setV(self, val):
-        """
-            Sets this channel's output voltage setpoint
-        """
-    
-    def setI(self, val):
-         """
-            Sets this channel's output current setpoint
-        """
-    

@@ -6,9 +6,19 @@ from devices.tektronix.scope.Channel import TekChannel
 class TekVertical(BaseVertical):
     """"Subclass of BaseVertical for Tektronix TDS1000 scope series. This class implements the baseclass."""
 
+    @classmethod
+    def getVertical(cls, dev):
+        """ Tries to get (instantiate) the device, based on the url"""
+        if cls is TekVertical:
+            cls.__init__(cls, 2, dev)
+            return cls
+        else:
+            return None   
+
     def __init__(self, nrOfChan, dev):
-        super().__init__(nrOfChan, dev) # visa dev will be initted by the Baseclass
+        #super().__init__(nrOfChan, dev) # visa dev will be initted by the Baseclass
         self.nrOfChan = nrOfChan
+        self.channels =list()
         
         for i in range(1, nrOfChan+1):
             self.channels.append({i:TekChannel(i, dev)})

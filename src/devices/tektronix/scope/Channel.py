@@ -19,20 +19,24 @@ class TekChannel(BaseChannel):
     IMMEDMEASTYPES =["CRMs","CURSORRms","DELay","FALL",
                         "FREQuency","MAXImum","MEAN","MINImum","NONe","NWIdth","PDUty","PERIod","PHAse", 
                         "PK2pk","PWIdth","RISe"]
-    #def __init__(self, chan_no: int, scope=None):
-        # 25/6/24: Got a partially imported or circular import error. A way to prevent the circular is explained here:
-        # https://stackoverflow.com/questions/64807163/importerror-cannot-import-name-from-partially-initialized-module-m
-        # But an better alternative is to change the structure so its purely hierarchical.
-        
-        #from tektronix.scope.TekScopes import TekScope
+    
+    @classmethod
+    def getChannel(cls, chan_no, dev):
+        """ Tries to get (instantiate) the device, based on the url"""
+        if cls is TekChannel:
+            cls.__init__(cls, chan_no, dev)
+            return cls
+        else:
+            return None      
+    
     def __init__(self, chan_no: int, visaInstr):
-        super().__init__(visaInstr)
+        #super().__init__(visaInstr)
         self.name = f"CH{chan_no}"
         self.log = TekLog()
         #if scope != None:
         #    self._parentScope = scope
-        self.WFP: TekWaveFormPreamble = TekWaveFormPreamble(visaInstr)
-        self.WF: TekWaveForm = TekWaveForm()
+        self.WFP= TekWaveFormPreamble(visaInstr)
+        self.WF = TekWaveForm()
         self.nrOfDivs = 5          # TODO: should be set during initialisation of the scope.
         self.isVisible = False     # Value will be only set during method setVisble.
         #self.setVisible(True)
@@ -330,8 +334,17 @@ class TekWaveFormPreamble(BaseWaveFormPreample):
         self.acqModeStr = str(hulp)
 
 class TekWaveForm(BaseWaveForm):
+
+    @classmethod
+    def getWaveFormObject(cls):
+        """ Tries to get (instantiate) the device, based on the url"""
+        if cls is TekWaveForm:
+            cls.__init__(cls)
+            return cls
+        else:
+            return None      
+        
     def __init__(self):
-        super().__init__()
         
         ####TEKTRONIX TDS SPECIFIC WAVEFORM PARAMS ########
         self.rawYdata       = None #data without any conversion or scaling taken from scope

@@ -55,7 +55,7 @@ class BaseScope(object):
         """abstract init function. A subclass should be override this function, which wil intitialize object below"""
         self.visaInstr : pyvisa.Resource = dev
         self.horizontal = None
-        self.vertical = None
+        self.vertical = BaseVertical()
         self.trigger = None
         self.utility = None
         self.host = None
@@ -67,6 +67,60 @@ class BaseScope(object):
         nor in any derived class.
             """
         return self.visaInstr
+###################################### BASECHANNEL #########################################################
+class BaseChannel(object):
+    channelList = []
+
+    def __init_subclass__(cls, **kwargs):
+        """BaseChannel: baseclass for oscilloscope (vertical) channel implementation.
+        Implementations for oscilloscopes channels have to inherit from this class:
+        1. This base class takes care for subclass auto registration, according to pep487, See:  
+        https://peps.python.org/pep-0487/
+        2. Implementing subclasses HAVE TO implement the getDevice method of this class, which has subsequent signature:
+        @classmethod def getChannel method:
+        3. Be sure BaseChannel's constructor has access to the inheriting subclass during instantion. If not, the
+        subclass will not be registated and the correct supply object won't be instantiated. """
+        super().__init_subclass__(**kwargs)
+        cls.channelList.append(cls)
+    
+    @classmethod
+    def getChannel(cls, dev):
+        """getChannel: factory method for scope channel objects. Remark: this baseclass implementation is empty """
+        pass
+
+    def __new__(cls, chan_no, visaInstr):
+        """New: creation of object. 
+        """
+        instance = super().__new__(cls) #to have Pylance detect the proper type of a variable, call this!
+
+        for channel in cls.channelList:
+            dev = channel.getChannel(chan_no, visaInstr)
+            if dev != None:
+                return dev
+        
+        return instance     
+
+    def __init__(self, chan_no, visaInstr):
+        self.visaInstr = visaInstr
+        self.chanNr = chan_no
+        self.WF = BaseWaveForm()            # the waveform ojbect of this channel
+        self.WFP = BaseWaveFormPreample(visaInstr) # the waveformpreamble object for this channel
+        
+        
+    def capture(self):
+        """Gets the waveform from the oscilloscope, by initiating a new aqquisition. This BaseChannel implementation is empty.  
+        An inheriting subclass wil have to implement this method by sending the proper SCPI commands 
+        in order need to a. get waveform descriptors, b. get the raw data and take care for store it into the proper datastructures"""
+        pass
+
+    def getAvailableMeasurements(self):
+        pass
+    
+    def getMean(self):
+        pass
+
+    def getMax(self):
+        pass
     
         
 ########## BASEVERTICAL ###########
@@ -74,6 +128,11 @@ class BaseScope(object):
 class BaseVertical(object):
     VerticalList = list()
     type ChanList = list[BaseChannel]
+
+    @classmethod
+    def getVertical(cls, dev):
+        """ Tries to get (instantiate) the device, based on the url"""
+        return None #Base class implementation: return None, because this class doesn't do any shit.
 
     
     def __init_subclass__(cls, **kwargs):
@@ -89,14 +148,27 @@ class BaseVertical(object):
         3. Use Python's properties, for the getter-setter mechanisme, See: https://realpython.com/python-property/"""
         super().__init_subclass__(**kwargs)
         cls.VerticalList.append(cls)
+
+    def __new__(cls,nrOfChan=0, dev=None):
+        instance = super().__new__(cls) #to have Pylance detect the proper type of a variable, call this!
+        
+        for verti in cls.VerticalList:
+            dev = verti.getVertical(dev)
+            if dev != None:
+                return dev
+        
+        return instance     
+    
+    def __set_name__(self, owner, name):
+        self.key = name
          
     
     def __init__(self, nrOfChan = 0, dev = None):
-        self.channels = list()           
+        self.channels = None          
         self.nrOfChan = nrOfChan       # A virtual Baseclass: so no channels available.
         self.visaInstr = dev             # default value = None, see param
               
-    def chan(self, chanNr): 
+    def chan(self, chanNr)->BaseChannel: 
         """Get the channel obejct based on the number. This method should be overridden by the 
         inherting subclass, as this BaseVertical implementation is empty."""
         pass
@@ -155,30 +227,39 @@ class BaseHorizontal(object):
         inherting subclass, as this BaseHorizontal implementation is empty."""    
         pass
 
-###################################### BASECHANNEL #########################################################
-class BaseChannel(object):
-    def __init__(self, visaInstr):
-        self.visaInstr = visaInstr
-        self.WF = BaseWaveForm()            # the waveform ojbect of this channel
-        self.WFP = BaseWaveFormPreample(visaInstr) # the waveformpreamble object for this channel
-        
-        
-    def capture(self):
-        """Gets the waveform from the oscilloscope, by initiating a new aqquisition. This BaseChannel implementation is empty.  
-        An inheriting subclass wil have to implement this method by sending the proper SCPI commands 
-        in order need to a. get waveform descriptors, b. get the raw data and take care for store it into the proper datastructures"""
-        pass
-
-    def getAvailableMeasurements(self):
-        pass
-    
-    def getMean(self):
-        pass
-
-    def getMax(self):
-        pass
 ######################################## BASEWAVEFORM #########################################################
 class BaseWaveForm(object):
+
+    WaveFormList = list()
+
+    def __init_subclass__(cls, **kwargs):
+        """BaseWaveForm: a base class for holding a channels waveform data.
+        Implementation of real scopes have to subclass their waveform implementations from this class. Reason for
+        doing so:
+        1. This base class takes care for subclass auto registration, according to pep487, See:  
+        https://peps.python.org/pep-0487/
+        2. Implementing subclasses HAVE TO implement the getDevice method of this class, which has subsequent signature:
+        @classmethod 
+        def getDevice(cls, url):
+        3. Be sure BasewaveForm's constructor has access to the inheriting subclass during instantion. If not, the
+        subclass will not be registated and the correct supply object won't be instantiated. 
+        """
+        super().__init_subclass__(**kwargs)
+        cls.WaveFormList.append(cls)
+
+    @classmethod
+    def getWaveFormObject(cls):
+        return cls
+        
+    def __new__(cls):
+        instance = super().__new__(cls) #to have Pylance detect the proper type of a variable, call this!
+        
+        for wave in cls.WaveFormList:
+            waveObj = wave.getWaveFormObject()
+            if waveObj != None:
+                return waveObj
+        
+        return instance     
     
     def __init__(self):
         """Class for holding waveform data of a channel capture and the methods to transform raw sample data into soming fysical meaningful, such as voltage."""
@@ -195,6 +276,10 @@ class BaseWaveFormPreample(object):
 class BaseTriggerUnit(object):
     """The base software representation of a triggerunit. This class has an empty implementation. An inheriting subclass will have to implement desired behaviour"""
     triggerUnitList = []
+
+    @classmethod
+    def getTriggerUnitObject(cls, vertical, dev):
+        return cls
     
     def __init_subclass__(cls, **kwargs):
         """BaseScope: base class for oscilloscope implementation.
@@ -220,8 +305,12 @@ class BaseTriggerUnit(object):
         see: https://peps.python.org/pep-0487/      
         """
         instance = super().__new__(cls) #to have Pylance detect the proper type of a variable, call this!
+        for trigger in cls.triggerUnitList:
+            triggerUnitObj = trigger.getTriggerUnitObject(vertical, dev)
+            if triggerUnitObj != None:
+                return triggerUnitObj
         
-        return instance
+        return instance     
 
     
     def __init__(self, vertical=None, dev=None):
