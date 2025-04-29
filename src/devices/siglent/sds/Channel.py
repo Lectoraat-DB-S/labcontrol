@@ -1,29 +1,21 @@
 from enum import Enum
-import pyvisa as visa
+import pyvisa
 import numpy as np
-import time
-import struct
+
 
 from devices.BaseScope import BaseChannel, BaseWaveForm, BaseWaveFormPreample
-from devices.tektronix.scope.TekLogger import TekLog
 
-class TekScopeEncodings(Enum):
-    ASCII = "ASCi"
-    RIBinary = "RIBinary" #Signed Integer, most significant byte first, fastest
-    RPBinary = "RPBinary" #positive Integer, most significant byte first
-    SRIbinary = "SRIbinary"#Signed Interger, least significant byte first.
-    SRPbinary = "SRPbinary"#positive Integer, least significant byte first
-      
 
-class TekChannel(BaseChannel):
-    IMMEDMEASTYPES =["CRMs","CURSORRms","DELay","FALL",
-                        "FREQuency","MAXImum","MEAN","MINImum","NONe","NWIdth","PDUty","PERIod","PHAse", 
-                        "PK2pk","PWIdth","RISe"]
+
+class SDSChannel(BaseChannel):
+    #IMMEDMEASTYPES =["CRMs","CURSORRms","DELay","FALL",
+    #                    "FREQuency","MAXImum","MEAN","MINImum","NONe","NWIdth","PDUty","PERIod","PHAse", 
+    #                    "PK2pk","PWIdth","RISe"]
     
     @classmethod
     def getChannel(cls, chan_no, dev):
         """ Tries to get (instantiate) the device, based on the url"""
-        if cls is TekChannel:
+        if cls is SDSChannel:
             cls.__init__(cls, chan_no, dev)
             return cls
         else:
@@ -32,15 +24,10 @@ class TekChannel(BaseChannel):
     def __init__(self, chan_no: int, visaInstr):
         #super().__init__(visaInstr)
         self.name = f"CH{chan_no}"
-        self.log = TekLog()
-        #if scope != None:
-        #    self._parentScope = scope
-        self.WFP= TekWaveFormPreamble(visaInstr)
-        self.WF = TekWaveForm()
-        self.nrOfDivs = 5          # TODO: should be set during initialisation of the scope.
-        self.isVisible = False     # Value will be only set during method setVisble.
-        #self.setVisible(True)
-        self.encoding = None
+        #TODO: code subsequent correctly
+        #self.WFP= TekWaveFormPreamble(visaInstr)
+        #self.WF = TekWaveForm()
+    ############ EVERYTING BELOW THIS LINE IS TEKTRONIX CODE, TOBE EDITED !!!! #########################    
         
     def queryNrOfSamples(self):
         NR_PT =  int(self._visaInstr.query('WFMPRE:NR_PT?')) #Requesting the number of samples

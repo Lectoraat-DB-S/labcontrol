@@ -1,15 +1,18 @@
-# some info on module reference: see https://stackoverflow.com/questions/448271/what-is-init-py-for
 import time
 import numpy as np
 from enum import Enum
 import socket
-import pyvisa as visa
+import pyvisa
 import logging
 import time
 #from devices.BaseScope import BaseScope
 from devices.siglent.sds.Channels import SDSChannel
 from devices.siglent.sds.util import INR_HASHMAP
 import devices.siglent.sds.util as util
+from devices.BaseScope import BaseScope
+from devices.siglent.sds.Vertical import SDSVertical
+from devices.siglent.sds.Horizontal import SDSHorizontal
+from devices.siglent.sds.Trigger import SDSTrigger
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -19,9 +22,23 @@ class SiglentWaveformWidth(Enum):
     BYTE = "BYTE"
     WORD = "WORD"
 
-class SiglentScope(object):
+class SiglentScope(BaseScope):
 
     KNOWN_MODELS = [
+        "SDS1000CFL",   #non-SPO model Series
+        "SDS1000A",     #non-SPO model Series
+        "SDS1000CML+",  #non-SPO model Series
+        "SDS1000CNL+",  #non-SPO model Series
+        "SDS1000DL+",   #non-SPO model Series
+        "SDS1000E+",    #non-SPO model Series
+        "SDS1000F+",    #non-SPO model Series
+        "SDS2000",      #SPO model Series
+        "SDS2000X",     #SPO model Series
+        "SDS1000X",     #SPO model Series
+        "SDS1000X+",    #SPO model Series
+        "SDS1000X-E",   #SPO model Series
+        "SDS1000X-C",   #SPO model Series
+        #USED MODEL (TESTED) SHOWN BELOW
         "SDS2504X Plus",
         "SDS1202X",
         "SDS1202X-E",
@@ -33,56 +50,53 @@ class SiglentScope(object):
     }
     
     @classmethod
-    def getDevice(cls, rm, urls, host):
+    def getDevice(cls, rm: pyvisa.ResourceManager, urls, host):
         """
             Tries to get (instantiate) this device, based on matched url or idn response
             This method will ONLY be called by the BaseScope class, to instantiate the proper object during
             creation by the __new__ method of BaseScope.     
         """  
-        if host is None:
-            pattern = "SDS"
-            for url in urls:
-                if pattern in url:
-                    mydev = rm.open_resource(url)
-                    cls.__init__(cls,**kwargs)
-                    return cls
+        if cls is SiglentScope:
+            if host is None:
+                pattern = "SDS"
+                for url in urls:
+                    if pattern in url:
+                        mydev = rm.open_resource(url)
+                        mydev.timeout = 10000  # ms
+                        mydev.read_termination = '\n'
+                        mydev.write_termination = '\n'
+                        cls.__init__(cls, mydev)
+                        return cls
+                        
+            else:
+                try:
+                    logger.info(f"Trying to resolve host {host}")
+                    ip_addr = socket.gethostbyname(host)
+                except socket.gaierror:
+                    logger.error(f"Couldn't resolve host {host}")
+                    return None
+                mydev = rm.open_resource("TCPIP::"+str(ip_addr)+"::INSTR")
+                cls.__init__(cls, mydev)
+                return cls
         else:
-            try:
-                logger.info(f"Trying to resolve host {host}")
-                ip_addr = socket.gethostbyname(host)
-            except socket.gaierror:
-                logger.error(f"Couldn't resolve host {host}")
-                return None
-            mydev = rm.open_resource("TCPIP::"+str(ip_addr)+"::INSTR")
-            return cls
-        
+            return None
+            
 
-    def __init__(self, host = None):
+    def __init__(self, dev = None, host = None):
         
         #self._inst = dev
-        
-        rm = visa.ResourceManager()
-        if host is None:
-            theList = rm.list_resources()
-            pattern = "SDS"
-            for url in theList:
-                if pattern in url:
-                    mydev = rm.open_resource(url)
-                    self._inst = mydev
-                    break
-        else:
-            self._host = host
-            try:
-                logger.info(f"Trying to resolve host {self._host}")
-                ip_addr = socket.gethostbyname(self._host)
-            except socket.gaierror:
-                logger.error(f"Couldn't resolve host {self._host}")
-            mydev = rm.open_resource("TCPIP::"+str(ip_addr)+"::INSTR")
-            self._inst = mydev
-        
-        self.CH1 = SDSChannel(1, self, logger)
-        self.CH2 = SDSChannel(2, self, logger)
-
+        """ 
+            Constructor for Tektronix TDS oscilloscoop. This class is a subclass of BaseScope. BaseScope implements
+            the autoregristration scheme for subclasses of PEP487 which is available since python 3.6. 
+        """
+        #Edit 26-04-2025: commented line below. Calling super at this state will mess up the scope object creation
+        #process.
+        #super().__init__(dev) #baseclass will store referentie to the device.
+        self.horizontal = SDSHorizontal(dev)
+        self.vertical = SDSVertical(2, dev)
+        self.trigger = SDSTrigger(self.vertical,dev)
+    
+    #TODO: move this to getDevice or to __init__
     def __enter__(self):
         try:
             dsc = self.query("*IDN?")
@@ -99,16 +113,8 @@ class SiglentScope(object):
         logger.debug(f"Discovered {model} by {mnf}")
         if model not in self.KNOWN_MODELS:
             raise Exception(f"Device {model} not supported")
-        #controle of onderstaande niet definitie eruit kan, 
-        #self.CH1 = SDSChannel(1, self)
-        #self.CH2 = SDSChannel(2, self)
         return self
 
-
-    #   @classmethod
-    #    def usb_device(cls, visa_rscr: str = None):
-    #        return USBDevice(visa_rscr)
-        
     def query(self, cmd: str):
         return self._inst.query(cmd)
     

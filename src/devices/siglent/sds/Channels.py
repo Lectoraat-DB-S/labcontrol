@@ -1,3 +1,4 @@
+#OLD SIGLENT SDS CHANNEL ABSTRACTIION FILE
 import time
 import struct
 import numpy as np
@@ -22,14 +23,12 @@ class SDSChannel(object):
     C4 = "C4"
     center_code = 127
 
-
     def __init__(self, chan_no: int, dev, logger):
         self._name = f"C{chan_no}"
         self._logger = logger
         self._dev = dev
         self._WVT = WaveFormTrace()
         
-
     def setIimeBase(self, value):
         """The query returns the parameters of the source using by the command
         :WAVeform:SOURce.

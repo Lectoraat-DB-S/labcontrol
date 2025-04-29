@@ -19,32 +19,32 @@ class TekScope(BaseScope):
             This method will ONLY be called by the BaseScope class, to instantiate the proper object during
             creation by the __new__ method of BaseScope.     
         """    
-        
-        urlPattern = "USB" 
-        if host == None:
-            for url in urls:
-                if urlPattern in url:
-                    mydev = rm.open_resource(url)
-                    mydev.timeout = 10000  # ms
-                    mydev.read_termination = '\n'
-                    mydev.write_termination = '\n'
-                    desc = mydev.query("*IDN?")
-                    if desc.find("TEKTRONIX,TDS") > -1: #Tektronix device found via IDN.
-                        if cls is TekScope:
+        if cls is TekScope:
+            urlPattern = "USB" 
+            if host == None:
+                for url in urls:
+                    if urlPattern in url:
+                        mydev = rm.open_resource(url)
+                        mydev.timeout = 10000  # ms
+                        mydev.read_termination = '\n'
+                        mydev.write_termination = '\n'
+                        desc = mydev.query("*IDN?")
+                        if desc.find("TEKTRONIX,TDS") > -1: #Tektronix device found via IDN.
                             cls.__init__(cls, mydev)
                             return cls
-                        else:
-                            return None        
+                            
+            else:
+                try:
+                    ip_addr = socket.gethostbyname(host)
+                    addr = 'TCPIP::'+str(ip_addr)+'::INSTR'
+                    mydev = rm.open_resource('TCPIP::'+str(ip_addr)+'::INSTR')
+                    cls.__init__(cls,mydev)
+                    return cls
+                except socket.gaierror:
+                    
+                    return None
         else:
-            try:
-                ip_addr = socket.gethostbyname(host)
-                addr = 'TCPIP::'+str(ip_addr)+'::INSTR'
-                mydev = rm.open_resource('TCPIP::'+str(ip_addr)+'::INSTR')
-                cls.__init__(cls,mydev)
-                return cls
-            except socket.gaierror:
-                
-                return None
+            return None
     
     def __init__(self, dev):
         """ 
