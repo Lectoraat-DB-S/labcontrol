@@ -74,17 +74,23 @@ if __name__ == "__main__":
     
     #print(rm.list_resources_info())  
     
-    #dummyUse()
+    dummyUse()
     #testKorad()
-    performTransCurve()
+    #performTransCurve()
     #logger = logging.getLogger(__name__)
     #logger.setLevel(logging.DEBUG)
 
     #testPickle(logger)
     #initLog()0
     #logging.info('Main Started')
-    #rm = pyvisa.ResourceManager()
-    #myList=rm.list_resources()
+  
+    #scope = BaseScope()
+    #vertie = scope.vertical
+    #print(vertie)
+    
+    #vertie.chan()
+    #chan1 = scope.vertical.getchan(1)
+    #chan1.capture()
     #print(myList)
     #mydev = rm.open_resource(myList[0])
     #print(mydev.timeout)

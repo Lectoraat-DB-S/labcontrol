@@ -1,5 +1,5 @@
 from enum import Enum
-import pyvisa as visa
+import pyvisa
 import numpy as np
 import time
 import struct
@@ -7,13 +7,6 @@ import struct
 from devices.BaseScope import BaseChannel, BaseWaveForm, BaseWaveFormPreample
 from devices.tektronix.scope.TekLogger import TekLog
 
-class TekScopeEncodings(Enum):
-    ASCII = "ASCi"
-    RIBinary = "RIBinary" #Signed Integer, most significant byte first, fastest
-    RPBinary = "RPBinary" #positive Integer, most significant byte first
-    SRIbinary = "SRIbinary"#Signed Interger, least significant byte first.
-    SRPbinary = "SRPbinary"#positive Integer, least significant byte first
-      
 
 class TekChannel(BaseChannel):
     IMMEDMEASTYPES =["CRMs","CURSORRms","DELay","FALL",
@@ -21,16 +14,14 @@ class TekChannel(BaseChannel):
                         "PK2pk","PWIdth","RISe"]
     
     @classmethod
-    def getChannel(cls, chan_no, dev):
-        """ Tries to get (instantiate) the device, based on the url"""
+    def getChannelClass(cls, chan_no, dev):
+        """ Tries to get the right device class, based on the url"""
         if cls is TekChannel:
-            cls.__init__(cls, chan_no, dev)
             return cls
         else:
             return None      
-    
-    def __init__(self, chan_no: int, visaInstr):
-        #super().__init__(visaInstr)
+    def __init__(self, chan_no: int, visaInstr:pyvisa.resources.MessageBasedResource):
+        super().__init__(chan_no, visaInstr)
         self.name = f"CH{chan_no}"
         self.log = TekLog()
         #if scope != None:
@@ -38,67 +29,29 @@ class TekChannel(BaseChannel):
         self.WFP= TekWaveFormPreamble(visaInstr)
         self.WF = TekWaveForm()
         self.nrOfDivs = 5          # TODO: should be set during initialisation of the scope.
-        self.isVisible = False     # Value will be only set during method setVisble.
-        #self.setVisible(True)
+        
+        #self.setVisible(state=True)
         self.encoding = None
         
     def queryNrOfSamples(self):
-        NR_PT =  int(self._visaInstr.query('WFMPRE:NR_PT?')) #Requesting the number of samples
-        return NR_PT
-        
-   
-    def setAsSource(self):
-        """Sets or queries which waveform will be transferred from the oscilloscope by the
-        CURVe, WFMPre, or WAVFrm? queries. You can transfer only one waveform
-        at a time.
-        """ 
-        #check if channel is valid 
-        self.visaInstr.write(f"DATA:SOURCE {self._name}") #Sets the channel as data source     
-
-    def setToDefault(self):
-        self.setEncoding(TekScopeEncodings.RIBinary)
-        self.setNrOfByteTransfer(2)
+        NR_PT =  int(self.visaInstr.query('WFMPRE:NR_PT?')) #Requesting the number of samples
+        return NR_PT     
          
     def setVisible(self, state:bool):
         if state:
-            self.visaInstr.write(f"SELECT:{self._name} ON")
+            self.visaInstr.write(f"SELECT:{self.name} ON")
             self.isVisible = True
         else:
-            self.visaInstr.write(f"SELECT:{self._name} OFF")
+            self.visaInstr.write(f"SELECT:{self.name} OFF")
             self.isVisible = False
             
     def isVisible(self):
         return self.isVisible
                 
-    def setEncoding(self, encoding: TekScopeEncodings):
-        if isinstance(encoding, TekScopeEncodings):
-            if (encoding==encoding.RIBinary or encoding==encoding.ASCII or 
-                encoding==encoding.RPBinary or
-                encoding==encoding.SRIbinary or
-                encoding==encoding.SRPbinary):
-                
-                self.visaInstr.write(f"DATa:ENCdg {encoding.value}")
-                self.encoding = encoding
-            else:
-                self.log.addToLog("Unknown encoding type. switch to RIBinary format")
-                self.visaInstr.write(f"DATa:ENCdg {encoding.RIBinary.value}")
-            
-    def setNrOfByteTransfer(self, nrOfBytes=1):
-        if (nrOfBytes==1):
-            self.visaInstr.write('wfmpre:byt_nr 1')
-        elif (nrOfBytes==2):
-            self.visaInstr.write('wfmpre:byt_nr 2')
-        else:
-            self.visaInstr.write('wfmpre:byt_nr 1')
-            self.log.addToLog("ÏNVALID USER SETTING! Number of byte transfer set to one.")
-                
+    
     def getLastTrace(self):
         return self.WF
-    
-    def queryHorizontalSecDiv(self):
-        SEC_DIV = float(self.visaInstr.query('HORIZONTAL:MAIN:SECDIV?')) #Requesting the horizontal scale in SEC/DIV
-        return SEC_DIV   
-    
+       
     def setVertScale(self, scale):
         #TODO check validity of param
         self.visaInstr.write(f"{self._name}:SCALE {scale}") #Sets V/DIV CH1
@@ -111,11 +64,13 @@ class TekChannel(BaseChannel):
         else:   
             self.log.addToLog("invalid VDIV input, ignoring.....") 
     
-    def setTimeDiv(self, time):
-        self.visaInstr.write(f"HORizontal:MAIn:SCAle {time}")
-    
     def setAsSource(self):
-        self.visaInstr.write(f"DATA:SOURCE {self.name}") #Sets the channel as data source for transimitting data
+        """Sets or queries which waveform will be transferred from the oscilloscope by the
+        CURVe, WFMPre, or WAVFrm? queries. You can transfer only one waveform
+        at a time.
+        """ 
+        #check if channel is valid 
+        self.visaInstr.write(f"DATA:SOURCE {self._name}") #Sets the channel as data source     
     
     def getSource(self):   
         return self.visaInstr.query(f"DATA:SOURCE?")
@@ -126,21 +81,39 @@ class TekChannel(BaseChannel):
         return int(self.visaInstr.query(f"wfmpre:{self._name}:nr_pt?")) #For a channel version of this command:see programming guide page 231
           
     def capture(self):
-        """Gets the waveform from the oscilloscope. This is TDS2000 series implementation, which send all relevant data by SCPI and than query 
-        the Tektronix scope for the correct data"""
+        """Capture: getting the waveform data from the oscilloscope. This is the Tektronix TDS2000 series 
+        implementation. According to the information in the TDS programming manual on page 54, 86, this method 
+        implements the following logic:
+2. Use the DATa:ENCdg command to specify the waveform data format.
+3. Use the DATa:WIDth command to specify the number of bytes per data point.
+4. Use the DATa:STARt and DATa:STOP commands to specify the part of the
+waveform that you want to transfer.
+5. Use the WFMPre? command to transfer waveform preamble information.
+6. Use the CURVe command to transfer waveform data.
+        1. It sets this channel to be visible, preventing therefore an errormessage send by the scope.
+        2. It sets this channel as being the source which has to be transferred by the scope to the computer. As
+            the TDS programming manual states on page 86: 'Only one waveform can be transferred at a time.' 
+        3. It sets the binary data format for transerring data.
+        4. It sets the number of bytes per data point to 1. 
+        5. It will query the preamble of this channel.
+        6. It will set the relevant data members of this channels waveformdata structure.
+        7. It will query the scope for the data.
+        8. When data has been transferred, this method will set the relevant datamembers of this channel's waveform
+            struct. """
         wfp = self.WFP
         trace = self.WF
+        self.setVisible(True)
         self.setAsSource()
+        self.visaInstr.write(f"DATa:ENCdg RPBinary")
+        self.visaInstr.write(f"DATA:WIDTH 1")
         wfp.queryPreamble()
         trace.setWaveFormID(wfp)
         self.log.addToLog("start querying scope")
         bin_wave = self.visaInstr.query_binary_values('curve?', datatype='b', container=np.array)
         self.log.addToLog("scope query ended")
-        
-        
         trace.rawYdata = bin_wave
         trace.rawXdata = np.linspace(0, wfp.nrOfSamples-1, num=int(wfp.nrOfSamples),endpoint=False)
-        total_time = wfp.sampleTime * wfp.nrOfSamples
+        total_time = wfp.sampleStepTime * wfp.nrOfSamples
         tstop = wfp.xzero + total_time
         scaled_time = np.linspace( wfp.xzero, tstop, num=int(wfp.nrOfSamples))
         # vertical (voltage)
@@ -155,11 +128,7 @@ class TekChannel(BaseChannel):
     def queryEncoding(self):
         return self.visaInstr.query("DATa:ENCdg?")
     
-    def setBinEncoding(self):
-        self._visaInstr.write('data:encdg RIBINARY')
-    
-    
-    
+
     def queryWaveFormPreamble(self):
         #TODO add intern state for ascii or binary. Defines query or binary_query
         self.setAsSource()
@@ -246,7 +215,16 @@ class TekChannel(BaseChannel):
 class TekWaveFormPreamble(BaseWaveFormPreample):
     """Class for holding the Tektronix TDS1000 scope series preamble. Extends BaseWaveFormPreamble.
     A preample is data describing the unit, range and spacing of a Waveform."""
-    def __init__(self, visaInstruments):
+
+    @classmethod
+    def getWaveFormPreambleClass(cls, dev):
+        """ Tries to get (instantiate) the right instance based on the type"""
+        if cls is TekWaveFormPreamble:
+            return cls
+        else:
+            return None      
+
+    def __init__(self, dev:pyvisa.resources.MessageBasedResource=None):
         """TekWaveFormPreamble init. Inits all datamembers to the value None.
         Following data members are set:
         self.nrOfBytePerTransfer   : Number of bytes per sample or in total => check!
@@ -256,7 +234,7 @@ class TekWaveFormPreamble(BaseWaveFormPreample):
         self.binFirstByteStr       : Location of first byte(? Checken!), see documentation
         self.nrOfSamples           : number of samples of acquired waveform
         self.vertMode              : Indicaties YT,XY, or FFT mode
-        self.sampleTime            : Sampleperiode (?, CHECKEN)
+        self.sampleStepTime        : Sampleperiode (?, CHECKEN)
         self.xincr                 : Time between to samples
         self.xzero                 : Location of X=0 on screen horizontally
         self.xUnitStr              : Horizontal axis unit
@@ -264,7 +242,7 @@ class TekWaveFormPreamble(BaseWaveFormPreample):
         self.yzero                 : Location of Y=0 on screen vertically
         self.yoff                  : Vertical offset on the display
         self.yUnitStr              : Vertical axis unit"""
-        super().__init__(visaInstruments)
+        super().__init__()
         ##### START OF TEKTRONIX TDS TYPICAL PARAMETERS DEFINITION ####### 
         self.nrOfBytePerTransfer   = None
         self.nrOfBitsPerTransfer   = None
@@ -273,7 +251,7 @@ class TekWaveFormPreamble(BaseWaveFormPreample):
         self.binFirstByteStr       = None
         self.nrOfSamples           = None
         self.vertMode              = None #Y, XY, or FFT.
-        self.sampleTime            = None
+        self.sampleStepTime            = None
         self.xincr                 = None
         self.xzero                 = None
         self.xUnitStr              = None
@@ -298,7 +276,7 @@ class TekWaveFormPreamble(BaseWaveFormPreample):
         self.binFirstByteStr        = str(paramlist[4])
         self.nrOfSamples            = int(paramlist[5])
         self.vertMode               = str(paramlist[7])
-        self.sampleTime             = float(paramlist[8])
+        self.sampleStepTime         = float(paramlist[8])
         self.xincr                  = float(paramlist[8])
         self.xzero                  = float(paramlist[10])
         self.xUnitStr               = str(paramlist[11])
@@ -336,20 +314,19 @@ class TekWaveFormPreamble(BaseWaveFormPreample):
 class TekWaveForm(BaseWaveForm):
 
     @classmethod
-    def getWaveFormObject(cls):
-        """ Tries to get (instantiate) the device, based on the url"""
+    def getWaveFormClass(cls):
+        """ Tries to get (instantiate) the right instance based on the type"""
         if cls is TekWaveForm:
-            cls.__init__(cls)
             return cls
         else:
             return None      
         
     def __init__(self):
-        
         ####TEKTRONIX TDS SPECIFIC WAVEFORM PARAMS ########
+        super().__init__()
         self.rawYdata       = None #data without any conversion or scaling taken from scope
         self.rawXdata       = None #just an integer array
-        self.scaledYdata    = None #data converted to correct scale e.g untis
+        self.scaledYdata    = None #data converted to correct scale e.g units
         self.scaledXdata    = None #An integer array representing the fysical instants of the scaledYData.
         #Horizontal data settings of scope
         self.chanstr        = None
@@ -360,7 +337,7 @@ class TekWaveForm(BaseWaveForm):
         self.xUnitStr       = None # unit of X-as/xdata
         self.xincr          = None # multiplier for scaling time data, time between two sample points.
         self.nrOfSamples    = None # the number of points of trace.
-        self.sampleTime     = None # same as XINCR, Ts = time between to samples.
+        self.sampleStepTime = None # same as XINCR, Ts = time between to samples.
         self.yzero          = None 
         self.ymult          = None # vertical step scaling factor. Needed to translate binary value of sample to real stuff.
         self.yoff           = None # vertical offset in V for calculating voltage
@@ -375,7 +352,7 @@ class TekWaveForm(BaseWaveForm):
         self.xUnitStr       = wfp.xUnitStr
         self.xincr          = wfp.xincr
         self.nrOfSamples    = wfp.nrOfSamples
-        self.sampleTime     = wfp.sampleTime
+        self.sampleStepTime = wfp.sampleStepTime
         self.yzero          = wfp.yzero
         self.yoff           = wfp.yoff
         self.ymult          = wfp.ymult

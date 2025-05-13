@@ -7,16 +7,15 @@ class TekVertical(BaseVertical):
     """"Subclass of BaseVertical for Tektronix TDS1000 scope series. This class implements the baseclass."""
 
     @classmethod
-    def getVertical(cls, dev):
+    def getVerticalClass(cls, dev):
         """ Tries to get (instantiate) the device, based on the url"""
         if cls is TekVertical:
-            cls.__init__(cls, 2, dev)
-            return cls
+            return (cls, 2)
         else:
             return None   
 
     def __init__(self, nrOfChan, dev):
-        #super().__init__(nrOfChan, dev) # visa dev will be initted by the Baseclass
+        super().__init__(nrOfChan, dev) # visa dev will be initted by the Baseclass
         self.nrOfChan = nrOfChan
         self.channels =list()
         

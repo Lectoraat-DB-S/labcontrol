@@ -1,19 +1,28 @@
-import pyvisa as visa
+import pyvisa
 import numpy as np
 import socket
 from devices.BaseScope import BaseScope, BaseVertical, BaseHorizontal
 from devices.tektronix.scope.Horizontal import TekHorizontal
 from devices.tektronix.scope.Vertical import TekVertical
 from devices.tektronix.scope.Trigger import TekTrigger
+from enum import Enum
 
 from devices.tektronix.scope.TekLogger import TekLog
 
 debug=True
 
+class TekScopeEncodings(Enum):
+    ASCII = "ASCi"
+    RIBinary = "RIBinary" #Signed Integer, most significant byte first, fastest
+    RPBinary = "RPBinary" #positive Integer, most significant byte first
+    SRIbinary = "SRIbinary"#Signed Interger, least significant byte first.
+    SRPbinary = "SRPbinary"#positive Integer, least significant byte first
+      
+
 class TekScope(BaseScope):
     
     @classmethod
-    def getDevice(cls, rm, urls, host):
+    def getScopeClass(cls, rm, urls, host):
         """
             Tries to get (instantiate) this device, based on matched url or idn response
             This method will ONLY be called by the BaseScope class, to instantiate the proper object during
@@ -30,8 +39,9 @@ class TekScope(BaseScope):
                         mydev.write_termination = '\n'
                         desc = mydev.query("*IDN?")
                         if desc.find("TEKTRONIX,TDS") > -1: #Tektronix device found via IDN.
-                            cls.__init__(cls, mydev)
-                            return cls
+                            return (cls, mydev)
+                        else:
+                            return (None, None)
                             
             else:
                 try:
@@ -39,48 +49,56 @@ class TekScope(BaseScope):
                     addr = 'TCPIP::'+str(ip_addr)+'::INSTR'
                     mydev = rm.open_resource('TCPIP::'+str(ip_addr)+'::INSTR')
                     cls.__init__(cls,mydev)
-                    return cls
+                    return (cls, mydev)
                 except socket.gaierror:
-                    
-                    return None
+                    print("Socket Error")
+                    return (None, None)
         else:
-            return None
+            return (None, None)
     
-    def __init__(self, dev):
+    def __init__(self, host: str=None, visaInstr:pyvisa.resources.MessageBasedResource=None):
+    #def __init__(self, visaResc: pyvisa.resources.MessageBasedResource):
         """ 
-            Constructor for Tektronix TDS oscilloscoop. This class is a subclass of BaseScope. BaseScope implements
+            Constructor for Tektronix TDS osself, cilloscoop. This class is a subclass of BaseScope. BaseScope implements
             the autoregristration scheme for subclasses of PEP487 which is available since python 3.6. 
         """
-        #Edit 26-04-2025: commented line below. Calling super at this state will mess up the scope object creation
-        #process.
-        #super().__init__(dev) #baseclass will store referentie to the device.
-        self.horizontal = TekHorizontal(dev)
-        self.vertical = TekVertical(2, dev)
-        self.trigger = TekTrigger(self.vertical,dev)
+        super().__init__(host,visaInstr) #baseclass will store referentie to the device.
+        self.horizontal = TekHorizontal(visaInstr)
+        self.vertical = TekVertical(2, visaInstr)
+        self.trigger = TekTrigger(self.vertical,visaInstr)
+        #self.setToDefault(self)
        
        
     def setToDefault(self):
         self.setBinEncoding()
-        self.setNrOfByteTransfer(2)
+        self.setNrOfByteTransfer(1)
 
-    
-    
-    #FOR TEKTRONIX TDS series nrOfBytes is 1 or 2.
+    def setEncoding(self, encoding: TekScopeEncodings):
+        if isinstance(encoding, TekScopeEncodings):
+            if (encoding==encoding.RIBinary or encoding==encoding.ASCII or 
+                encoding==encoding.RPBinary or
+                encoding==encoding.SRIbinary or
+                encoding==encoding.SRPbinary):
+                
+                self.visaInstr.write(f"DATa:ENCdg {encoding.value}")
+                self.encoding = encoding
+            else:
+                self.log.addToLog("Unknown encoding type. switch to RIBinary format")
+                self.visaInstr.write(f"DATa:ENCdg {encoding.RIBinary.value}")
+            
     def setNrOfByteTransfer(self, nrOfBytes=1):
         if (nrOfBytes==1):
-            self._visaInstr.write('wfmpre:byt_nr 1')
+            self.visaInstr.write('wfmpre:byt_nr 1')
         elif (nrOfBytes==2):
-            self._visaInstr.write('wfmpre:byt_nr 2')
+            self.visaInstr.write('wfmpre:byt_nr 2')
         else:
-            self._visaInstr.write('wfmpre:byt_nr 1')
+            self.visaInstr.write('wfmpre:byt_nr 1')
             self.log.addToLog("ÏNVALID USER SETTING! Number of byte transfer set to one.")
-    
+                
     def getNrOfPoints(self):
         #TODO:
         # correct handling of event code 2244
-        return int(self._visaInstr.query('wfmpre:nr_pt?')) #For a channel version of this command:see programming guide page 231
-            
-       
+        return int(self.visaInstr.query('wfmpre:nr_pt?')) #For a channel version of this command:see programming guide page 231  
     
     def setDataTransferWidth(self,width):
         #TODO: check validity of width param     

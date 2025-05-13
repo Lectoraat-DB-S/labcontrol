@@ -1,0 +1,454 @@
+<!--?xml version="1.0" encoding="utf-8"?-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">
+<html lang="en" style="--wm-toolbar-height: 67px;"><head><script src="How-To%20Guide%20for%20Descriptors_bestanden/athena.js" type="text/javascript"></script>
+<script type="text/javascript">window.addEventListener('DOMContentLoaded',function(){var v=archive_analytics.values;v.service='wb';v.server_name='wwwb-app223.us.archive.org';v.server_ms=1677;archive_analytics.send_pageview({});});</script>
+<script type="text/javascript" src="How-To%20Guide%20for%20Descriptors_bestanden/bundle-playback.js" charset="utf-8"></script>
+<script type="text/javascript" src="How-To%20Guide%20for%20Descriptors_bestanden/wombat.js" charset="utf-8"></script>
+<script>window.RufflePlayer=window.RufflePlayer||{};window.RufflePlayer.config={"autoplay":"on","unmuteOverlay":"hidden"};</script>
+<script type="text/javascript" src="How-To%20Guide%20for%20Descriptors_bestanden/ruffle.js"></script>
+<script type="text/javascript">
+    __wm.init("http://web.archive.org/web");
+  __wm.wombat("http://users.rcn.com/python/download/Descriptor.htm","20170221220235","http://web.archive.org/","web","https://web-static.archive.org/_static/",
+	      "1487714555");
+</script>
+<link rel="stylesheet" type="text/css" href="How-To%20Guide%20for%20Descriptors_bestanden/banner-styles.css">
+<link rel="stylesheet" type="text/css" href="How-To%20Guide%20for%20Descriptors_bestanden/iconochive.css">
+<!-- End Wayback Rewrite JS Include -->
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="generator" content="Docutils: http://docutils.sourceforge.net/">
+<link rel="stylesheet" href="How-To%20Guide%20for%20Descriptors_bestanden/default.css" type="text/css">
+<title>How-To Guide for Descriptors</title>
+<meta name="author" content="Raymond Hettinger">
+<meta name="contact" content="&lt;python at rcn dot com&gt;">
+<meta name="copyright" content="Copyright (c) 2003, 2004 Python Software Foundation. All rights reserved.">
+<style></style><style></style></head>
+<body><!-- BEGIN WAYBACK TOOLBAR INSERT -->
+<script>__wm.rw(0);</script>
+<div id="wm-ipp-base" lang="en" style="display: block; direction: ltr; height: 67px;" toolbar-mode="auto">
+</div><div id="wm-ipp-print">The Wayback Machine - http://web.archive.org/web/20170221220235/http://users.rcn.com/python/download/Descriptor.htm</div>
+<script type="text/javascript">//<![CDATA[
+__wm.bt(750,27,25,2,"web","http://users.rcn.com/python/download/Descriptor.htm","20170221220235",1996,"https://web-static.archive.org/_static/",["https://web-static.archive.org/_static/css/banner-styles.css?v=p7PEIJWi","https://web-static.archive.org/_static/css/iconochive.css?v=3PDvdIFv"], false);
+  __wm.rw(1);
+//]]></script>
+<!-- END WAYBACK TOOLBAR INSERT -->
+ 
+<div class="document" id="how-to-guide-for-descriptors" name="how-to-guide-for-descriptors">
+<h1 class="title">How-To Guide for Descriptors</h1>
+<table class="docinfo" frame="void" rules="none">
+<colgroup><col class="docinfo-name">
+<col class="docinfo-content">
+</colgroup><tbody valign="top">
+<tr><td class="docinfo-name">Author:&nbsp;</td><td>
+Raymond Hettinger</td></tr>
+<tr><td class="docinfo-name">Contact:&nbsp;</td><td>
+&lt;python at rcn dot com&gt;</td></tr>
+<tr><td class="docinfo-name">Copyright:&nbsp;</td><td>
+Copyright (c) 2003, 2004 Python Software Foundation.
+All rights reserved.</td></tr>
+</tbody>
+</table>
+<div class="contents topic" id="contents" name="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li id="id1" name="id1"><a class="reference" href="#abstract">Abstract</a></li>
+<li id="id2" name="id2"><a class="reference" href="#definition-and-introduction">Definition and Introduction</a></li>
+<li id="id3" name="id3"><a class="reference" href="#descriptor-protocol">Descriptor Protocol</a></li>
+<li id="id4" name="id4"><a class="reference" href="#invoking-descriptors">Invoking Descriptors</a></li>
+<li id="id5" name="id5"><a class="reference" href="#descriptor-example">Descriptor Example</a></li>
+<li id="id6" name="id6"><a class="reference" href="#properties">Properties</a></li>
+<li id="id7" name="id7"><a class="reference" href="#functions-and-methods">Functions and Methods</a></li>
+<li id="id8" name="id8"><a class="reference" href="#static-methods-and-class-methods">Static Methods and Class Methods</a></li>
+</ul>
+</div>
+<div class="section" id="abstract" name="abstract">
+<h1><a class="toc-backref" href="#id1">Abstract</a></h1>
+<p>Defines descriptors, summarizes the protocol, and shows how descriptors are
+called.  Examines a custom descriptor and several built-in python descriptors
+including functions, properties, static methods, and class methods.  Shows how
+each works by giving a pure Python equivalent and a sample application.</p>
+<p>Learning about descriptors not only provides access to a larger toolset, it
+creates a deeper understanding of how Python works and an appreciation for the
+elegance of its design.</p>
+</div>
+<div class="section" id="definition-and-introduction" name="definition-and-introduction">
+<h1><a class="toc-backref" href="#id2">Definition and Introduction</a></h1>
+<p>In general, a descriptor is an object attribute with "binding behavior", one whose
+attribute access has been overridden by methods in the descriptor protocol.    Those
+methods are <tt class="literal">__get__</tt>, <tt class="literal">__set__</tt>, and <tt class="literal">__delete__</tt>.  If any of those methods are
+defined for an object, it is said to be a descriptor.</p>
+<p>The default behavior for attribute access is to get, set, or delete the
+attribute from an object's dictionary.  For instance, <tt class="literal">a.x</tt> has a lookup chain
+starting with <tt class="literal">a.__dict__['x']</tt>, then <tt class="literal">type(a).__dict__['x']</tt>, and continuing
+through the base classes of <tt class="literal">type(a)</tt> excluding metaclasses.
+If the looked-up value is an object defining one of the
+descriptor methods, then Python may override the default behavior and invoke the
+descriptor method instead.  Where this occurs in the precedence chain depends on
+which descriptor methods were defined.  Note that descriptors are only invoked
+for new style objects or classes (a class is new style if it inherits from
+<tt class="literal">object</tt> or <tt class="literal">type</tt>).</p>
+<p>Descriptors are a powerful, general purpose protocol.  They are the mechanism
+behind properties, methods, static methods, class methods, and <tt class="literal">super()</tt>.
+They are used used throughout Python itself to implement the new style classes
+introduced in version 2.2.  Descriptors simplify the underlying C-code and offer
+a flexible set of new tools for everyday Python programs.</p>
+</div>
+<div class="section" id="descriptor-protocol" name="descriptor-protocol">
+<h1><a class="toc-backref" href="#id3">Descriptor Protocol</a></h1>
+<p><tt class="literal">descr.__get__(self, obj, type=None) --&gt; value</tt></p>
+<p><tt class="literal">descr.__set__(self, obj, value) --&gt; None</tt></p>
+<p><tt class="literal">descr.__delete__(self, obj) --&gt; None</tt></p>
+<p>That is all there is to it.  Define any of these methods and an object is
+considered a descriptor and can override default behavior upon being looked up
+as an attribute.</p>
+<p>If an object defines both <tt class="literal">__get__</tt> and <tt class="literal">__set__</tt>, it is considered a data
+descriptor.  Descriptors that only define <tt class="literal">__get__</tt> are called non-data
+descriptors (they are typically used for methods but other uses are possible).</p>
+<p>Data and non-data descriptors differ in how overrides are calculated with
+respect to entries in an instance's dictionary.  If an instance's dictionary
+has an entry with the same name as a data descriptor, the data descriptor
+takes precedence.  If an instance's dictionary has an entry with the same
+name as a non-data descriptor, the dictionary entry takes precedence.</p>
+<p>To make a read-only data descriptor, define both <tt class="literal">__get__</tt> and <tt class="literal">__set__</tt>
+with the <tt class="literal">__set__</tt> raising an <tt class="literal">AttributeError</tt> when called.  Defining the
+<tt class="literal">__set__</tt> method with an exception raising placeholder is enough to make
+it a data descriptor.</p>
+</div>
+<div class="section" id="invoking-descriptors" name="invoking-descriptors">
+<h1><a class="toc-backref" href="#id4">Invoking Descriptors</a></h1>
+<p>A descriptor can be called directly by its method name.  For example,
+<tt class="literal">d.__get__(obj)</tt>.</p>
+<p>Alternatively, it is more common for a descriptor to be invoked automatically
+upon attribute access.  For example, <tt class="literal">obj.d</tt> looks up <tt class="literal">d</tt> in the dictionary
+of <tt class="literal">obj</tt>.  If <tt class="literal">d</tt> defines the method <tt class="literal">__get__</tt>, then <tt class="literal">d.__get__(obj)</tt>
+is invoked according to the precedence rules listed below.</p>
+<p>The details of invocation depend on whether <tt class="literal">obj</tt> is an object or a class.  Either
+way, descriptors only work for new style objects and classes.  A class is new
+style if it is a subclass of <tt class="literal">object</tt>.</p>
+<p>For objects, the machinery is in <tt class="literal">object.__getattribute__</tt> which transforms
+<tt class="literal">b.x</tt> into <tt class="literal">type(b).__dict__['x'].__get__(b, type(b))</tt>.  The implementation works
+through a precedence chain that gives data descriptors priority over instance
+variables, instance variables priority over non-data descriptors, and assigns
+lowest priority to <tt class="literal">__getattr__</tt> if provided.  The full C implementation can be
+found in <tt class="literal">PyObject_GenericGetAttr()</tt> in <tt class="literal">Objects/object.c</tt>.</p>
+<p>For classes, the machinery is in <tt class="literal">type.__getattribute__</tt> which transforms <tt class="literal">B.x</tt>
+into <tt class="literal">B.__dict__['x'].__get__(None, B)</tt>.  In pure Python, it looks like:</p>
+<pre class="literal-block">def __getattribute__(self, key):
+    "Emulate type_getattro() in Objects/typeobject.c"
+    v = object.__getattribute__(self, key)
+    if hasattr(v, '__get__'):
+       return v.__get__(None, self)
+    return v</pre>
+<p>The important points to remember are:</p>
+<ul class="simple">
+<li>descriptors are invoked by the <tt class="literal">__getattribute__</tt> method</li>
+<li>overriding <tt class="literal">__getattribute__</tt> prevents automatic descriptor calls</li>
+<li><tt class="literal">__getattribute__</tt> is only available with new style classes and objects</li>
+<li><tt class="literal">object.__getattribute__</tt> and <tt class="literal">type.__getattribute__</tt> make different
+calls to <tt class="literal">__get__</tt>.</li>
+<li>data descriptors always override instance dictionaries.</li>
+<li>non-data descriptors may be overridden by instance dictionaries.</li>
+</ul>
+<p>The object returned by <tt class="literal">super()</tt> also has a custom <tt class="literal">__getattribute__</tt>
+method for invoking descriptors.  The call <tt class="literal">super(B, obj).m()</tt> searches
+<tt class="literal">obj.__class__.__mro__</tt> for the base class <tt class="literal">A</tt> immediately following <tt class="literal">B</tt>
+and then returns <tt class="literal">A.__dict__['m'].__get__(obj, A)</tt>.  If not a descriptor,
+<tt class="literal">m</tt> is returned unchanged.  If not in the dictionary, <tt class="literal">m</tt> reverts to a
+search using <tt class="literal">object.__getattribute__</tt>.</p>
+<p>Note, in Python 2.2, <tt class="literal">super(B, obj).m()</tt> would only invoke <tt class="literal">__get__</tt> if
+<tt class="literal">m</tt> was a data descriptor.  In Python 2.3, non-data descriptors also get
+invoked unless an old-style class is involved.  The implementation details
+are in <tt class="literal">super_getattro()</tt> in <tt class="literal">Objects/typeobject.c</tt> and a pure Python
+equivalent can be found in <a class="reference" href="http://web.archive.org/web/20170221220235/http://www.python.org/2.2.3/descrintro.html#cooperation">Guido's Tutorial</a>.</p>
+<p>The details above show that the mechanism for descriptors is embedded in the
+<tt class="literal">__getattribute__()</tt> methods for <tt class="literal">object</tt>, <tt class="literal">type</tt>, and <tt class="literal">super</tt>.  Classes
+inherit this machinery when they derive from <tt class="literal">object</tt> or if they have a
+meta-class providing similar functionality.  Likewise, classes can turn-off
+descriptor invocation by overriding <tt class="literal">__getattribute__()</tt>.</p>
+</div>
+<div class="section" id="descriptor-example" name="descriptor-example">
+<h1><a class="toc-backref" href="#id5">Descriptor Example</a></h1>
+<p>The following code creates a class whose objects are data descriptors which
+print a message for each get or set.  Overriding <tt class="literal">__getattribute__</tt> is
+alternate approach that could do this for every attribute.  However, this
+descriptor is useful for monitoring just a few chosen attributes:</p>
+<pre class="literal-block">class RevealAccess(object):
+    """A data descriptor that sets and returns values
+       normally and prints a message logging their access.
+    """
+
+    def __init__(self, initval=None, name='var'):
+        self.val = initval
+        self.name = name
+
+    def __get__(self, obj, objtype):
+        print 'Retrieving', self.name
+        return self.val
+
+    def __set__(self, obj, val):
+        print 'Updating' , self.name
+        self.val = val
+
+&gt;&gt;&gt; class MyClass(object):
+    x = RevealAccess(10, 'var "x"')
+    y = 5
+
+&gt;&gt;&gt; m = MyClass()
+&gt;&gt;&gt; m.x
+Retrieving var "x"
+10
+&gt;&gt;&gt; m.x = 20
+Updating var "x"
+&gt;&gt;&gt; m.x
+Retrieving var "x"
+20
+&gt;&gt;&gt; m.y
+5</pre>
+<p>The protocol is simple and offers exciting possibilities.  Several use cases are
+so common that they have been packaged into individual function calls.
+Properties, bound and unbound methods, static methods, and class methods are all
+based on the descriptor protocol.</p>
+</div>
+<div class="section" id="properties" name="properties">
+<h1><a class="toc-backref" href="#id6">Properties</a></h1>
+<p>Calling <tt class="literal">property()</tt> is a succinct way of building a data descriptor that triggers
+function calls upon access to an attribute.  Its signature is:</p>
+<pre class="literal-block">property(fget=None, fset=None, fdel=None, doc=None) -&gt; property attribute</pre>
+<p>The documentation shows a typical use to define a managed attribute <tt class="literal">x</tt>:</p>
+<pre class="literal-block">class C(object):
+    def getx(self): return self.__x
+    def setx(self, value): self.__x = value
+    def delx(self): del self.__x
+    x = property(getx, setx, delx, "I'm the 'x' property.")</pre>
+<p>To see how <tt class="literal">property()</tt> is implemented in terms of the descriptor protocol, here
+is a pure Python equivalent:</p>
+<pre class="literal-block">class Property(object):
+    "Emulate PyProperty_Type() in Objects/descrobject.c"
+
+    def __init__(self, fget=None, fset=None, fdel=None, doc=None):
+        self.fget = fget
+        self.fset = fset
+        self.fdel = fdel
+        self.__doc__ = doc
+
+    def __get__(self, obj, objtype=None):
+        if obj is None:
+            return self         
+        if self.fget is None:
+            raise AttributeError, "unreadable attribute"
+        return self.fget(obj)
+
+    def __set__(self, obj, value):
+        if self.fset is None:
+            raise AttributeError, "can't set attribute"
+        self.fset(obj, value)
+
+    def __delete__(self, obj):
+        if self.fdel is None:
+            raise AttributeError, "can't delete attribute"
+        self.fdel(obj)</pre>
+<p>The <tt class="literal">property()</tt> builtin helps whenever a user interface has granted attribute
+access and then subsequent changes require the intervention of a method.</p>
+<p>For instance, a spreadsheet class may grant access to a cell value through
+<tt class="literal">Cell('b10').value</tt>. Subsequent improvements to the program require the cell to be
+recalculated on every access; however, the programmer does not want to affect
+existing client code accessing the attribute directly.  The solution is to wrap
+access to the value attribute in a <tt class="literal">property()</tt> data descriptor:</p>
+<pre class="literal-block">class Cell(object):
+    . . .
+    def getvalue(self, obj):
+        "Recalculate cell before returning value"
+        self.recalc()
+        return obj._value
+    value = property(getvalue)</pre>
+</div>
+<div class="section" id="functions-and-methods" name="functions-and-methods">
+<h1><a class="toc-backref" href="#id7">Functions and Methods</a></h1>
+<p>Python's object oriented features are built upon a function based environment.
+Using non-data descriptors, the two are merged seamlessly.</p>
+<p>Class dictionaries store methods as functions.  In a class definition, methods
+are written using <tt class="literal">def</tt> and <tt class="literal">lambda</tt>, the usual tools for creating
+functions.  The only difference from regular functions is that the first
+argument is reserved for the object instance.  By Python convention, the
+instance reference is called <tt class="literal">self</tt> but may be called <tt class="literal">this</tt> or any
+other variable name.</p>
+<p>To support method calls, functions include the <tt class="literal">__get__</tt> method for binding
+methods during attribute access.  This means that all functions are non-data
+descriptors which return bound or unbound methods depending whether they are
+invoked from an object or a class.  In pure python, it works like this:</p>
+<pre class="literal-block">class Function(object):
+    . . .
+    def __get__(self, obj, objtype=None):
+        "Simulate func_descr_get() in Objects/funcobject.c"
+        return types.MethodType(self, obj, objtype)</pre>
+<p>Running the interpreter shows how the function descriptor works in practice:</p>
+<pre class="literal-block">&gt;&gt;&gt; class D(object):
+     def f(self, x):
+          return x
+
+&gt;&gt;&gt; d = D()
+&gt;&gt;&gt; D.__dict__['f'] # Stored internally as a function
+&lt;function f at 0x00C45070&gt;
+&gt;&gt;&gt; D.f             # Get from a class becomes an unbound method
+&lt;unbound method D.f&gt;
+&gt;&gt;&gt; d.f             # Get from an instance becomes a bound method
+&lt;bound method D.f of &lt;__main__.D object at 0x00B18C90&gt;&gt;</pre>
+<p>The output suggests that bound and unbound methods are two different types.
+While they could have been implemented that way, the actual C implemention of
+<tt class="literal">PyMethod_Type</tt> in <tt class="literal">Objects/classobject.c</tt> is a single object with two different
+representations depending on whether the <tt class="literal">im_self</tt> field is set or is <tt class="literal">NULL</tt> (the C
+equivalent of <tt class="literal">None</tt>).</p>
+<p>Likewise, the effects of calling a method object depend on the <tt class="literal">im_self</tt> field.
+If set (meaning bound), the original function (stored in the <tt class="literal">im_func</tt> field) is
+called as expected with the first argument set to the instance.  If unbound, all
+of the arguments are passed unchanged to the original function.  The actual C
+implementation of <tt class="literal">instancemethod_call()</tt> is only slightly more complex in that it
+includes some type checking.</p>
+</div>
+<div class="section" id="static-methods-and-class-methods" name="static-methods-and-class-methods">
+<h1><a class="toc-backref" href="#id8">Static Methods and Class Methods</a></h1>
+<p>Non-data descriptors provide a simple mechanism for variations on the usual
+patterns of binding functions into methods.</p>
+<p>To recap, functions have a <tt class="literal">__get__</tt> method so that they can be converted to a
+method when accessed as attributes.  The non-data descriptor transforms a
+<tt class="literal">obj.f(*args)</tt> call into <tt class="literal">f(obj, *args)</tt>.  Calling <tt class="literal">klass.f(*args)</tt> becomes
+<tt class="literal">f(*args)</tt>.</p>
+<p>This chart summarizes the binding and its two most useful variants:</p>
+<blockquote>
+<table frame="border" rules="all">
+<colgroup>
+<col colwidth="24%">
+<col colwidth="20%">
+<col colwidth="31%">
+<col colwidth="25%">
+</colgroup>
+<thead valign="bottom">
+<tr><th>Transformation</th>
+<th>&nbsp;</th>
+<th>Called from an
+Object</th>
+<th>Called from a
+Class</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td rowspan="3">Descriptor</td>
+<td>function</td>
+<td>f(obj, *args)</td>
+<td>f(*args)</td>
+</tr>
+<tr><td>staticmethod</td>
+<td>f(*args)</td>
+<td>f(*args)</td>
+</tr>
+<tr><td>classmethod</td>
+<td>f(type(obj), *args)</td>
+<td>f(klass, *args)</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+<p>Static methods return the underlying function without changes.  Calling either
+<tt class="literal">c.f</tt> or <tt class="literal">C.f</tt> is the equivalent of a direct lookup into
+<tt class="literal">object.__getattribute__(c, "f")</tt> or <tt class="literal">object.__getattribute__(C, "f")</tt>.
+As a result, the function becomes identically accessible from either an object or a class.</p>
+<p>Good candidates for static methods are methods that do not reference the
+<tt class="literal">self</tt> variable.</p>
+<p>For instance, a statistics package may include a container class for
+experimental data.  The class provides normal methods for computing the average,
+mean, median, and other descriptive statistics that depend on the data.
+However, there may be useful functions which are conceptually related but do not
+depend on the data.  For instance, <tt class="literal">erf(x)</tt> is handy conversion routine that comes
+up in statistical work but does not directly depend on a particular data set.
+It can be called either from an object or the class:  <tt class="literal">s.erf(1.5) --&gt; .9332</tt> or
+<tt class="literal">Sample.erf(1.5) --&gt; .9332</tt>.</p>
+<p>Since staticmethods return the underlying function with no changes, the example
+calls are unexciting:</p>
+<pre class="literal-block">&gt;&gt;&gt; class E(object):
+     def f(x):
+          print x
+     f = staticmethod(f)
+
+&gt;&gt;&gt; print E.f(3)
+3
+&gt;&gt;&gt; print E().f(3)
+3</pre>
+<p>Using the non-data descriptor protocol, a pure Python version of <tt class="literal">staticmethod()</tt>
+would look like this:</p>
+<pre class="literal-block">class StaticMethod(object):
+ "Emulate PyStaticMethod_Type() in Objects/funcobject.c"
+
+ def __init__(self, f):
+      self.f = f
+
+ def __get__(self, obj, objtype=None):
+      return self.f</pre>
+<p>Unlike static methods, class methods prepend the class reference to the
+argument list before calling the function.  This format is the same
+for whether the caller is an object or a class:</p>
+<pre class="literal-block">&gt;&gt;&gt; class E(object):
+     def f(klass, x):
+          return klass.__name__, x
+     f = classmethod(f)
+
+&gt;&gt;&gt; print E.f(3)
+('E', 3)
+&gt;&gt;&gt; print E().f(3)
+('E', 3)</pre>
+<p>This behavior is useful whenever the function only needs to have a class
+reference and does not care about any underlying data.  One use for
+classmethods is to create alternate class constructors.  In Python 2.3,
+the classmethod <tt class="literal">dict.fromkeys()</tt> creates a new dictionary from a list
+of keys.  The pure Python equivalent is:</p>
+<pre class="literal-block">class Dict:
+    . . .
+    def fromkeys(klass, iterable, value=None):
+        "Emulate dict_fromkeys() in Objects/dictobject.c"
+        d = klass()
+        for key in iterable:
+            d[key] = value
+        return d
+    fromkeys = classmethod(fromkeys)</pre>
+<p>Now a new dictionary of unique keys can be constructed like this:</p>
+<pre class="literal-block">&gt;&gt;&gt; Dict.fromkeys('abracadabra')
+{'a': None, 'r': None, 'b': None, 'c': None, 'd': None}</pre>
+<p>Using the non-data descriptor protocol, a pure Python version of
+<tt class="literal">classmethod()</tt> would look like this:</p>
+<pre class="literal-block">class ClassMethod(object):
+     "Emulate PyClassMethod_Type() in Objects/funcobject.c"
+
+     def __init__(self, f):
+          self.f = f
+
+     def __get__(self, obj, klass=None):
+          if klass is None:
+               klass = type(obj)
+          def newfunc(*args):
+               return self.f(klass, *args)
+          return newfunc</pre>
+</div>
+</div>
+
+
+
+</body></html>
+<!--
+     FILE ARCHIVED ON 22:02:35 Feb 21, 2017 AND RETRIEVED FROM THE
+     INTERNET ARCHIVE ON 06:47:04 May 13, 2025.
+     JAVASCRIPT APPENDED BY WAYBACK MACHINE, COPYRIGHT INTERNET ARCHIVE.
+
+     ALL OTHER CONTENT MAY ALSO BE PROTECTED BY COPYRIGHT (17 U.S.C.
+     SECTION 108(a)(3)).
+-->
+<!--
+playback timings (ms):
+  captures_list: 1.456
+  exclusion.robots: 0.038
+  exclusion.robots.policy: 0.025
+  esindex: 0.014
+  cdx.remote: 110.341
+  LoadShardBlock: 587.266 (3)
+  PetaboxLoader3.datanode: 717.805 (5)
+  PetaboxLoader3.resolve: 645.836 (3)
+  load_resource: 932.847 (2)
+-->

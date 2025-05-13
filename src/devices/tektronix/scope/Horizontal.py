@@ -26,14 +26,13 @@ class TekHorizontal(BaseHorizontal):
                     }
     
     @classmethod
-    def getHorizontal(cls, dev):
+    def getHorizontalClass(cls, dev):
         """
             Tries to get (instantiate) this device, based on matched cls
             This method will ONLY be called by the BaseScope class or other Scope related Baseclasses, 
             to instantiate the proper object during creation by the __new__ method according to PEP487.     
         """    
         if cls is TekHorizontal:
-            cls.__init__(cls, dev)
             return cls
         else:
             return None   
@@ -54,3 +53,11 @@ class TekHorizontal(BaseHorizontal):
     
     def setTimeDiv(self, value):
         self.visaInstr.write (f"HORIZONTAL:MAIN:SECDIV {value}")
+
+    def queryHorizontalSecDiv(self):
+        SEC_DIV = float(self.visaInstr.query('HORIZONTAL:MAIN:SECDIV?')) #Requesting the horizontal scale in SEC/DIV
+        return SEC_DIV   
+    
+    def setTimeDiv(self, time):
+        self.visaInstr.write(f"HORizontal:MAIn:SCAle {time}")
+    

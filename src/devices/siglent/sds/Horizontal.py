@@ -21,14 +21,13 @@ class SDSHorizontal(BaseHorizontal):
                     }
     
     @classmethod
-    def getHorizontal(cls, dev):
+    def getHorizontalClass(cls, dev):
         """
             Tries to get (instantiate) this device, based on matched cls
             This method will ONLY be called by the BaseScope class or other Scope related Baseclasses, 
             to instantiate the proper object during creation by the __new__ method according to PEP487.     
         """    
         if cls is SDSHorizontal:
-            cls.__init__(cls, dev)
             return cls
         else:
             return None   
@@ -41,11 +40,12 @@ class SDSHorizontal(BaseHorizontal):
         self.POS = 0                   # Horizontal position in screen (of the waveforms)
         self.ZOOM = 0                  # Horizontal magnifying. 
     
-    def getTimeDivs(self):
-        """Method for getting available timebase, or samething, horizontal resolution settings of the TDS2000x oscilloscope series.
-        According to the Tektronix datasheet, the TDS series timbase ranges from 5 ns/div to 50 s/div, in a 1, 2.5, 5 sequence. 
-        This method returns a dict containing valid time/div settings"""    
-        return SDSHorizontal.TIMEBASE_HASHMAP
-    
+    def setIimeBase(self, value):
+        """The query returns the parameters of the source using by the command
+        :WAVeform:SOURce.
+        See text output from a Siglent scope for reference. See Repo.
+        """
+        self._dev._inst.write(f"Time_DIV {value}")
+        
     def setTimeDiv(self, value):
-        self.visaInstr.write (f"HORIZONTAL:MAIN:SECDIV {value}")
+        self.setIimeBase(value)

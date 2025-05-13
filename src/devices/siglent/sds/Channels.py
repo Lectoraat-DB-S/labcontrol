@@ -29,16 +29,7 @@ class SDSChannel(object):
         self._dev = dev
         self._WVT = WaveFormTrace()
         
-    def setIimeBase(self, value):
-        """The query returns the parameters of the source using by the command
-        :WAVeform:SOURce.
-        See text output from a Siglent scope for reference. See Repo.
-        """
-        self._dev._inst.write(f"Time_DIV {value}")
-        
-    def setTimeDiv(self, value):
-        self.setIimeBase(value)
-
+    
     def setVoltDiv(self, value):
         """The query returns the parameters of the source using by the command
         :WAVeform:SOURce.
@@ -101,7 +92,7 @@ class SDSChannel(object):
         #### end timebase convert
 
         WFP._vertCoupling = struct.unpack('H', params[326:328])[0] # enum, 2 bytes use 'H' for now. need check!
-        WFP._vertGain = struct.unpack('H', params[332:334])[0]
+        self.ymult = struct.unpack('H', params[332:334])[0]
         WFP._bwLimit = struct.unpack('H', params[334:336])[0] #enum, 2 bytes use 'H' for now. need check!
         # vert_vernier=struct.unpack('f', params[336:340])[0] # enum = kind of parameter, use 'x' for now.Don't what this really means need check!
         # acq_vert_offset=struct.unpack('f', params[340:344])[0] # enum = kind of parameter, use 'x' for now.Don't what this really means need check!
@@ -109,14 +100,6 @@ class SDSChannel(object):
         #TODO: if the object WFP really is the WaveForm object for this channel, then all values have now been set. THIS MUST BE CHECKED.
 
         
-    def get_trigger_status(self):
-        """The command query returns the current state of the trigger.
-
-        :return: str
-                    Returns either "Arm", "Ready", "Auto", "Trig'd", "Stop", "Roll"
-        """
-        return self._dev.query(":TRIGger:STATus?")
-
     def capture(self):
         
         #self._dev.write(":WAVeform:SOURce {}".format(self._name))
@@ -146,7 +129,7 @@ class SDSChannel(object):
     
     def getTimeAxis(self):
         horOffset = self._WVT._WVP._horizontalOffset
-        sampleInterval = self._WVT._WVP._horizontalInterval
+        sampleInterval = self.WVP.xincr
         tdiv = self._WVT._WVP._timebase
         nrOfPoints = self._WVT._WVP._total_points
         FirstSampleTime = horOffset -tdiv*(14/2)
@@ -187,20 +170,12 @@ class SDSChannel(object):
         #first point = delay - (timebase*(hori_grid_size/2))
         
         mydelay = self._WVT._WVP._delay
-        mytimebase = self._WVT._WVP._timebase
+        mytimebase = self.WVP.timeDiv
         timeOfFirstSample = mydelay - (mytimebase*(self._hori_grid_size/2))
         self._WVT._WVP._timeOfFirstValidSample = timeOfFirstSample
         self._WVT._WVP._timeOfLastValidSample = timeOfFirstSample +(self._WVT._WVP._sampInterval * self._WVT._WVP._total_points)
         return (self._WVT._WVP._timeOfFirstValidSample,  self._WVT._WVP._timeOfLastValidSample)
 
-    def timebase_scale(self) -> float:
-        """The query returns the current horizontal scale setting in seconds per
-        division for the main window.
-
-        :return: float
-
-        """
-        return float(self._dev._inst.query_binary_values(":TIMebase:SCALe?"))
     
     ########## PARAMETER MEASUREMENTS (PAVA) ###########
     

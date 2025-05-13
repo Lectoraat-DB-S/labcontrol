@@ -1,6 +1,7 @@
 import struct
 import numpy as np
-
+import pyvisa
+from enum import Enum
 MATH_FUNC_ADD = 0
 MATH_FUNC_SUB = 1
 MATH_FUNC_MUL = 2
@@ -9,7 +10,85 @@ MATH_FUNC_FFT = 4
 MATH_FUNC_INT = 5
 MATH_FUNC_DIF = 6
 MATH_FUNC_SQR = 7
- 
+
+class SIGLENT_TIME_STAMP(object):
+    def __init__(self):
+        self.seconds    = None  #float => 64 bits
+        self.minutes    = None  #byte => 8 bits, signed
+        self.hours      = None  #byte => 8 bits
+        self.days       = None  #byte => 8 bits
+        self.month      = None  #byte => 8 bits
+        self.years      = None  #word => 16 bits
+        self.unused     = None  #word => 16 bits
+
+    def decode(self, byteArray):
+        self.seconds = struct.unpack('f', byteArray[296:304])[0] #time parameter? how to decode?
+        self.minutes = struct.unpack('B', byteArray[304:305])[0]
+
+class BANDWIDTH_LIMIT(Enum): # for bwlimtit param of preamble
+    OFF     = 0
+    M20     = 1
+    M200    = 3
+
+class RECORDTYPE(Enum):
+    single_sweep        = 0
+    interleaved         = 1
+    histogram           = 2
+    graph               = 3
+    filter_coefficient  = 4
+    complex             = 5
+    extrema             = 6
+    sequence_obsolete   = 7
+    centered_RIS        = 8
+    peak_detect         = 9
+
+KNOWN_MODELS = [
+        "SDS1000CFL",   #non-SPO model Series
+        "SDS1000A",     #non-SPO model Series
+        "SDS1000CML+",  #non-SPO model Series
+        "SDS1000CNL+",  #non-SPO model Series
+        "SDS1000DL+",   #non-SPO model Series
+        "SDS1000E+",    #non-SPO model Series
+        "SDS1000F+",    #non-SPO model Series
+        "SDS2000",      #SPO model Series
+        "SDS2000X",     #SPO model Series
+        "SDS1000X",     #SPO model Series
+        "SDS1000X+",    #SPO model Series
+        "SDS1000X-E",   #SPO model Series
+        "SDS1000X-C",   #SPO model Series
+        #USED MODEL (TESTED) SHOWN BELOW
+        "SDS2504X Plus",
+        "SDS1202X",
+        "SDS1202X-E",
+    ]
+
+class SiglentIDN(object):
+    def __init__(self, mybrand, mymodel, myserial, myfirmware) -> None:
+        self.brand = mybrand
+        self.model = mymodel
+        self.serial = myserial
+        self.firmware = myfirmware
+        
+
+def checkIDN(idnstr:str):
+        """
+        example
+        Siglent Technologies,SDS1204X-E,SDS1EBAC0L0098,7.6.1.15
+        """
+        splitted = idnstr.split(",")
+        if len(splitted) != 4:
+            return None
+        manufacturer  = "Siglent"
+        if manufacturer in splitted[0]:
+            if splitted[1] in KNOWN_MODELS:
+                if len(splitted[2])==14:
+                    brand = splitted[0]
+                    model = splitted[1]
+                    serial = splitted[2]
+                    firmware = splitted[3]
+                    siglentIdn = SiglentIDN(brand,model, serial, firmware) 
+                    return siglentIdn
+        return None
 
 def saveTrace():
     columnNames ={"s"}
@@ -126,38 +205,6 @@ class WaveFormTrace(object):
         self._tracedata = None
         self._WVP = WaveFormPreamble()
         
-    def calculate_voltage(self):
-        x = self.getRawTrace()
-        fc =self.full_code
-        #np.where(x>5, x, temp)
-        np.where(x > self.center_code , x, x - self.full_code)
-        #FS=10 hokjes=top-top
-        #0->1.0 = 127 stapjes
-        #0->1.0 = 5 hokjes
-
-        """
-            To Calculate the voltage value, as shown on scope, can only be performed if one has the limitations
-            of the oscilloscope in mind:
-                - screen of scope consists of 10 'divs', although the fysical scope only shows 8 of them. 
-                    The samples therefore  always represents a range of 5 'divs'. 
-                - The (vertical) resolution of the SDS1202X-E is 8 bits
-                - The center of the screen equals to a decimal sample value of 127 (self.center_code),
-                    assuming 0.0 Volt offset (voffset)
-                - The samples are coded as unsigned bytes, so one have to restore the sign in the code.
-                - The range of samples is therefore -128 .... + 127
-            So xnew = (xold * 5/128)-voffset                
-        """
-        voltfactor = self._WVP._vdiv/25
-        tempVolt = np.multiply(x,voltfactor)
-        res = np.subtract(tempVolt, self._WVP._voffset)
-        
-        return res
-    
-    def convertRaw_to_voltage(self):
-        # Get the parameters of the source
-        raw_array = self.getRawTrace()
-        vect_voltage = self.calculate_voltage()
-        self.setTrace(vect_voltage)
         
     def getWVP(self):
         return self._WVP
@@ -217,10 +264,10 @@ class WaveFormPreamble(object):
         
         self._recordType = None
         self._processingDone = None
-        self._vertCoupling = None
-        self._vertGain = None
-        self._bwLimit = None
-        self._waveSource = None
+        self.vertCoupling = None
+        self.ymult = None
+        self.bwLimit = None
+        self.waveSource = None
         #NOM_SUBARRAY_COUNT
         #HORIZ_INTERVAL: float2
         #HORIZ_OFFSET: double;
