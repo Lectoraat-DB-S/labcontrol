@@ -22,7 +22,7 @@ class TestTDSCreate(unittest.TestCase):
         mydev.return_value = ["USBINSTR"]
         mydev.query.return_value = "TEKTRONIX,TDS"
         expected = call.query("*IDN?").call_list()
-        scope = BaseScope()
+        scope = BaseScope.getScope()
         verticaal = scope.vertical
         thechan = verticaal.chan(1)
         print(RMMock.mock_calls)

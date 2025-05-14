@@ -4,16 +4,19 @@ import unittest
 from unittest.mock import call, patch, MagicMock
 from devices.siglent.sds.Scopes import SiglentScope
 
-
 class TestSDSCreate(unittest.TestCase):
     
+    @classmethod
+    def setUpClass(cls):
+        cls.sigSDS = None
+        return super().setUpClass()
     
     def __init__(self, methodName = "runSDSTests"):
         super().__init__(methodName)
         self.myrm = None
         self.mydev = None
         self.expected = None
-    
+
     @patch.object(pyvisa.ResourceManager, "list_resources")
     @patch.object(pyvisa.ResourceManager, "open_resource")
     def testNetEffeAnders(self, mock_open_resource, mock_list_resource):
@@ -24,7 +27,11 @@ class TestSDSCreate(unittest.TestCase):
         scope = BaseScope()
         vert =scope.vertical
         print(vert.nrOfChan)
+        theScope = scope
 
+    #@patch.object(pyvisa.resources.MessageBasedResource, "query")
+    #def testNogEffeAnders(self, mock_query):
+    #    print(theScope.vertical.nrOfChan())
 
 
 """

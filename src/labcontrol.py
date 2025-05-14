@@ -36,9 +36,9 @@ def initLog():
 
 def dummyUse():
     scope = BaseScope()
-    scope.horizontal.timediv=1e-3 #1ms/div
-    trig = scope.trigger
-    trig.setSource(2)
+    #scope.horizontal.timediv=1e-3 #1ms/div
+    #trig = scope.trigger
+    #trig.setSource(2)
     ch1 = scope.vertical.chan(1)
     chs = scope.vertical.channels
     ch1.capture()

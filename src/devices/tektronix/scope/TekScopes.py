@@ -56,7 +56,7 @@ class TekScope(BaseScope):
         else:
             return (None, None)
     
-    def __init__(self, host: str=None, visaInstr:pyvisa.resources.MessageBasedResource=None):
+    def __init__(self, host: str, visaInstr:pyvisa.resources.MessageBasedResource):
     #def __init__(self, visaResc: pyvisa.resources.MessageBasedResource):
         """ 
             Constructor for Tektronix TDS osself, cilloscoop. This class is a subclass of BaseScope. BaseScope implements

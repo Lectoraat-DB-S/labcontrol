@@ -7,7 +7,7 @@ class BaseScope(object):
     """BaseScope: base class for oscilloscope implementation.
     This code of this class also reflects the learning curve on Python.
         https://realpython.com/python-property/"""
-    scopeList = []
+    scopeList = []        
     
     def __init_subclass__(cls, **kwargs):
         """BaseScope: base class for oscilloscope implementation.
@@ -27,7 +27,7 @@ class BaseScope(object):
         return None #Base class implementation: return None, because this class can't do shit.
     
         
-    def __new__(cls, host: str=None, visaInstr:pyvisa.resources.MessageBasedResource=None):
+    #def __new__(cls, host: str=None):
         """New: creation of object. 
         Only BaseScope may call this new methond as the first step in creation of a scope object. 
         This is a way to controll if an object will be returned from a new method and if so, which type of object
@@ -36,17 +36,35 @@ class BaseScope(object):
         This coding scheme requires (automatic) registration of subclasses according pep487:
         see: https://peps.python.org/pep-0487/      
         """
+        
+        """
         rm = pyvisa.ResourceManager()
         urls = rm.list_resources()
 
         for scope in cls.scopeList:
-            scopeobj, dev = scope.getScopeClass(rm, urls, host)
-            if scopeobj != None:
+            scopetype, dev = scope.getScopeClass(rm, urls, host)
+            if scopetype != None:
                 #return super().__new__(scopeobj, visaInstr = dev)
-                return super().__new__(scopeobj)
+                scopeobj = super().__new__(scopetype)
+                cls.__init__(cls, None, dev)
+                scopeobj.__init__(scopeobj, None, dev)
+                return scopeobj
+                
             
         return super().__new__(cls)
-        
+        """
+    @classmethod
+    def getScope(cls,host=None):
+        rm = pyvisa.ResourceManager()
+        urls = rm.list_resources()
+
+        for scope in cls.scopeList:
+            scopetype, dev = scope.getScopeClass(rm, urls, host)
+            if scopetype != None:
+                cls = scopetype
+                return cls(host, dev)
+
+
     def __init__(self, host: str=None, visaInstr:pyvisa.resources.MessageBasedResource=None):
         """abstract init function. A subclass should be override this function, which wil intitialize the final object. Remark: if the subclass 
         wants to use intialisation done below, it must call super().__init()__ first!"""

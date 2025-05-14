@@ -4,8 +4,8 @@ from pyvisa import ResourceManager as rm
 import unittest
 from unittest.mock import patch, MagicMock
 #from tests.testKorad import TestKoradSupply
-#from tests.testTDS import TestTDSCreate
-from tests.testSDS import TestSDSCreate
+from tests.testTDS import TestTDSCreate
+#from tests.testSDS import TestSDSCreate
 
 
 if __name__ == "__main__":
