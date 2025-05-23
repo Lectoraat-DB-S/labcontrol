@@ -54,13 +54,13 @@ class TekChannel(BaseChannel):
        
     def setVertScale(self, scale):
         #TODO check validity of param
-        self.visaInstr.write(f"{self._name}:SCALE {scale}") #Sets V/DIV CH1
+        self.visaInstr.write(f"{self.name}:SCALE {scale}") #Sets V/DIV CH1
   
     def setVoltsDiv(self, scale):
         #TODO check validity of param
         vertscalelist = [2e-3, 5e-3, 10e-3, 20e-3, 50e-3, 100e-3, 200e-3, 500e-3, 1, 2, 5]
         if scale in vertscalelist:
-            self.visaInstr.write(f"{self._name}:SCALE {scale}") #Sets V/DIV CH1   
+            self.visaInstr.write(f"{self.name}:SCALE {scale}") #Sets V/DIV CH1   
         else:   
             self.log.addToLog("invalid VDIV input, ignoring.....") 
     
@@ -70,7 +70,7 @@ class TekChannel(BaseChannel):
         at a time.
         """ 
         #check if channel is valid 
-        self.visaInstr.write(f"DATA:SOURCE {self._name}") #Sets the channel as data source     
+        self.visaInstr.write(f"DATA:SOURCE {self.name}") #Sets the channel as data source     
     
     def getSource(self):   
         return self.visaInstr.query(f"DATA:SOURCE?")
@@ -78,18 +78,18 @@ class TekChannel(BaseChannel):
     def getNrOfPoints(self):
         #TODO:
         # correct handling of event code 2244
-        return int(self.visaInstr.query(f"wfmpre:{self._name}:nr_pt?")) #For a channel version of this command:see programming guide page 231
+        return int(self.visaInstr.query(f"wfmpre:{self.name}:nr_pt?")) #For a channel version of this command:see programming guide page 231
           
     def capture(self):
         """Capture: getting the waveform data from the oscilloscope. This is the Tektronix TDS2000 series 
         implementation. According to the information in the TDS programming manual on page 54, 86, this method 
         implements the following logic:
-2. Use the DATa:ENCdg command to specify the waveform data format.
-3. Use the DATa:WIDth command to specify the number of bytes per data point.
-4. Use the DATa:STARt and DATa:STOP commands to specify the part of the
-waveform that you want to transfer.
-5. Use the WFMPre? command to transfer waveform preamble information.
-6. Use the CURVe command to transfer waveform data.
+        2. Use the DATa:ENCdg command to specify the waveform data format.
+        3. Use the DATa:WIDth command to specify the number of bytes per data point.
+        4. Use the DATa:STARt and DATa:STOP commands to specify the part of the
+        waveform that you want to transfer.
+        5. Use the WFMPre? command to transfer waveform preamble information.
+        6. Use the CURVe command to transfer waveform data.
         1. It sets this channel to be visible, preventing therefore an errormessage send by the scope.
         2. It sets this channel as being the source which has to be transferred by the scope to the computer. As
             the TDS programming manual states on page 86: 'Only one waveform can be transferred at a time.' 
@@ -104,12 +104,13 @@ waveform that you want to transfer.
         trace = self.WF
         self.setVisible(True)
         self.setAsSource()
-        self.visaInstr.write(f"DATa:ENCdg RPBinary")
+        self.visaInstr.write(f"DATa:ENCdg RIBinary")
         self.visaInstr.write(f"DATA:WIDTH 1")
         wfp.queryPreamble()
         trace.setWaveFormID(wfp)
         self.log.addToLog("start querying scope")
         bin_wave = self.visaInstr.query_binary_values('curve?', datatype='b', container=np.array)
+        #bin_wave = bin_wave - trace.yoff
         self.log.addToLog("scope query ended")
         trace.rawYdata = bin_wave
         trace.rawXdata = np.linspace(0, wfp.nrOfSamples-1, num=int(wfp.nrOfSamples),endpoint=False)
@@ -118,7 +119,7 @@ waveform that you want to transfer.
         scaled_time = np.linspace( wfp.xzero, tstop, num=int(wfp.nrOfSamples))
         # vertical (voltage)
         unscaled_wave = np.array(bin_wave, dtype='double') # data type conversion
-        scaled_wave = (unscaled_wave - wfp.yoff) *  wfp.ymult  + wfp.yzero
+        scaled_wave = (unscaled_wave - trace.yoff) *  trace.ymult  + trace.yzero
         #put the data into internal 'struct'
         trace.scaledYdata = scaled_wave
         trace.scaledXdata = scaled_time
@@ -242,7 +243,7 @@ class TekWaveFormPreamble(BaseWaveFormPreample):
         self.yzero                 : Location of Y=0 on screen vertically
         self.yoff                  : Vertical offset on the display
         self.yUnitStr              : Vertical axis unit"""
-        super().__init__()
+        super().__init__(dev=dev)
         ##### START OF TEKTRONIX TDS TYPICAL PARAMETERS DEFINITION ####### 
         self.nrOfBytePerTransfer   = None
         self.nrOfBitsPerTransfer   = None
@@ -282,7 +283,7 @@ class TekWaveFormPreamble(BaseWaveFormPreample):
         self.xUnitStr               = str(paramlist[11])
         self.ymult                  = float(paramlist[12])
         self.yzero                  = float(paramlist[13])
-        self.yoff                    = float(paramlist[14])
+        self.yoff                   = float(paramlist[14])
         self.yUnitStr               = str(paramlist[15])
         self.decodeChanPreamble(paramlist[6])
         

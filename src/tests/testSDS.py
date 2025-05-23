@@ -8,30 +8,44 @@ class TestSDSCreate(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        cls.sigSDS = None
-        return super().setUpClass()
+        # 1) Patch pyvisa-functies één keer
+        
+        cls.patcher1 = patch.object(pyvisa.ResourceManager, "list_resources")
+        cls.patcher2 = patch.object(pyvisa.ResourceManager, "open_resource")
+        
+        cls.MockListResources = cls.patcher1.start()
+        cls.MockOpenResource = cls.patcher2.start()
+        cls.mockdev = cls.MockOpenResource.return_value
+
+        cls.mockdev.return_value = ["USBINSTR"]
+        cls.mockdev.query.return_value= "Siglent Technologies,SDS1202X-E,SDS1EBAC0L0098,7.6.1.15"
+        cls.MockListResources.return_value = ["INSTR::SDS1202XE::USB"]
+        # 2) Maak de instrument-instantie aan
+        cls.scope:BaseScope = BaseScope.getDevice()
     
+    @classmethod
+    def tearDownClass(cls):
+        # Stop alle patchers
+        cls.patcher1.stop()
+        cls.patcher2.stop()
+
     def __init__(self, methodName = "runSDSTests"):
         super().__init__(methodName)
         self.myrm = None
         self.mydev = None
         self.expected = None
 
-    @patch.object(pyvisa.ResourceManager, "list_resources")
-    @patch.object(pyvisa.ResourceManager, "open_resource")
-    def testNetEffeAnders(self, mock_open_resource, mock_list_resource):
-        mockdev = mock_open_resource.return_value
-        mockdev.return_value = ["USBINSTR"]
-        mockdev.query.return_value= "Siglent Technologies,SDS1202X-E,SDS1EBAC0L0098,7.6.1.15"
-        mock_list_resource.return_value=["INSTR::SDS1202XE::USB"]
-        scope = BaseScope()
-        vert =scope.vertical
-        print(vert.nrOfChan)
-        theScope = scope
-
-    #@patch.object(pyvisa.resources.MessageBasedResource, "query")
-    #def testNogEffeAnders(self, mock_query):
-    #    print(theScope.vertical.nrOfChan())
+    def testNewSDS(self):
+        verticaal = self.scope.vertical
+        
+        thechan = verticaal.chan(1)
+        print(thechan)
+        print(verticaal.nrOfChan)
+        self.assertTrue(self.scope.vertical.nrOfChan == 2)
+        self.assertFalse(self.scope.vertical.chan(1) == None)
+        self.assertFalse(self.scope.vertical.chan(2) == None)
+        self.assertFalse(self.scope.visaInstr == None)
+        self.assertTrue(self.scope.__module__==SiglentScope.__module__)
 
 
 """

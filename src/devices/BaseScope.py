@@ -1,60 +1,39 @@
 import pyvisa
-#from pyvisa import ResourceManager as resman
-#import labcontrol
-#import devices.tektronix.scope.TekScopes #Gives circular import problem
 
 class BaseScope(object):
     """BaseScope: base class for oscilloscope implementation.
-    This code of this class also reflects the learning curve on Python.
-        https://realpython.com/python-property/"""
-    scopeList = []        
-    
-    def __init_subclass__(cls, **kwargs):
-        """BaseScope: base class for oscilloscope implementation.
         Implementations for oscilloscopes have to inherit from this class:
         1. This base class takes care for subclass auto registration, according to pep487, See:  
         https://peps.python.org/pep-0487/
         2. Implementing subclasses HAVE TO implement the getDevice method of this class, which has subsequent signature:
-        @classmethod def getDevice(cls, url):
-        3. Be sure BaseScope's constructor has access to the inheriting subclass during instantion. If not, the
-        subclass will not be registated and the correct supply object won't be instantiated. """
+        @classmethod def getScopeClass.
+        3. Be sure BaseScope's constructor has access to the inheriting subclasses during instantion. If not, the
+        subclass will not be registated and the correct supply object won't be instantiated. 
+        4. Instantion must be done by calling the getDevice method. This method implements a factory kind of scheme. 
+    """
+    scopeList = []        
+    
+    def __init_subclass__(cls, **kwargs):
+        """Method for auto registration of BaseScope subclasses according to PEP487.
+        DO NOT ALTER THIS METHOD NOR TRY TO OVERRIDE IT.
+        """
         super().__init_subclass__(**kwargs)
         cls.scopeList.append(cls)
          
     @classmethod
     def getScopeClass(cls, rm, urls, host=None):
-        """ Tries to get (instantiate) the device, based on the url"""
-        return None #Base class implementation: return None, because this class can't do shit.
+        """Method for getting the right type of scope, so it can be created by the runtime.
+        This Basescope implementation does nothing other the return the BaseScope type. The inheriting
+        subclass should implement the needed logic"""
+        return cls
     
-        
-    #def __new__(cls, host: str=None):
-        """New: creation of object. 
-        Only BaseScope may call this new methond as the first step in creation of a scope object. 
-        This is a way to controll if an object will be returned from a new method and if so, which type of object
-        it will have to return, as a form of factory pattern. 
-        See also: https://mathspp.com/blog/customising-object-creation-with-__new__ 
-        This coding scheme requires (automatic) registration of subclasses according pep487:
-        see: https://peps.python.org/pep-0487/      
-        """
-        
-        """
-        rm = pyvisa.ResourceManager()
-        urls = rm.list_resources()
-
-        for scope in cls.scopeList:
-            scopetype, dev = scope.getScopeClass(rm, urls, host)
-            if scopetype != None:
-                #return super().__new__(scopeobj, visaInstr = dev)
-                scopeobj = super().__new__(scopetype)
-                cls.__init__(cls, None, dev)
-                scopeobj.__init__(scopeobj, None, dev)
-                return scopeobj
-                
-            
-        return super().__new__(cls)
-        """
     @classmethod
-    def getScope(cls,host=None):
+    def getDevice(cls,host=None):
+        """Method for handling the creation of the correct Scope object, by implementing a factory process. 
+        Firstly, this method calls getScopeClass() for getting the right BaseScope derived type. If succesfull, this 
+        method, secondly, returns this (class)type together with the needed parameters, to enable
+        the Python runtime to create and initialise the object correctly.
+        DON'T TRY TO CALL THE CONSTRUCTOR OF THIS CLASS DIRECTLY"""
         rm = pyvisa.ResourceManager()
         urls = rm.list_resources()
 
@@ -62,12 +41,15 @@ class BaseScope(object):
             scopetype, dev = scope.getScopeClass(rm, urls, host)
             if scopetype != None:
                 cls = scopetype
-                return cls(host, dev)
+                return cls(dev)
+            
+        return None # if getDevice can't find an instrument, return None.
 
 
-    def __init__(self, host: str=None, visaInstr:pyvisa.resources.MessageBasedResource=None):
-        """abstract init function. A subclass should be override this function, which wil intitialize the final object. Remark: if the subclass 
-        wants to use intialisation done below, it must call super().__init()__ first!"""
+    def __init__(self, visaInstr:pyvisa.resources.MessageBasedResource=None):
+        """This method takes care of the intialisation of a BaseScope object. This implementation leaves most
+        datamembers uninitialised. A subclass should therefore override this function, by initialising the datamembers 
+        needed. Remark: if the subclass relies the intialisation done below, don't forget to call super().__init()__ !"""
         self.brand = None
         self.model = None
         self.serial = None
@@ -81,37 +63,41 @@ class BaseScope(object):
         
     #@property 
     def visaInstr(self) -> pyvisa.resources.MessageBasedResource: 
-        """The reference to a visaInstrument object has to be created during creation of the object @init, which is a reason for the 
-        programmer not to implement this as immutable property and not implement any kind of setter method for this property, nor in this class,
-        nor in any derived class.
+        """The reference to a visaInstrument object will be stored by init. visaInstr is an immutable property. 
+        Therefore no setter method has been defined for this property. Please don't alter this property or
+        override in the derived class.
             """
         return self.visaInstr
 ###################################### BASECHANNEL #########################################################
 class BaseChannel(object):
+    """BaseChannel: a baseclass for the abstraction of a channel of an oscilloscope.
+    All channel implementation have to inherit from this baseclass.
+    1. This base class takes care for subclass auto registration, according to pep487, See:  
+    https://peps.python.org/pep-0487/
+    2. Implementing subclasses HAVE TO fully implement the getChannelClass method of this class.
+    3. Be sure this BaseChannel implementation has access to all inheriting subclasses during creation. If not, 
+    the subclass won't be registered and creating the needed channel object(s) will fail."""
+
     channelList = []
 
     def __init_subclass__(cls, **kwargs):
-        """BaseChannel: baseclass for oscilloscope (vertical) channel implementation.
-        Implementations for oscilloscopes channels have to inherit from this class:
-        1. This base class takes care for subclass auto registration, according to pep487, See:  
-        https://peps.python.org/pep-0487/
-        2. Implementing subclasses HAVE TO implement the getDevice method of this class, which has subsequent signature:
-        @classmethod def getChannel method:
-        3. Be sure BaseChannel's constructor has access to the inheriting subclass during instantion. If not, the
-        subclass will not be registated and the correct supply object won't be instantiated. """
+        """Method for auto registration of BaseChannel subclasses according to PEP487.
+        DO NOT ALTER THIS METHOD NOR TRY TO OVERRIDE IT.
+        """
         super().__init_subclass__(**kwargs)
         cls.channelList.append(cls)
     
     @classmethod
     def getChannelClass(cls, dev):
-        """getChannelObject: factory method for scope channel objects. Remark: this baseclass implementation is empty """
+        """getChannelClass: factory method for scope channel objects. 
+        Remark: this baseclass implementation is empty, must be implemented by the subclass. """
         pass
 
     def __new__(cls, chan_no: int, visaInstr:pyvisa.resources.MessageBasedResource):
-        """New: creation of object. 
+        """New: creation of object based on the right type.
+        Returns a new object of the type, by calling super().__new__(). 
+        The Python runtime will autamtically call init(), if exisists. 
         """
-        #to have Pylance detect the proper type of a variable, call this!
-
         for channel in cls.channelList:
             if channel is cls:
                 chanObj = channel.getChannelClass(chan_no, visaInstr)
@@ -121,6 +107,8 @@ class BaseChannel(object):
         return super().__new__(cls)     
 
     def __init__(self, chan_no: int, visaInstr:pyvisa.resources.MessageBasedResource):
+        """Method voor initialising this Channel object.
+        Remark: if the subclass relies the intialisation done below, don't forget to call super().__init()__ !"""
         self.visaInstr = visaInstr
         self.chanNr = chan_no
         self.WF = BaseWaveForm()            # the waveform ojbect of this channel
@@ -128,9 +116,10 @@ class BaseChannel(object):
         
         
     def capture(self):
-        """Gets the waveform from the oscilloscope, by initiating a new aqquisition. This BaseChannel implementation is empty.  
-        An inheriting subclass wil have to implement this method by sending the proper SCPI commands 
-        in order need to a. get waveform descriptors, b. get the raw data and take care for store it into the proper datastructures"""
+        """Gets the waveform from the oscilloscope, by initiating a new aqquisition. This BaseChannel implementation 
+        is empty. An inheriting subclass wil have to implement this method by sending the proper SCPI commands 
+        in order need to a. get waveform descriptors, b. get the raw data and take care for store it into the proper
+        datastructures for plotting or processing."""
         pass
 
     def getAvailableMeasurements(self):
@@ -146,31 +135,36 @@ class BaseChannel(object):
 ########## BASEVERTICAL ###########
     
 class BaseVertical(object):
+    """BaseVertical is a baseclass implementation of the vertical functionality of a scope.
+    A Vertical of a real oscilloscope have to inherit from this class
+    1. This base class takes care for subclass auto registration, according to pep487, See:  
+    https://peps.python.org/pep-0487/
+    2. Implementing subclasses HAVE TO implement the getVerticalClass method of this class
+    3. Be sure BaseSupply's constructor has access to the inheriting subclass during instantion. If not, the
+    subclass will not be registated and the correct supply object won't be instantiated. 
+    """
     VerticalList = list()
-    #type ChanList = list[BaseChannel]
-
+   
     @classmethod
     def getVerticalClass(cls, dev):
-        """ Tries to get (instantiate) the device, based on the url"""
-        return None #Base class implementation: return None, because this class doesn't do any shit.
+        """getVerticalClass: factory method for getting the right vertical type of an oscilloscope. 
+        Remark: this baseclass implementation is empty, must be implemented by the subclass. """
+        return None 
 
     
     def __init_subclass__(cls, **kwargs):
-        """BaseScope: base class for oscilloscope implementation.
-        Implementation of real supplies have to inherit from this class:
-        1. This base class takes care for subclass auto registration, according to pep487, See:  
-        https://peps.python.org/pep-0487/
-        2. Implementing subclasses HAVE TO implement the getDevice method of this class, which has subsequent signature:
-        @classmethod 
-        def getDevice(cls, url):
-        4. Be sure BaseSupply's constructor has access to the inheriting subclass during instantion. If not, the
-        subclass will not be registated and the correct supply object won't be instantiated. 
-        3. Use Python's properties, for the getter-setter mechanisme, See: https://realpython.com/python-property/"""
+        """Method for auto registration of BaseVertical subclasses according to PEP487.
+        DO NOT ALTER THIS METHOD NOR TRY TO OVERRIDE IT.
+        """
         super().__init_subclass__(**kwargs)
         cls.VerticalList.append(cls)
 
     def __new__(cls,nrOfChan=0, dev:pyvisa.resources.MessageBasedResource=None): 
-        
+        """New: creation of correct object based on the right type, which will be returned by getVerticalClass.
+        Subsequently it returns the new object of the right type, by calling super().__new__(). 
+        Because this method has a return value, the Python runtime will automatically call the init() belonging to
+        the type. 
+        """
         for verti in cls.VerticalList:
             if verti is cls:
                 vertiObj, myNrOfChan = verti.getVerticalClass(dev)
@@ -179,45 +173,52 @@ class BaseVertical(object):
         
         return super().__new__(cls)  
     
-    #def __set_name__(self, owner, name):
-    #    self.key = name
-         
-    
     def __init__(self, nrOfChan: int = 0, dev:pyvisa.resources.MessageBasedResource = None):
+        """This method takes care of the intialisation of a BaseVertical object. Subclass must override this 
+        method ,by initialising the datamembers needed. Remark: if the subclass relies on the intialisation done 
+        below, don't forget to call super().__init()__ !"""
         self.channels = []          
         self.nrOfChan = nrOfChan       # A virtual Baseclass: so no channels available.
         self.visaInstr = dev             # default value = None, see param
     
     #def chan(self, chanNr:int):          
     def chan(self, chanNr)->BaseChannel: 
-        """Get the channel obejct based on the number. This method should be overridden by the 
+        """Get the channel object based on the number. This method should be overridden by the 
         inherting subclass, as this BaseVertical implementation is empty."""
         pass
     
 ############ BaseHorizontal ###########
 class BaseHorizontal(object):
-    HorizontalList = list()
+    """BaseHorizontal: baseclass implementation of a scope horizontal functionality.
+    Implementation of real supplies have to inherit from this class:
+    1. This base class takes care for subclass auto registration, according to pep487, See:  
+    https://peps.python.org/pep-0487/
+    2. Implementing subclasses HAVE TO implement the getHorizontalClass method of this class
+    3. Give BaseHorizontal's constructor access to all inheriting subclasses during its instantion. If not, 
+    registration of the subclass will fail, which prevents creation of needed Horizontal type kind of object."""
     
+    HorizontalList = list()
+
     def __init_subclass__(cls, **kwargs):
-        """BaseHorizontal: base class for oscilloscope implementation.
-        Implementation of real supplies have to inherit from this class:
-        1. This base class takes care for subclass auto registration, according to pep487, See:  
-        https://peps.python.org/pep-0487/
-        2. Implementing subclasses HAVE TO implement the getDevice method of this class, which has subsequent signature:
-        @classmethod 
-        def getDevice(cls, url):
-        4. Be sure BaseSupply's constructor has access to the inheriting subclass during instantion. If not, the
-        subclass will not be registated and the correct supply object won't be instantiated. 
-        3. Use Python's properties, for the getter-setter mechanisme, See: https://realpython.com/python-property/"""
+        """Method for auto registration of BaseHorizontal subclasses according to PEP487.
+        DO NOT ALTER THIS METHOD NOR TRY TO OVERRIDE IT.
+        """
         super().__init_subclass__(**kwargs)
         cls.HorizontalList.append(cls)
     
     @classmethod
     def getHorizontalClass(cls, dev):
+        """getHorizontalClass: a factory method for getting the right horziontal type of an oscilloscope. 
+        Remark: this baseclass implementation is empty, all logic must be implemented by the subclass. """
         return cls
         
     def __new__(cls,dev:pyvisa.resources.MessageBasedResource=None):
-        
+        """New: creation of correct Horizontal object based on the right type, which will be returned by 
+        getVerticalClass.
+        Subsequently it returns the new object of the right type, by calling super().__new__(). 
+        Because this method has a return value, the Python runtime will automatically call the init() belonging to
+        the type. 
+        """
         for hori in cls.HorizontalList:
             if hori is cls:
                 horiObj = hori.getHorizontalClass(dev)
@@ -227,6 +228,9 @@ class BaseHorizontal(object):
         return super().__new__(cls)     
           
     def __init__(self, dev:pyvisa.resources.MessageBasedResource= None):
+        """This method takes care of the intialisation of a BaseHorizontal object. Subclasses must override this 
+        method ,by initialising the datamembers needed. Remark: if the subclass relies on the intialisation done 
+        below, don't forget to call super().__init()__ !"""
         self.visaInstr = dev             # default value = None, see param
         self.TB = 0.0                  # current value of timebase, unit sec/div
         self.SR = 0                    # samplerate
@@ -250,20 +254,21 @@ class BaseHorizontal(object):
 
 ######################################## BASEWAVEFORM #########################################################
 class BaseWaveForm(object):
-
+    """BaseWaveForm: a base class for holding a channels waveform data.
+    Implementation of real scopes have to subclass their waveform implementations from this class. Reason for
+    doing so:
+    1. This base class takes care for subclass auto registration, according to pep487, See:  
+    https://peps.python.org/pep-0487/
+    2. Implementing subclasses HAVE TO implement the getWaveFormClass method of this class.
+    3. Be sure BasewaveForm's constructor has access to the inheriting subclass during instantion. If not, 
+    registration of the subclass will fail and the correct supply object won't be instantiated. 
+    """
+    
     WaveFormList = list()
 
     def __init_subclass__(cls, **kwargs):
-        """BaseWaveForm: a base class for holding a channels waveform data.
-        Implementation of real scopes have to subclass their waveform implementations from this class. Reason for
-        doing so:
-        1. This base class takes care for subclass auto registration, according to pep487, See:  
-        https://peps.python.org/pep-0487/
-        2. Implementing subclasses HAVE TO implement the getDevice method of this class, which has subsequent signature:
-        @classmethod 
-        def getDevice(cls, url):
-        3. Be sure BasewaveForm's constructor has access to the inheriting subclass during instantion. If not, the
-        subclass will not be registated and the correct supply object won't be instantiated. 
+        """Method for auto registration of BaseWaveForm subclasses according to PEP487.
+        DO NOT ALTER THIS METHOD NOR TRY TO OVERRIDE IT.
         """
         super().__init_subclass__(**kwargs)
         cls.WaveFormList.append(cls)
@@ -273,7 +278,11 @@ class BaseWaveForm(object):
         return cls
         
     def __new__(cls):
-        
+        """New: creation of correct BaseWaveForm object based on the right type, which will be returned by 
+        getVerticalClass. Subsequently this method will return the new object of the right type, by calling 
+        super().__new__(). Because this method has a return value, the Python runtime will automatically call
+        the init() belonging to the type. 
+        """
         for wave in cls.WaveFormList:
             if wave is cls:
                 waveObj = wave.getWaveFormClass()
@@ -284,11 +293,38 @@ class BaseWaveForm(object):
     
     def __init__(self):
         """Class for holding waveform data of a channel capture and the methods to transform raw sample data into soming fysical meaningful, such as voltage."""
-        
+        self.rawYdata       = None #data without any conversion or scaling taken from scope
+        self.rawXdata       = None #just an integer array
+        self.scaledYdata    = None #data converted to correct scale e.g units
+        self.scaledXdata    = None #An integer array representing the fysical instants of the scaledYData.
+        #Horizontal data settings of scope
+        self.chanstr        = None
+        self.couplingstr    = None
+        self.timeDiv        = None # see TDS prog.guide table2-17: (horizontal)scale = (horizontal) secdev 
+        self.vDiv           = None # probably the same as Ymult.
+        self.xzero          = None # Horizontal Position value
+        self.xUnitStr       = None # unit of X-as/xdata
+        self.xincr          = None # multiplier for scaling time data, time between two sample points.
+        self.nrOfSamples    = None # the number of points of trace.
+        self.sampleStepTime = None # same as XINCR, Ts = time between to samples.
+        self.yzero          = None 
+        self.ymult          = None # vertical step scaling factor. Needed to translate binary value of sample to real stuff.
+        self.yoff           = None # vertical offset in V for calculating voltage
+        self.yUnitStr       = None
+            
 ###################################### BASECWAVEFORMPREAMBLE ###################################################
 class BaseWaveFormPreample(object):
-    """A WaveFormPreamble (WFP) is a kind of struct which holds relevant data about a channel capture. Based on WFP data, the WaveForm object is able to convert raw samples to
-    measured voltages (vertical data) and samplenumbers to time of frequency instances. (x, t or f data)"""
+    """BaseWaveFormPreambel: a base class for holding a channels waveform Preambel data.
+    Implementation of real scopes have to subclass their waveform implementations from this class. Reason for
+    doing so:
+    1. This base class takes care for subclass auto registration, according to pep487, See:  
+    https://peps.python.org/pep-0487/
+    2. Implementing subclasses HAVE TO implement the getDevice method of this class, which has subsequent signature:
+    @classmethod 
+    def getWaveFormPreableObject(cls, dev):
+    3. Be sure BasewaveForm's constructor has access to the inheriting subclass during instantion. If not, the
+    subclass will not be registated and the correct supply object won't be instantiated. 
+    """
     WaveFormPreambleList = list()
 
     @classmethod
@@ -296,28 +332,24 @@ class BaseWaveFormPreample(object):
         pass
 
     def __init_subclass__(cls, **kwargs):
-        """BaseWaveFormPreambel: a base class for holding a channels waveform Preambel data.
-        Implementation of real scopes have to subclass their waveform implementations from this class. Reason for
-        doing so:
-        1. This base class takes care for subclass auto registration, according to pep487, See:  
-        https://peps.python.org/pep-0487/
-        2. Implementing subclasses HAVE TO implement the getDevice method of this class, which has subsequent signature:
-        @classmethod 
-        def getWaveFormPreableObject(cls, dev):
-        3. Be sure BasewaveForm's constructor has access to the inheriting subclass during instantion. If not, the
-        subclass will not be registated and the correct supply object won't be instantiated. 
+        """Method for auto registration of BaseWaveFormPreamble subclasses according to PEP487.
+        DO NOT ALTER THIS METHOD NOR TRY TO OVERRIDE IT.
         """
         super().__init_subclass__(**kwargs)
         cls.WaveFormPreambleList.append(cls)
     
     def __new__(cls, dev:pyvisa.resources.MessageBasedResource=None):
-        
+        """New: creation of correct BaseWaveFormPreamble object based on the right type, which will be returned 
+        by getVerticalClass() method. Subsequently it returns the new object of the right type, by calling 
+        super().__new__(). Because this method has a return value, the Python runtime will automatically call the init() belonging to
+        the type. 
+        """
         for preamble in cls.WaveFormPreambleList:
-            if preamble is cls:
-                wavePreObj = preamble.getWaveFormPreambleClass(dev)
-                if wavePreObj != None:
-                    return super().__new__(wavePreObj) 
-        
+            #if preamble is cls:
+            wavePreObj = preamble.getWaveFormPreambleClass(dev)
+            if wavePreObj != None:
+                return super().__new__(wavePreObj) 
+    
         return super().__new__(cls) 
 
     def __init__(self, dev:pyvisa.resources.MessageBasedResource=None):
@@ -331,8 +363,14 @@ class BaseWaveFormPreample(object):
 
 ###################################### BASETRIGGERUNIT #########################################################
 class BaseTriggerUnit(object):
-    """The base software representation of a triggerunit. This class has an empty implementation. An inheriting 
-    subclass will have to implement desired behaviour"""
+    """New: creation of an object, or instance. 
+    Only BaseTriggerUnit may call this new method for creating an object based on the correct type, as a kind
+    of factory pattern. To get the right type __new__ will call getTriggerUnitClass methods from every subclass
+    known to BaseTriggerUnit
+    See also: https://mathspp.com/blog/customising-object-creation-with-__new__ 
+    This coding scheme requires (automatic) registration of subclasses according pep487:
+    see: https://peps.python.org/pep-0487/      
+    """
     triggerUnitList = []
 
     @classmethod
@@ -349,15 +387,11 @@ class BaseTriggerUnit(object):
         cls.triggerUnitList.append(cls)
     
     def __new__(cls, vertical:BaseVertical = None, visaInstr:pyvisa.resources.MessageBasedResource=None):
-        """New: creation of an object, or instance. 
-        Only BaseTriggerUnit may call this new method for creating an object based on the correct type, as a kind
-        of factory pattern. To get the right type __new__ will call getTriggerUnitClass methods from every subclass
-        known to BaseTriggerUnit
-        See also: https://mathspp.com/blog/customising-object-creation-with-__new__ 
-        This coding scheme requires (automatic) registration of subclasses according pep487:
-        see: https://peps.python.org/pep-0487/      
+        """New: creation of correct BaseTriggerUnit object based on the right type, which will be returned 
+        by getTriggerUnitClass() method. Subsequently, this method will return the new object of the right type, 
+        by calling super().__new__(). Because this method has a return value, the Python runtime will automatically 
+        call the init() method belonging to the type. 
         """
-        
         for trigger in cls.triggerUnitList:
             if trigger is cls:
                 triggerUnitObj = trigger.getTriggerUnitClass(vertical, visaInstr)
@@ -366,9 +400,10 @@ class BaseTriggerUnit(object):
         
         return super().__new__(cls)      
 
-    
     def __init__(self, vertical:BaseVertical=None, visaInstr:pyvisa.resources.MessageBasedResource=None):
-        """"Method voor initialisation of the BaseTriggerUntit object."""
+        """This method takes care of the intialisation of a BaseTriggerUnit object. Subclasses must override this 
+        method, by initialising the datamembers needed. Remark: if the subclass relies on the intialisation done 
+        below, don't forget to call the subcalss' super().__init()__ !"""
         self.vertical = vertical
         self.visaInstr = visaInstr
         self.source = None #the channel to trigger on.

@@ -71,13 +71,12 @@ class SiglentScope(BaseScope):
             return (None, None)
             
 
-    def __init__(self, visaResc: pyvisa.resources.MessageBasedResource = None, host = None):
+    def __init__(self, visaResc: pyvisa.resources.MessageBasedResource = None ):
         """ 
             init: initialise a newly  created SiglentScope object. Because the pyvisa resource handle will be saved
             during the initing of BaseScope, this method calls super().__init__() 
         """
-        super().__init__()
-        self.visaInstr:pyvisa.resources.MessageBasedResource = visaResc
+        super().__init__(visaResc)
         self.horizontal = SDSHorizontal(visaResc)
         self.vertical = SDSVertical(2, visaResc)
         self.trigger = SDSTrigger(self.vertical,visaResc)

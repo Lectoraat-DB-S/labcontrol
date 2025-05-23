@@ -35,7 +35,7 @@ def initLog():
                             datefmt='%Y-%m-%d %H:%M:%S')
 
 def dummyUse():
-    scope = BaseScope()
+    scope = BaseScope.getDevice()
     #scope.horizontal.timediv=1e-3 #1ms/div
     #trig = scope.trigger
     #trig.setSource(2)
@@ -44,10 +44,10 @@ def dummyUse():
     ch1.capture()
     wfdata = ch1.WFP
     trace = ch1.WF
-    #plt.plot(trace.rawXdata, trace.rawYdata)
+    plt.figure(1)
     plt.plot(trace.scaledXdata, trace.scaledYdata)
-    
-    
+    plt.figure(2)
+    plt.plot(trace.rawXdata, trace.rawYdata)
     plt.show()
 
 #def testSiglent():

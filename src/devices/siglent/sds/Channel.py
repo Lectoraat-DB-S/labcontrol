@@ -216,8 +216,7 @@ class SDSWaveFormPreamble(BaseWaveFormPreample):
     def getWaveFormPreambleClass(cls, dev):
         """ Tries to get (instantiate) the right instance based on the type"""
         if cls is SDSWaveFormPreamble:
-            cls.__init__(cls, dev)
-            return cls
+            return cls(dev)
         else:
             return None      
 
@@ -225,6 +224,7 @@ class SDSWaveFormPreamble(BaseWaveFormPreample):
         """SDSWaveFormPreamble init. Inits all datamembers to the value None.
         Following data members are set:
         TBD """
+        super().__init__(visaInstruments)
         self.nrOfSamples            = None  #Number of points of (last) acquired waveform
         self.vdiv                   = None  #Number of units (e.g. V) per division 
         self.yoff                   = None  #Vertical offset. Calc floating values from raw data : VERTICAL_GAIN * data - VERTICAL_OFFSET

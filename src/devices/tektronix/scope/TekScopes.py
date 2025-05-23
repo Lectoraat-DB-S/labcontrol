@@ -56,13 +56,13 @@ class TekScope(BaseScope):
         else:
             return (None, None)
     
-    def __init__(self, host: str, visaInstr:pyvisa.resources.MessageBasedResource):
+    def __init__(self, visaInstr:pyvisa.resources.MessageBasedResource):
     #def __init__(self, visaResc: pyvisa.resources.MessageBasedResource):
         """ 
-            Constructor for Tektronix TDS osself, cilloscoop. This class is a subclass of BaseScope. BaseScope implements
+            Constructor for Tektronix TDS oscilloscoop. This class is a subclass of BaseScope. BaseScope implements
             the autoregristration scheme for subclasses of PEP487 which is available since python 3.6. 
         """
-        super().__init__(host,visaInstr) #baseclass will store referentie to the device.
+        super().__init__(visaInstr) #baseclass will store referentie to the device.
         self.horizontal = TekHorizontal(visaInstr)
         self.vertical = TekVertical(2, visaInstr)
         self.trigger = TekTrigger(self.vertical,visaInstr)
