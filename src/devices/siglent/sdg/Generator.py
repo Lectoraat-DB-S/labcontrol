@@ -3,7 +3,7 @@ import struct
 import numpy as np
 from enum import Enum
 import socket
-import pyvisa as visa
+import pyvisa
 import logging
 import time
 from devices.BaseGenerator import BaseGenerator
@@ -131,58 +131,72 @@ class SiglentGenerator(BaseGenerator):
 
    @classmethod
    def getGeneratorClass(cls, rm, urls, host):
-        """
-            Tries to get (instantiate) this device, based on matched url or idn response
-            This method will ONLY be called by the BaseScope class, to instantiate the proper object during
-            creation by the __new__ method of BaseGenerator.     
-        """    
-        if cls is SiglentGenerator:
-            urlPattern = "SDG" 
-            if host == None:
-                for url in urls:
-                    if urlPattern in url:
-                        mydev = rm.open_resource(url)
-                        mydev.timeout = 10000  # ms
-                        mydev.read_termination = '\n'
-                        mydev.write_termination = '\n'
-                        desc = mydev.query("*IDN?")
-                        myidn = cls.decodeIDN(desc)
-                        if myidn: #Found a valid Siglent Generator.
-                            return (cls, mydev)
-                        else:
-                            return (None, None)
-                            
-            else:
-                try:
-                    ip_addr = socket.gethostbyname(host)
-                    addr = 'TCPIP::'+str(ip_addr)+'::INSTR'
-                    mydev = rm.open_resource('TCPIP::'+str(ip_addr)+'::INSTR')
-                    cls.__init__(cls,mydev)
-                    return (cls, mydev)
-                except socket.gaierror:
-                    print("Socket Error")
-                    return (None, None)
-        else:
-            return (None, None)
-    
-   def __init__(self, host=None):
-      self.visaInstr = None
-      self.idn = None
+      """
+         Tries to get (instantiate) this device, based on matched url or idn response
+         This method will ONLY be called by the BaseScope class, to instantiate the proper object during
+         creation by the __new__ method of BaseGenerator.     
+      """    
+      if cls is SiglentGenerator:
+         urlPattern = "SDG" 
+         if host == None:
+               for url in urls:
+                  if urlPattern in url:
+                     mydev = rm.open_resource(url)
+                     mydev.timeout = 10000  # ms
+                     mydev.read_termination = '\n'
+                     mydev.write_termination = '\n'
+                     desc = mydev.query("*IDN?")
+                     myidn = cls.decodeIDN(desc)
+                     if myidn: #Found a valid Siglent Generator.
+                           return (cls, 2, mydev)
+               return (None, 0, None)
+                              
+         else:
+               try:
+                  ip_addr = socket.gethostbyname(host)
+                  addr = 'TCPIP::'+str(ip_addr)+'::INSTR'
+                  mydev = rm.open_resource('TCPIP::'+str(ip_addr)+'::INSTR')
+                  cls.__init__(cls,mydev)
+                  return (cls, 2, mydev)
+               except socket.gaierror:
+                  print("Socket Error")
+                  return (None, 0, None)
+      else:
+         return (None, 0, None)
+
+   def __init__(self, nrOfChan: int=0, visaInstr:pyvisa.resources.MessageBasedResource=None):
+      super().__init__(nrOfChan=nrOfChan, instr=visaInstr)
+      self.idn = IDN()
+      self.channels =list()
+      
+
       
       logger.info("SiglentGenerator found and generator object created.")
       self.CH1 = SDGChannel(1, self.visaInstr)
       self.CH2 = SDGChannel(2, self.visaInstr)
+      for i in range(1, self.nrOfChan+1):
+            self.channels.append({i:SDGChannel(i, visaInstr)})
 
    def __enter__(self):
       return self
 
    def getIDN(self):
-      desc = self._inst.query("*IDN?")
-      self._idn.decodeIDN(desc)
-      return self._idn.printIDN()
+      desc = self.visaInstr.query("*IDN?")
+      self.idn.decodeIDN(desc)
+      return self.idn.printIDN()
 
    def __exit__(self, *args):
-        self._inst.close()
+        self.visaInstr.close()
 
    def query(self, cmd: str):
-      return self._inst.query(cmd)
+      return self.visaInstr.query(cmd)
+   
+   def chan(self, chanNr): 
+        """Gets a channel, based on its index: 1, 2 etc."""
+        try: 
+            for  i, val in enumerate(self.channels):
+                if (chanNr) in val.keys():
+                    return val[chanNr]
+        except ValueError:
+            print("Requested channel not available")
+            return None     

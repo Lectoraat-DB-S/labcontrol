@@ -1,5 +1,5 @@
 import socket
-import pyvisa as visa
+import pyvisa
 
 class BaseDMM(object):
     """
@@ -30,40 +30,50 @@ class BaseDMM(object):
         """
         super().__init_subclass__(**kwargs) 
         cls.supplyList.append(cls)
-         
+
+    @classmethod
+    def getDMMClass(cls, rm, urls, host):
+        pass    
+
     @classmethod
     def getDevice(cls, rm, urls, host):
-        """ Tries to get (instantiate) the device, based on the url. REMARK: this baseclass implementation is empty.
-        Inheriting subclasses must implement this functionality."""
-        return None #Base class implementation: return None, because this class can't do shit.
-    
-        
-    def __new__(cls, host=None):
-        """
-        Only BaseSupply may call this new methond as the first step in creation of a scope object. 
-        This is a way to controll if an object will be returned from a new method and if so, which type of object
-        it will have to return, as a form of factory pattern. This method will call the getDevice implementation of each 
-        registered subclass.
-        See also:https://mathspp.com/blog/customising-object-creation-with-__new__ 
-        
-        This coding scheme relies on the (automatic) registration of subclasses according to pep487:
-        see: https://peps.python.org/pep-0487/
-        
-        """
-        instance = super().__new__(cls) #to have Pylance detect the proper type of a variable, call this!
+        """Method for handling the creation of the correct DMM object, by implementing a factory process. 
+        Firstly, this method calls getDMMClass() for getting the right DMM derived type. If succesfull, this 
+        method, secondly, returns this (class)type together with the needed parameters, to enable
+        the Python runtime to create and initialise the object correctly.
+        DON'T TRY TO CALL THE CONSTRUCTOR OF THIS CLASS DIRECTLY"""
+        rm = pyvisa.ResourceManager()
+        urls = rm.list_resources()
 
-        rm = visa.ResourceManager()
-        devUrls = rm.list_resources()
         for supply in cls.supplyList:
-            dev = supply.getDevice(rm, devUrls, host)
-            if dev != None:
-                return dev
-        
-        return instance  #needed for codecompletion by Pylance      
-        
+            supplytype, dev = supply.getDMMClass(rm, urls, host)
+            if supplytype != None:
+                cls = supplytype
+                return cls(dev)
+            
+        return None # if getDevice can't find an instrument, return None.
+    
+    @classmethod
+    def getDevice(cls,host=None):
+        """Method for handling the creation of the correct Scope object, by implementing a factory process. 
+        Firstly, this method calls getScopeClass() for getting the right BaseScope derived type. If succesfull, this 
+        method, secondly, returns this (class)type together with the needed parameters, to enable
+        the Python runtime to create and initialise the object correctly.
+        DON'T TRY TO CALL THE CONSTRUCTOR OF THIS CLASS DIRECTLY"""
+        rm = pyvisa.ResourceManager()
+        urls = rm.list_resources()
+
+        for generator in cls.GeneratorList:
+            generatortype, dev = generator.getGeneratorClass(rm, urls, host)
+            if generatortype != None:
+                cls = generatortype
+                return cls(dev)
+            
+        return None # if getDevice can't find an instrument, return None.
+      
     def __init__(self, dev=None): #For now, init should get the nrOfChan for this scope as a param.
         """abstract init function. A subclass should be override this function, which wil intitialize object below"""
-        self.visaInstr : visa.Resource = dev
+        self.visaInstr : pyvisa.resources.MessageBasedResource = dev
         
     def idn(self):
         """Method for retrieving the indentification string of the GPIB instrument. REMARK: this is an empty baseclass

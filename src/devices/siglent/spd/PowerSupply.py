@@ -50,7 +50,6 @@ class SiglentPowerSupply(BaseSupply):
     def __init__(self, nrOfChan : int = None, dev : pyvisa.resources.MessageBasedResource = None):
         super.__init__(nrOfChan, dev)
         
-        self.nrOfChan = nrOfChan
         self.channels = list()
         for i in range(1, self.nrOfChan+1):
             self.channels.append({i:SPDChannel(i, dev)})

@@ -7,18 +7,12 @@ import pyvisa
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+import tests.utils as utils
+
+preamblstr_toreturn = None
 
 #assert: if true, then nothing. If false, assertion
 #blog : https://www.toptal.com/python/an-introduction-to-mocking-in-python
-
-def fakesinewave(starttime = 0, endtime = 2e-3, aantal_stappen = 2500, f=200):
-    tstep = np.linspace(starttime,endtime,aantal_stappen)
-    y = np.sin(2.0*np.pi*(f)*tstep)
-    y=y*127
-    y=np.round(y)
-    #plt.plot(y)
-    #plt.show()
-    return np.array(y, dtype=np.dtype('b'))
 
 def fake_preamble():
     """Hieronder een output van de scoop na aanzetten en autoscale
@@ -92,13 +86,14 @@ class FakeWaveFormPreamble(TekWaveFormPreamble):
             {self.yoff};\
             {self.yUnitStr};"
         return wfpre_str
-            
-        
+                    
 def setFakeTekWaveFormPreamble(aantal,stepTime, vdiv):
     p = TekWaveFormPreamble(None)
     
                     
     return p
+
+
 
 def query_side_effect(command):
     if command == "*IDN?":
@@ -106,9 +101,9 @@ def query_side_effect(command):
     elif command == "MEAS:VOLT?":
         return "3.3"
     elif command == "curve?":
-        return fakesinewave()
+        return utils.genFakeSineWave()
     elif command == "WFMPRE?":
-        return getWFMPREString(myPreamble)
+        return preamblstr_toreturn
     else:
         return "UNKNOWN COMMAND"
     
@@ -132,8 +127,9 @@ class TestTDSCreate(unittest.TestCase):
         aantal_stappen = 2500
         f=200
         timestep=(starttime-endtime)/aantal_stappen
-        cls.myfakeSin = fakesinewave(starttime, endtime, aantal_stappen, f)
-        cls.myfakePreamble = setFakeTekWaveFormPreamble(aantal=aantal_stappen, stepTime=timestep, vdiv=1 )
+        cls.myfakeSin = utils.fakesinewave(starttime, endtime, aantal_stappen, f)
+        cls.myfakePreamble:FakeWaveFormPreamble = setFakeTekWaveFormPreamble(aantal=aantal_stappen, stepTime=timestep, vdiv=1 )
+        
         
         cls.patcher1 = patch.object(pyvisa.ResourceManager, "list_resources")
         cls.patcher2 = patch.object(pyvisa.ResourceManager, "open_resource")
@@ -147,7 +143,7 @@ class TestTDSCreate(unittest.TestCase):
         # Wijs de functie toe als side_effect van de mock query methode
         cls.mockdev.query.side_effect = query_side_effect   
         #cls.mockdev.query_binary_values.side_effect = query_side_effect
-        cls.mockdev.query_binary_values.return_value = fakesinewave()   
+        cls.mockdev.query_binary_values.return_value = utils.fakesinewave()   
         cls.MockListResources.return_value = ["INSTR::xxx::USB"]
         # 2) Maak de instrument-instantie aan
         cls.scope:BaseScope = BaseScope.getDevice()
@@ -173,8 +169,8 @@ class TestTDSCreate(unittest.TestCase):
         self.assertTrue(self.scope.__module__==TekScope.__module__)
 
     def testCaptureTDS(self):
+        preamblstr_toreturn = self.myfakePreamble.getWFMPREString()
         
-
         verticaal = self.scope.vertical
         
         thechan = verticaal.chan(1)

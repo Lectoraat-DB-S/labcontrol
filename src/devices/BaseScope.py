@@ -45,7 +45,6 @@ class BaseScope(object):
             
         return None # if getDevice can't find an instrument, return None.
 
-
     def __init__(self, visaInstr:pyvisa.resources.MessageBasedResource=None):
         """This method takes care of the intialisation of a BaseScope object. This implementation leaves most
         datamembers uninitialised. A subclass should therefore override this function, by initialising the datamembers 
@@ -55,8 +54,8 @@ class BaseScope(object):
         self.serial = None
         self.firmware = None
         self.visaInstr : pyvisa.resources.MessageBasedResource = visaInstr
-        self.horizontal = BaseHorizontal(visaInstr)
-        self.vertical = BaseVertical(visaInstr)
+        self.horizontal = None
+        self.vertical = None
         self.trigger = None
         self.utility = None
         self.host = None
@@ -93,18 +92,6 @@ class BaseChannel(object):
         Remark: this baseclass implementation is empty, must be implemented by the subclass. """
         pass
 
-    def __new__(cls, chan_no: int, visaInstr:pyvisa.resources.MessageBasedResource):
-        """New: creation of object based on the right type.
-        Returns a new object of the type, by calling super().__new__(). 
-        The Python runtime will autamtically call init(), if exisists. 
-        """
-        for channel in cls.channelList:
-            if channel is cls:
-                chanObj = channel.getChannelClass(chan_no, visaInstr)
-                if chanObj != None:
-                    return super().__new__(chanObj)
-        
-        return super().__new__(cls)     
 
     def __init__(self, chan_no: int, visaInstr:pyvisa.resources.MessageBasedResource):
         """Method voor initialising this Channel object.
@@ -159,20 +146,7 @@ class BaseVertical(object):
         super().__init_subclass__(**kwargs)
         cls.VerticalList.append(cls)
 
-    def __new__(cls,nrOfChan=0, dev:pyvisa.resources.MessageBasedResource=None): 
-        """New: creation of correct object based on the right type, which will be returned by getVerticalClass.
-        Subsequently it returns the new object of the right type, by calling super().__new__(). 
-        Because this method has a return value, the Python runtime will automatically call the init() belonging to
-        the type. 
-        """
-        for verti in cls.VerticalList:
-            if verti is cls:
-                vertiObj, myNrOfChan = verti.getVerticalClass(dev)
-                if vertiObj != None:
-                    return super().__new__(vertiObj)
-        
-        return super().__new__(cls)  
-    
+  
     def __init__(self, nrOfChan: int = 0, dev:pyvisa.resources.MessageBasedResource = None):
         """This method takes care of the intialisation of a BaseVertical object. Subclass must override this 
         method ,by initialising the datamembers needed. Remark: if the subclass relies on the intialisation done 
@@ -212,20 +186,6 @@ class BaseHorizontal(object):
         Remark: this baseclass implementation is empty, all logic must be implemented by the subclass. """
         return cls
         
-    def __new__(cls,dev:pyvisa.resources.MessageBasedResource=None):
-        """New: creation of correct Horizontal object based on the right type, which will be returned by 
-        getVerticalClass.
-        Subsequently it returns the new object of the right type, by calling super().__new__(). 
-        Because this method has a return value, the Python runtime will automatically call the init() belonging to
-        the type. 
-        """
-        for hori in cls.HorizontalList:
-            if hori is cls:
-                horiObj = hori.getHorizontalClass(dev)
-                if horiObj != None:
-                    #return super().__new__(horiObj, dev)
-                    return super().__new__(horiObj)
-        return super().__new__(cls)     
           
     def __init__(self, dev:pyvisa.resources.MessageBasedResource= None):
         """This method takes care of the intialisation of a BaseHorizontal object. Subclasses must override this 
@@ -277,20 +237,6 @@ class BaseWaveForm(object):
     def getWaveFormClass(cls):
         return cls
         
-    def __new__(cls):
-        """New: creation of correct BaseWaveForm object based on the right type, which will be returned by 
-        getVerticalClass. Subsequently this method will return the new object of the right type, by calling 
-        super().__new__(). Because this method has a return value, the Python runtime will automatically call
-        the init() belonging to the type. 
-        """
-        for wave in cls.WaveFormList:
-            if wave is cls:
-                waveObj = wave.getWaveFormClass()
-                if waveObj != None:
-                    return  super().__new__(waveObj)
-        
-        return  super().__new__(cls)     
-    
     def __init__(self):
         """Class for holding waveform data of a channel capture and the methods to transform raw sample data into soming fysical meaningful, such as voltage."""
         self.rawYdata       = None #data without any conversion or scaling taken from scope
@@ -338,19 +284,6 @@ class BaseWaveFormPreample(object):
         super().__init_subclass__(**kwargs)
         cls.WaveFormPreambleList.append(cls)
     
-    def __new__(cls, dev:pyvisa.resources.MessageBasedResource=None):
-        """New: creation of correct BaseWaveFormPreamble object based on the right type, which will be returned 
-        by getVerticalClass() method. Subsequently it returns the new object of the right type, by calling 
-        super().__new__(). Because this method has a return value, the Python runtime will automatically call the init() belonging to
-        the type. 
-        """
-        for preamble in cls.WaveFormPreambleList:
-            #if preamble is cls:
-            wavePreObj = preamble.getWaveFormPreambleClass(dev)
-            if wavePreObj != None:
-                return super().__new__(wavePreObj) 
-    
-        return super().__new__(cls) 
 
     def __init__(self, dev:pyvisa.resources.MessageBasedResource=None):
         self.visaInstr = dev
@@ -386,20 +319,7 @@ class BaseTriggerUnit(object):
         super().__init_subclass__(**kwargs)
         cls.triggerUnitList.append(cls)
     
-    def __new__(cls, vertical:BaseVertical = None, visaInstr:pyvisa.resources.MessageBasedResource=None):
-        """New: creation of correct BaseTriggerUnit object based on the right type, which will be returned 
-        by getTriggerUnitClass() method. Subsequently, this method will return the new object of the right type, 
-        by calling super().__new__(). Because this method has a return value, the Python runtime will automatically 
-        call the init() method belonging to the type. 
-        """
-        for trigger in cls.triggerUnitList:
-            if trigger is cls:
-                triggerUnitObj = trigger.getTriggerUnitClass(vertical, visaInstr)
-                if triggerUnitObj != None:
-                    return super().__new__(triggerUnitObj) 
-        
-        return super().__new__(cls)      
-
+    
     def __init__(self, vertical:BaseVertical=None, visaInstr:pyvisa.resources.MessageBasedResource=None):
         """This method takes care of the intialisation of a BaseTriggerUnit object. Subclasses must override this 
         method, by initialising the datamembers needed. Remark: if the subclass relies on the intialisation done 

@@ -33,7 +33,7 @@ class TekHorizontal(BaseHorizontal):
             to instantiate the proper object during creation by the __new__ method according to PEP487.     
         """    
         if cls is TekHorizontal:
-            return cls
+            return cls(dev=dev)
         else:
             return None   
          
@@ -58,6 +58,6 @@ class TekHorizontal(BaseHorizontal):
         SEC_DIV = float(self.visaInstr.query('HORIZONTAL:MAIN:SECDIV?')) #Requesting the horizontal scale in SEC/DIV
         return SEC_DIV   
     
-    def setTimeDiv(self, time):
-        self.visaInstr.write(f"HORizontal:MAIn:SCAle {time}")
+    #def setTimeDiv(self, time):
+    #    self.visaInstr.write(f"HORizontal:MAIn:SCAle {time}")
     

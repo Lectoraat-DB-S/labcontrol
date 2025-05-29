@@ -45,7 +45,7 @@ class SDSHorizontal(BaseHorizontal):
         :WAVeform:SOURce.
         See text output from a Siglent scope for reference. See Repo.
         """
-        self._dev._inst.write(f"Time_DIV {value}")
+        self.visaInstr.write(f"Time_DIV {value}")
         
     def setTimeDiv(self, value):
         self.setIimeBase(value)

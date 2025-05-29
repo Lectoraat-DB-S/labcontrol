@@ -11,6 +11,7 @@ from devices.Korad.KoradSupply import Korad3305P
 #import tests.testSDS as scopeTest
 #import control.gutter as gootje
 from devices.BaseScope import BaseChannel, BaseScope, BaseHorizontal, BaseVertical, BaseWaveForm, BaseWaveFormPreample
+from devices.BaseGenerator import BaseGenerator
 from devices.siglent.sds.Scopes import  SiglentScope
 from devices.tektronix.scope.TekScopes import TekScope, TekHorizontal, TekTrigger
 
@@ -36,20 +37,16 @@ def initLog():
 
 def dummyUse():
     scope = BaseScope.getDevice()
-    #scope.horizontal.timediv=1e-3 #1ms/div
+    #gen: BaseGenerator = BaseGenerator.getDevice()
+    scope.horizontal.setTimeDiv(0.5e-3) #1ms/div
+    chan1 = scope.vertical.chan(1)
+    chan1.capture()
     #trig = scope.trigger
     #trig.setSource(2)
-    ch1 = scope.vertical.chan(1)
-    chs = scope.vertical.channels
-    ch1.capture()
-    wfdata = ch1.WFP
-    trace = ch1.WF
-    plt.figure(1)
-    plt.plot(trace.scaledXdata, trace.scaledYdata)
-    plt.figure(2)
-    plt.plot(trace.rawXdata, trace.rawYdata)
-    plt.show()
-
+    #chan1 = gen.chan(1)
+    #chan1.setfreq(100000)
+    #chan1.enableOutput(True)
+    #
 #def testSiglent():
 #    sigTest.doTheTest()
 

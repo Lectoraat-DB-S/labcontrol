@@ -1,10 +1,17 @@
 import pyvisa
+from devices.BaseSupply import BaseSupplyChannel
 
-class SPDChannel(object):
-    def __init__(self, chan_no: int, dev :  pyvisa.resources.Resource):
-        self._name = f"CH{chan_no}"
-        self.visaInstr = dev
-
+class SPDChannel(BaseSupplyChannel):
+    def getSupplyChannelClass(cls,  chan_no, dev):
+        if cls is SPDChannel:
+            return cls
+        else:
+            return None     
+         
+    def __init__(self, chanNr : int = None, dev : pyvisa.resources.MessageBasedResource = None):
+        super().__init__(chanNr=chanNr, dev=dev)
+        self.name = f"CH{chanNr}"
+        
     ####BaseClass methods######
     def enable(self, state: bool):
         """
@@ -51,25 +58,25 @@ class SPDChannel(object):
     #### SPD dedicated methods ######
 
     def set_output(self, status: bool):
-        self.visaInstr.write(f"OUTP {self._name},{'ON' if status else 'OFF'}")
+        self.visaInstr.write(f"OUTP {self.name},{'ON' if status else 'OFF'}")
 
     def set_voltage(self, voltage: float):
-        self.visaInstr.write(f"{self._name}:VOLT {voltage:.3f}")
+        self.visaInstr.write(f"{self.name}:VOLT {voltage:.3f}")
 
     def set_current(self, current: float):
-        self.visaInstr.write(f"{self._name}:CURR {current:.3f}")
+        self.visaInstr.write(f"{self.name}:CURR {current:.3f}")
 
     def get_voltage(self):
-        return self.visaInstr.query(f"{self._name}:VOLT?")
+        return self.visaInstr.query(f"{self.name}:VOLT?")
 
     def get_current(self):
-        return self.visaInstr.query(f"{self._name}:CURR?")
+        return self.visaInstr.query(f"{self.name}:CURR?")
 
     def measure_voltage(self):
-        return self.visaInstr.query(f"MEAS:VOLT? {self._name}")
+        return self.visaInstr.query(f"MEAS:VOLT? {self.name}")
 
     def measure_current(self):
-        return self.visaInstr.query(f"MEAS:CURR? {self._name}")
+        return self.visaInstr.query(f"MEAS:CURR? {self.name}")
 
     def measure_power(self):
-        return self.visaInstr.query(f"MEAS:POWE? {self._name}")
+        return self.visaInstr.query(f"MEAS:POWE? {self.name}")

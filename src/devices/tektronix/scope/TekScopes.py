@@ -40,8 +40,8 @@ class TekScope(BaseScope):
                         desc = mydev.query("*IDN?")
                         if desc.find("TEKTRONIX,TDS") > -1: #Tektronix device found via IDN.
                             return (cls, mydev)
-                        else:
-                            return (None, None)
+                
+                return (None, None)
                             
             else:
                 try:

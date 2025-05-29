@@ -45,11 +45,11 @@ class SDSChannel(BaseChannel):
         self.visaInstr.write(cmd)
 
     def getVdiv(self):
-        VDIV = self.query(f"{self._name}:VDIV?")
+        VDIV = self.query(f"{self.name}:VDIV?")
         return VDIV
 
     def getVofs(self):
-        VOFS = self.query(f"{self._name}:OFST?")
+        VOFS = self.query(f"{self.name}:OFST?")
         return VOFS
     
     def getWaveformPreamble(self):
@@ -57,42 +57,48 @@ class SDSChannel(BaseChannel):
         :WAVeform:SOURce.
         See text output from a Siglent scope for reference. See Repo.
         """
-        wvpRespStr = self.visaInstr.query_binary_values(f"{self.name}:WaveForm? DESC", datatype='B', container=np.ndarray)
+        wvpRespStr = self.visaInstr.query_binary_values(f"{self.name}:WaveForm? DESC", datatype='B', is_big_endian=False, container=np.ndarray)
         self.WFP.decodePreambleStr(params=wvpRespStr)
         
     def capture(self):
-        
         self.getWaveformPreamble() #for quering the preamble, in order to have fresh WVP
-        
-        data = self.visaInstr.query_binary_values(f"{self._name}:WF? DAT2", datatype='B', is_big_endian=False, container=np.ndarray)
+        data = self.visaInstr.query_binary_values(f"{self.name}:WF? DAT2", datatype='B', is_big_endian=False, container=np.ndarray)
         try:
             
             trace = np.frombuffer(data, dtype=np.byte)
-            self._WVT.setRawTrace(trace)
+            self.WF.rawYdata = trace
+            self.rawXdata = np.linspace(0, self.WFP.nrOfSamples-1, num=int(self.WFP.nrOfSamples),endpoint=False)
             self.WF.convertRaw_to_voltage()
         except Exception as e:
-            self._logger.error(e)
+            #TODO: fix logger hassle
+            #self.logger.error(e)
+            print("Exception during capture SDS!!")
     
-    def getTimeAxis(self):
-        horOffset = self.WVP.trigDelay
-        sampleInterval = self.WVP.xincr
-        tdiv = self._WVT._WVP.timeDiv
-        nrOfPoints = self.WVP.nrOfSamples
+    def setTimeAxis(self):
+        #fix below
+        horOffset = self.WFP.trigDelay
+        sampleInterval = self.WFP.xincr
+        tdiv = self.WF.timeDiv
+        nrOfPoints = self.WF.nrOfSamples
         FirstSampleTime = horOffset -tdiv*(14/2)
         lastSampleTime = FirstSampleTime + nrOfPoints*sampleInterval
         timeArr = np.arange(FirstSampleTime,lastSampleTime,sampleInterval)
+        self.WF.scaledXdata = timeArr
         
-        return timeArr
     
+    def getTimeAxis(self):
+        self.setTimeAxis()
+        return self.WF.scaledXdata
+
+
     def getTimeAxisRange(self):
         #See programming manual sds, page 142:
         #first point = delay - (timebase*(hori_grid_size/2))
-        
-        mydelay = self._WVT._WVP._delay
-        mytimebase = self.WVP.timeDiv
-        timeOfFirstSample = mydelay - (mytimebase*(self._hori_grid_size/2))
-        self.WVP.lastValidSample = timeOfFirstSample +(self.WVP.xincr * self.WVP.nrOfSamples)
-        return (self.WVP.firstValidSample,  self.WVP.lastValidSample)
+        mydelay = self.WFP.trigDelay
+        mytimebase = self.WFP.timeDiv
+        timeOfFirstSample = mydelay - (mytimebase*(self.WF.hori_grid_size/2))
+        self.WFP.lastValidPoint = timeOfFirstSample +(self.WFP.xincr * self.WF.nrOfSamples)
+        return (self.WFP.firstValidPoint,  self.WFP.lastValidPoint)
 
     ########## PARAMETER MEASUREMENTS (PAVA) ###########
     
@@ -131,7 +137,7 @@ class SDSChannel(BaseChannel):
     #duty cycle
     def getDuty(self):
         response =self.query(f"{self._name}:PAVA? DUTY")
-        return float( )
+        return float(response)
     
     #period
     def getPeriod(self):
@@ -140,71 +146,71 @@ class SDSChannel(BaseChannel):
 
     #falltime
     def getFall(self):
-        response =self.query(f"{self._name}:PAVA? FALL")
+        response =self.query(f"{self.name}:PAVA? FALL")
         return splitAndStripSec(response)
     
     #(Vmin-Vbase)/ Vamp before the waveform rising transition
     def getRPRE(self):
-        response =self.query(f"{self._name}:PAVA? RPRE")
+        response =self.query(f"{self.name}:PAVA? RPRE")
         return float(response )
     
     #positive width
     def getPwidth(self):
-        response = self.query(f"{self._name}:PAVA? PWID")
+        response = self.query(f"{self.name}:PAVA? PWID")
         return float(response )
     
     #(Vmin-Vbase)/ Vamp before the waveform falling transition
     def getFPRE(self):
-        response =  self.query(f"{self._name}:PAVA? FPRE")
+        response =  self.query(f"{self.name}:PAVA? FPRE")
         return float(response)
     
     #root mean square
     def getRMS(self):
-        response = self.query(f"{self._name}:PAVA? RMS")
+        response = self.query(f"{self.name}:PAVA? RMS")
         return splitAndStripV(response)
     
     #maximum
     def getMax(self):
-        response = self.query(f"{self._name}:PAVA? MAX")
+        response = self.query(f"{self.name}:PAVA? MAX")
         return splitAndStripV(response)
     
     #risetime
     def getRise(self):
-        response = self.query(f"{self._name}:PAVA? RISE")
+        response = self.query(f"{self.name}:PAVA? RISE")
         return float( response)
     
     #minimum
     def getMin(self):
-        response =self.query(f"{self._name}:PAVA? MIN")
+        response =self.query(f"{self.name}:PAVA? MIN")
         return splitAndStripV(response)
     
     #top
     def getTop(self):
-        response = self.query(f"{self._name}:PAVA? TOP")
+        response = self.query(f"{self.name}:PAVA? TOP")
         return splitAndStripV(response)
     
     #mean
     def getMean(self):
-        response = self.query(f"{self._name}:PAVA? MEAN")
+        response = self.query(f"{self.name}:PAVA? MEAN")
         return splitAndStripV(response)
     
     #width
     def getWidth(self):
-        response = self.query(f"{self._name}:PAVA? WID")
+        response = self.query(f"{self.name}:PAVA? WID")
         return float(response )
     
     #Gets the measured parameter 'amplitude'
     #example response: 'C1:PAVA AMPL,3.20E-01V\n'
     def getAmplitude(self):
-        response =self.query(f"{self._name}:PAVA? AMPL")
+        response =self.query(f"{self.name}:PAVA? AMPL")
         return splitAndStripV(response)
         
     def getPKPK(self):
-        response =self.query(f"{self._name}:PAVA? PKPK")
+        response =self.query(f"{self.name}:PAVA? PKPK")
         return splitAndStripV(response)
         
     def getFrequency(self):
-        response = self.query(f"{self._name}:PAVA? FREQ")
+        response = self.query(f"{self.name}:PAVA? FREQ")
         return splitAndStripHz(response)
   
 
@@ -263,15 +269,18 @@ class SDSWaveFormPreamble(BaseWaveFormPreample):
         self.recordType             = None
         self.processingDone         = None
         self.vertCouplingstr        = None #self._vertCoupling = None
+        self.probeAtt               = None
         self.ymult                  = None #self._vertGain = None
         self.bwLimit                = None
         self.vertVernier            = None
         self.acqVertOffs            = None # geen idee wat dit is.
         self.waveSource             = None
+        self.instrumentName         = None
+        self.instrumentNr           = None
        
     def decodePreambleStr(self, params):
-        instrument_name = struct.unpack("16s", params[76:92])[0] #string type parameter.
-        instrument_number = struct.unpack("L", params[92:96])[0] #long int type parameter.
+        self.instrumentName = struct.unpack("16s", params[76:92])[0] #string type parameter.
+        self.instrumentNr = struct.unpack("L", params[92:96])[0] #long int type parameter.
         temp = struct.unpack('4c', params[96:100])[0] #string type parameter.
         trace_label = str(temp)
         self.nrOfSamples = struct.unpack('i', params[116:120])[0]
@@ -280,15 +289,15 @@ class SDSWaveFormPreamble(BaseWaveFormPreample):
         self.wfsu_si = struct.unpack('i', params[144:148])[0]
         
         
-        probe = struct.unpack('f', params[328:332])[0]
+        self.probeAtt = struct.unpack('f', params[328:332])[0]
         sweeps_per_acq = struct.unpack('L', params[148:152])[0] #for Long sized parameter, use 'L'
-        self.pairPoints=struct.unpack('x', params[152:154])[0] #Word= kind of parameter, use 'x' for hex decoding?
-        self.pairOffset=struct.unpack('x', params[154:156])[0] #Word= kind of parameter, use 'x' for hex decoding?
-        self.vdiv = struct.unpack('f', params[156:160])[0] * probe
+        #self.pairPoints=struct.unpack('x', params[152:154])[0] #Word= kind of parameter, use 'x' for hex decoding?
+        #self.pairOffset=struct.unpack('x', params[154:156])[0] #Word= kind of parameter, use 'x' for hex decoding?
+        self.vdiv = struct.unpack('f', params[156:160])[0] * self.probeAtt
         
-        self.yoff = struct.unpack('f', params[160:164])[0] * probe
-        self.maxGridVal = struct.unpack('f', params[164:168])[0] * probe
-        self.minGridVal = struct.unpack('f', params[168:172])[0] * probe
+        self.yoff = struct.unpack('f', params[160:164])[0] * self.probeAtt
+        self.maxGridVal = struct.unpack('f', params[164:168])[0] * self.probeAtt
+        self.minGridVal = struct.unpack('f', params[168:172])[0] * self.probeAtt
         #nom_bits: an intrinsic measure of precision. Raw data is 8 bits, but averaging increases number of bits.
         self.nomBits = struct.unpack('H', params[172:174])[0]  # for Word sized parameter, use 'H'
         self.xincr = struct.unpack( 'f', params[176:180])[0]
@@ -328,7 +337,7 @@ class SDSWaveFormPreamble(BaseWaveFormPreample):
         self.vertGain = struct.unpack('H', params[332:334])[0]
         self.bwLimit = struct.unpack('H', params[334:336])[0] #enum, 2 bytes use 'H' for now. need check!
         self.vertVernier = struct.unpack('f', params[336:340])[0] # enum = kind of parameter, use 'x' for now.Don't what this really means need check!
-        self.acqVertOffs = struct.unpack('f', params[340:344])[0] # enum = kind of parameter, use 'x' for now.Don't what this really means need check!
+        #self.acqVertOffs = struct.unpack('f', params[340:344])[0] # enum = kind of parameter, use 'x' for now.Don't what this really means need check!
         self.waveSource = struct.unpack('H', params[344:346])[0] # enum, 2 bytes use 'H' for now. need check!
         #TODO: if the object WFP really is the WaveForm object for this channel, then all values have now been set. THIS MUST BE CHECKED.
 
@@ -352,21 +361,8 @@ class SDSWaveForm(BaseWaveForm):
         self.scaledYdata    = None #data converted to correct scale e.g untis
         self.scaledXdata    = None #An integer array representing the fysical instants of the scaledYData.
         
-        self.nrOfDivs = 5 # TODO: should be set during initialisation of the scope.
-        self.full_code = 256 # TODO: should be set during initialisation of the scope.
-        self.center_code = 127 # TODO: should be set during initialisation of the scope.
-        self.max_code = self.full_code/2
-        self.hori_grid_size = 14 # TODO: is this a fixed number for Siglent? Check this.
+        self.hori_grid_size = 14 # TODO: See programming manual, pag 142/143 gridsize = 14.
         
-    def calculate_voltage(self):
-        x = self.getRawTrace()
-        fc =self.full_code
-        #np.where(x>5, x, temp)
-        np.where(x > self.center_code , x, x - self.full_code)
-        #FS=10 hokjes=top-top
-        #0->1.0 = 127 stapjes
-        #0->1.0 = 5 hokjes
-
         """
             To Calculate the voltage value, as shown on scope, can only be performed if one has the limitations
             of the oscilloscope in mind:
@@ -379,15 +375,4 @@ class SDSWaveForm(BaseWaveForm):
                 - The range of samples is therefore -128 .... + 127
             So xnew = (xold * 5/128)-voffset                
         """
-        voltfactor = self._WVP._vdiv/25
-        tempVolt = np.multiply(x,voltfactor)
-        res = np.subtract(tempVolt, self._WVP._voffset)
-        
-        return res
-    
-    def convertRaw_to_voltage(self):
-        # Get the parameters of the source
-        raw_array = self.getRawTrace()
-        vect_voltage = self.calculate_voltage()
-        self.setTrace(vect_voltage)
-            
+

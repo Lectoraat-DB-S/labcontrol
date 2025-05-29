@@ -252,7 +252,7 @@ class TekWaveFormPreamble(BaseWaveFormPreample):
         self.binFirstByteStr       = None
         self.nrOfSamples           = None
         self.vertMode              = None #Y, XY, or FFT.
-        self.sampleStepTime            = None
+        self.sampleStepTime        = None
         self.xincr                 = None
         self.xzero                 = None
         self.xUnitStr              = None

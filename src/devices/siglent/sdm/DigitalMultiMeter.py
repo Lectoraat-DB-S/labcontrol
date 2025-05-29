@@ -1,4 +1,4 @@
-import pyvisa as visa
+import pyvisa
 from enum import Enum
 from devices.siglent.sdm.util import MeasType
 import devices.siglent.sdm.util as util
@@ -31,7 +31,7 @@ class SDM3045X_CURR_RANGE(Enum):
 class SiglentDMM(BaseDMM):
 
     @classmethod
-    def getDevice(cls, rm, urls, host):
+    def getDMMClass(cls, rm, urls, host):
         """ Tries to get (instantiate) the device, based on the url. REMARK: this baseclass implementation is empty.
         Inheriting subclasses must implement this functionality."""
         urlPattern = "SDM" 
@@ -44,21 +44,18 @@ class SiglentDMM(BaseDMM):
                     mydev.write_termination = '\n'
                     
                     if cls is SiglentDMM:
-                        cls.__init__(cls, mydev)
-                        return cls
-                    else:
-                        return None        
+                        return (cls, mydev)
+                    
+                return (None, None)        
         else:
             try:
                 ip_addr = socket.gethostbyname(host)
                 addr = 'TCPIP::'+str(ip_addr)+'::INSTR'
                 mydev = rm.open_resource('TCPIP::'+str(ip_addr)+'::INSTR')
-                cls.__init__(cls,mydev)
-                return cls
+                return (cls,mydev)
             except socket.gaierror:
-                
-                return None
-
+                return (None, None)
+        return (None, None)
 
     KNOWN_MODELS = [
         "SDM3045X",
@@ -75,14 +72,14 @@ class SiglentDMM(BaseDMM):
     ###### VISA SYSTEM FUNCTIONS ########
 
     #TODO: define how to handle unsuccessfull connection.
-    def __init__(self, dev=None):
-        self.visaInstr  = dev
-        self._query_delay = 0.0
+    def __init__(self, dev:pyvisa.resources.MessageBasedResource = None):
+        super().__init__(dev=dev)
+        self.queryDelay = 0.0
         self.nrOfAttemps = 2
         
     def setQueryDelay(self, delay):
         if self.visaInstr != None:
-            self._query_delay = delay
+            self.queryDelay = delay
         
     def setTimeOut(self, timeOutms):
         if self.visaInstr != None:
@@ -131,9 +128,9 @@ class SiglentDMM(BaseDMM):
         nr = 1
         while True:
             try:
-                val = self.visaInstr.query(querystr, delay=self._query_delay)
+                val = self.visaInstr.query(querystr, delay=self.queryDelay)
                 return val
-            except visa.errors.VisaIOError:
+            except pyvisa.errors.VisaIOError:
                 logging.info(f"VisaIOError occured {nr} time(s). Retrying .....")
                 nr+=1
                 if nr > self.nrOfAttemps:

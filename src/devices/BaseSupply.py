@@ -13,6 +13,12 @@ class BaseSupplyChannel(object):
     """
     supplyChannelList = list()
 
+    @classmethod
+    def getSupplyChannelClass(cls,  chan_no, dev):
+        """getGenChannelClass: factory method for generator channel objects. 
+        Remark: this baseclass implementation is empty, must be implemented by the subclass. """
+        pass 
+
     def __init_subclass__(cls, **kwargs):
         """ __init_subclass__: method for autoregistration, according to pep487, See:  
         https://peps.python.org/pep-0487/. This way of registration requires a Python environment with version >= 3.6.
@@ -26,12 +32,12 @@ class BaseSupplyChannel(object):
         super().__init_subclass__(**kwargs) 
         cls.supplyChannelList.append(cls)
     
-    def __init__(self, chanNr : int = None, dev : pyvisa.resources.Resource = None):
+    def __init__(self, chanNr : int = None, dev : pyvisa.resources.MessageBasedResource = None):
         """__init__: This method will be called after creation of a channel object. 
         Parameters: 
             chanNr:     an integer index number representing this channelobject.
             visaInstr:  a VISA reference to an succesfully opened VISA instrument"""
-        self.visaInstr = dev
+        self.visaInstr:pyvisa.resources.MessageBasedResource = dev
         self.name = chanNr
     
         
@@ -154,7 +160,7 @@ class BaseSupply(object):
         
     def __init__(self, nrOfChan : int = None, visaInstr : pyvisa.resources.MessageBasedResource = None): 
         """abstract init function. A subclass should be override this function, which wil intitialize object below"""
-        self.visaInstr : pyvisa.Resource = visaInstr
+        self.visaInstr : pyvisa.resources.MessageBasedResource = visaInstr
         self.nrOfChan = nrOfChan
         self.channels = None
 
