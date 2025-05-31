@@ -19,7 +19,7 @@ class TekTrigger(BaseTriggerUnit):
         self.visaInstr: pyvisa.resources.MessageBasedResource = dev
         
     def level(self):
-        self.visaInstr.query("TRIGger:MAIn:LEVel?")
+        return self.visaInstr.query("TRIGger:MAIn:LEVel?")
         
     def level(self, level):
         self.visaInstr.write(f"TRIGGER:MAIN:LEVEL {level}") #Sets Trigger Level in V 

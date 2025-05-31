@@ -2,6 +2,8 @@ import logging
 import serial
 import configparser
 import pyvisa
+import threading
+from multiprocessing import Process
 
 #import measurements.weerstandsmetingDMM as measurement
 import measurements.transistorcurve as curfje
@@ -23,6 +25,12 @@ import unittest
 from unittest.mock import call, patch, MagicMock
 from pyvisa import ResourceManager
 from pyvisa import ResourceManager as rm
+from devices.Hantek import HantekServer
+
+def testHantek():
+    t = threading.Thread(target=HantekServer.createApp())
+    t.start()
+
 
 def readConfig():
     config = configparser.ConfigParser()
@@ -70,8 +78,8 @@ if __name__ == "__main__":
     
     
     #print(rm.list_resources_info())  
-    
-    dummyUse()
+    testHantek()
+    #dummyUse()
     #testKorad()
     #performTransCurve()
     #logger = logging.getLogger(__name__)

@@ -5,6 +5,13 @@ from devices.siglent.sds.Vertical import SDSVertical, SDSChannel
 
 class SDSTrigger(BaseTriggerUnit):
 
+    TRIG_COUPLING_OPTIONS = ("AC","DC","HFREJ","LFREJ")
+    TRIG_SLOPE_OPTIONS = ( "NEG", "POS", "WINDOW")
+    TRIG_MODE_OPTIONS = ("AUTO", "NORM", "SINGLE", "STOP")
+    TRIG_HOLDTYPE_OPTIONS = ("TI","PS","PL","P2","IS","IL","I2","OFF","EV")
+    TRIG_TYPE_OPTIONS = ("EDGE", "GLIT","SLEW", "INTV")
+    TRIG_SRC_OPTIONS = ("C1", "C2", "C3", "C4", "LINE","EX","EX5")
+
     @classmethod
     def getTriggerUnitObject(cls, vertical, dev):
         """ Tries to get (instantiate) the correct object."""
@@ -18,9 +25,29 @@ class SDSTrigger(BaseTriggerUnit):
         self.vertical = vertical
         self.source = 1
         self.visaInstr = dev
+        self.type = None
+        self.holdType = None
+        self.holdValue = None
         #self.setSource(1)  #dit gaat niet goed.
         #self.auto()
 
+    def getCurrSettings(self):
+        resp = self.query("TRSE?")
+        # See page 132 of SDS programming manual: 
+        # Response format will be structurized like this
+        # TRig_Select <trig_type>, SR, <source>, HT, <hold_type>, HV, <hold_value>
+        splittedResp =  resp.split(",")
+        if len(splittedResp) != 7:
+            #error
+            return None
+        trigType = splittedResp[0].split()
+        self.type = trigType[1].strip()
+        self.source = splittedResp[2].strip()
+        self.source = self.source.removeprefix("C")
+        self.source = int(self.source)
+
+        self.holdType = splittedResp[4].strip()
+        self.holdValue = splittedResp[6].strip()
     def query(self, cmd: str):
         return self.visaInstr.query(cmd)
     
@@ -28,8 +55,9 @@ class SDSTrigger(BaseTriggerUnit):
         self.visaInstr.write(cmd)
 
     def getChannel(self, chanNr):
+        chans = self.vertical.channels
         theChan : SDSChannel = None
-        for  i, val in enumerate(chanNr):
+        for  i, val in enumerate(chans):
                 if (chanNr) in val.keys():
                     theChan = val[chanNr]
         
@@ -40,17 +68,36 @@ class SDSTrigger(BaseTriggerUnit):
     
     def setSource(self, chanNr):
         """Sets his trigger source channel."""
-        vertical = self.vertical
-        chans = vertical.channels
+        chans = self.vertical.channels
         theChan : SDSChannel = None
         for  i, val in enumerate(chans):
                 if (chanNr) in val.keys():
                     theChan = val[chanNr]
         
         if theChan!=None:
-            self.write(f"TRSE EDGE, SR, C1, HT, OFF, HV, 1.43US {theChan.name}")
+            self.write(f"TRSE EDGE, SR, {theChan.name}, HT, OFF, HV, 1.43US")
 
-    def auto(self):
+    def setSlope(self, slope):
+        theChan:SDSChannel = None
+        theChan = self.getCurrSrcChannel()
+        if theChan !=None:
+
+            if slope in SDSTrigger.TRIG_SLOPE_OPTIONS:
+                self.write(f"{theChan.name}: TRSL {slope}")
+        #TODO: decide if we log something if one is asking for an unkown slope or the source was somehow not set.
+
+    def setMode(self, mode):
+        if mode in SDSTrigger.TRIG_MODE_OPTIONS:
+            self.write(f"TRMD {mode}")
+        #TODO: decide if we log something if one is asking for an unkown mode
+
+    def setLevel(self, level):  
+        theChan:SDSChannel = self.getCurrSrcChannel()
+        if theChan != None:
+            self.write(f"{theChan.name}: TRLV {level}")
+        #TODO: decide if we log something if one is asking for an unkown mode
+
+    def Auto(self):
         self.write("TRMD AUTO")
 
     def normal(self):
@@ -61,169 +108,54 @@ class SDSTrigger(BaseTriggerUnit):
 
     def stop(self):
         self.write("TRMD STOP")
-            
-    def level(self):
-        srcChan = self.getCurrSrcChannel()
-        return self.query(f"{srcChan}:TRig_LeVel?")
-        
-    def level(self, level):
-        srcChan = self.getCurrSrcChannel()
-        self.write(f"{srcChan}:TRig_LeVel {level}") #Sets Trigger Level in V 
-
-    def levelOf(self, chanNr):
+   
+    def getlevel(self, chanNr):
         srcChan = self.getChannel(chanNr)
-        return self.query(f"{srcChan}:TRig_LeVel?")
+        return self.query(f"{srcChan.name}:TRSL?")
 
-    def levelOf(self, chanNr, level):
-        srcChan = self.getChannel(chanNr)
-        self.write(f"{srcChan}:TRig_LeVel {level}") #Sets Trigger Level in V 
-
-    def slope(self):
+    def getSlope(self):
         srcChan = self.getCurrSrcChannel()
-        return self.query(f"{srcChan}:TRig_Slope?")
+        return self.query(f"{srcChan}:TRSL?")
     
-    def slopePos(self):
+    def setPosSlope(self):
         srcChan = self.getCurrSrcChannel()
-        self.write(f"{srcChan}: TRig_Slope POS") 
+        self.write(f"{srcChan.name}: TRSL POS") 
 
-    def slopeNeg(self):
+    def setNegSlope(self):
         srcChan = self.getCurrSrcChannel()
-        self.write(f"{srcChan}: TRig_Slope NEG") 
+        self.write(f"{srcChan.name}: TRSL NEG") 
 
-    def slopeWindow(self):
+    def setWindowSlope(self):
         srcChan = self.getCurrSrcChannel()
-        self.write(f"{srcChan}: TRig_Slope WINDOW") 
-
-    def getEdge(self):
-        pass
-
+        self.write(f"{srcChan.name}: TRSL WINDOW") 
+    
     def setCoupling(self, coup:str):
-        pass
+        """Sets the coupling of this trigger for the current trigger source
+        Valid coupling settings are: {AC,DC,HFREJ,LFREJ}
+        """
+        if coup in SDSTrigger.TRIG_COUPLING_OPTIONS:
+            srcChan = self.getCurrSrcChannel()
+            if srcChan != None:
+                self.write(f"{srcChan.name}: TRCP {coup}")
 
-    def setSlope(self, slope:str):
-        pass    
     def getFrequency(self):
+        response = self.query("CYMOMETER?")
+        splitted = response.split()
+        freq = splitted[1].removesuffix("Hz")
+        return float(freq)
+
+    def getholdOff(self): 
         pass
 
-    def getholdOff(self): #Trigger holdoff blz 215 TRIGger:MAIn:HOLDOff:VALue?
-        pass
+    def setDelay(self, delay):
+        self.write(f"TRDL {delay}")
 
-    def mode(self): #trigger mode blz 216 TRIGger:MAIn:MODe?
-        pass
-
-    def mode(self, modeVal):
-        pass
-
-    def getState(self): #tigger state zie blz 223 TRIGger:STATE?
-        pass
-
-    ##### copy paste for siglent.scopes: have to check this!####
-
-    def set_trigger_run(self):
-        """The command sets the oscilloscope to run
-        """
-        self.write(":TRIGger:RUN")
-
-    def set_single_trigger(self):
-        """The command sets the mode of the trigger.
-
-        The backlight of SINGLE key lights up, the oscilloscope enters the
-        waiting trigger state and begins to search for the trigger signal that meets
-        the conditions. If the trigger signal is satisfied, the running state shows
-        Trig'd, and the interface shows stable waveform. Then, the oscilloscope stops
-        scanning, the RUN/STOP key becomes red, and the running status shows Stop.
-        Otherwise, the running state shows Ready, and the interface does not display
-        the waveform.
-
-        :return: Nothing
-        """
-        self.write(":TRIGger:MODE SINGle")
-
-    def set_normal_trigger(self):
-        """The command sets the mode of the trigger.
-
-        The oscilloscope enters the wait trigger state and begins to search for
-        trigger signals that meet the conditions. If the trigger signal is satisfied,
-        the running state shows Trig'd, and the interface shows stable waveform.
-        Otherwise, the running state shows Ready, and the interface displays the last
-        triggered waveform (previous trigger) or does not display the waveform (no
-        previous trigger).
-
-        :return: Nothing
-        """
-        self.write(":TRIGger:MODE NORMal")
-
-    def set_auto_trigger(self):
-        """The command sets the mode of the trigger.
-
-        The oscilloscope begins to search for the trigger signal that meets the
-        conditions. If the trigger signal is satisfied, the running state on the top
-        left corner of the user interface shows Trig'd, and the interface shows stable
-        waveform. Otherwise, the running state always shows Auto, and the interface
-        shows unstable waveform.
-
-        :return: Nothing
-        """
-        self.write(":TRIGger:MODE AUTO")
-
-    def set_force_trigger(self):
-        """The command sets the mode of the trigger.
-
-        Force to acquire a frame regardless of whether the input signal meets the
-        trigger conditions or not.
-
-        :return: Nothing
-        """
-        self.write(":TRIGger:MODE FTRIG")
-
-    def get_trigger_mode(self):
-        """The query returns the current mode of trigger.
-
-        :return: str
-                    Returns either "SINGle", "NORMal", "AUTO", "FTRIG"
-        """
-        return self.query(":TRIGger:MODE?")
-
-    def set_rising_edge_trigger(self):
-        """The command sets the slope of the slope trigger to Rising Edge
-
-        :return: Nothing
-        """
-        self.write(":TRIGger:SLOPe:SLOPe RISing")
-
-    def set_falling_edge_trigger(self):
-        """The command sets the slope of the slope trigger to Falling Edge
-
-        :return: Nothing
-        """
-        self.write(":TRIGger:SLOPe:SLOPe FALLing")
-
-    def set_alternate_edge_trigger(self):
-        """The command sets the slope of the slope trigger to Falling Edge
-
-        :return: Nothing
-        """
-        self.write(":TRIGger:SLOPe:SLOPe ALTernate")
-
-    def get_edge_trigger(self):
-        """The query returns the current slope of the slope trigger
-
-        :return: str
-                    Returns either "RISing", "FALLing", "ALTernate"
-        """
-        return self.query(":TRIGger:SLOPe:SLOPe?")
+    def getDelay(self):
+        return self.query("TRDL?")
 
   
-    def set_trigger_edge_level(self, level: float):
-        """The command sets the trigger level of the edge trigger
+  
 
-        :param level: Trigger level
-        """
-
-        """
-        TODO: trigger level needs to be between:
-        [-4.1*vertical_scale-vertical_offset, 4.1*vertical_scale-vertical_offset]
-        """
-        self.write(":TRIGger:EDGE:LEVel {}".format(str(level)))
-
+  
+    
     
