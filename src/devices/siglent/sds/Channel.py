@@ -212,6 +212,10 @@ class SDSChannel(BaseChannel):
     def getFrequency(self):
         response = self.query(f"{self.name}:PAVA? FREQ")
         return splitAndStripHz(response)
+    
+    def getPhase(self, input):
+        myinput: SDSChannel = input
+        return self.visaInstr.query(f"MEAD PHA,{self.name}-{myinput.name}")    
   
 
 class SDSWaveFormPreamble(BaseWaveFormPreample):

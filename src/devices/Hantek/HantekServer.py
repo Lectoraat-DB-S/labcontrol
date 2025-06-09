@@ -1,7 +1,7 @@
 import socket
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
 from pathlib import Path
-from devices.Hantek6022API.PyHT6022.LibUsbScope import Oscilloscope
+from devices.Hantek.HantekScopes import Hantek6022Scope
 import sys
 from time import sleep
 import threading
@@ -31,57 +31,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-
-scope = None
 clientSocket = None
-
-
-class Worker(QObject):
-    finished = pyqtSignal()
-    progress = pyqtSignal(int)
-
-    def __init__(self):
-        super().__init__()
-        self.keepRunning = True
-        self.server = None
-        self.myScope = None
-        
-    def setScopeObject(self,scopeObj):
-        self.myScope = scopeObj
-    def stopIt(self):
-        
-        self.keepRunning = False
-        mykillsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        mykillsocket.connect( ("127.0.0.1", PORT))
-        #self.server.close()
-        mykillsocket.close()
-
-    def run(self):
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server.bind((HOST, PORT))
-        self.server.listen(5)
-        self.progress.emit(f"SCPI Server luistert op {HOST}:{PORT}")
-        print(f"SCPI Server luistert op {HOST}:{PORT}")
-        
-        while self.keepRunning:
-            clientSocket, addr = self.server.accept()
-            if self.keepRunning:
-                print('clientconnected')
-                self.progress.emit(f"SCPI Server heeft connectie met een client geaccepteerd")
-                clientThread = threading.Thread(target=handle_client, args=(clientSocket, addr, self.myScope))
-                clientThread.start()
-            else:
-                print("terminating server")
-                break
-
-        self.finished.emit()
-        print("Server: bye bye")
-
-
-        
-
-
-
 ############
 # settings #
 ############
@@ -98,125 +48,149 @@ keepRunning = True
 HOST = "0.0.0.0"  # Luistert op alle interfaces
 PORT = 5025  # Standaard SCPI poort
 
-def handle_client(conn, addr, scope):
-    print(f"Verbonden met {addr}")
-    #conn.sendall(b"Hantek 6022BL SCPI Server\n")
-    while True:
-        try:
-            data = conn.recv(1024).decode("utf-8").strip()
-            if not data:
-                break
-            print(f"Ontvangen: {data}")
-            
-            if data == "*IDN?":
-                conn.sendall(b"Hantek,6022BL,123456,1.0\n")
-            elif data == "CAPTURE?":
-                wave_data = scope.read_data()
-                ch1_data_tuple = wave_data[0]
-                ch1_samples = ch1_data_tuple.tobytes()
-                nrOfBytes = len(ch1_samples)
-                hlength = str(nrOfBytes)
-                hlength = hlength
-                str2send = hlength.encode()
-                conn.sendall(b'#')
-                conn.sendall(b'4')
-                conn.sendall(str2send)
-                #conn.sendall(b'\0')
-                conn.sendall(ch1_samples)
-                conn.sendall(b'\0')
-                conn.sendall(b'\n')
-            elif data == "EXIT":
-                conn.sendall(b"Bye\n")
-                break
-            else:
-                conn.sendall(b"ERROR: Unknown command\n")
-        except Exception as e:
-            print(f"Fout: {e}")
-            break
-    conn.close()
-
-class MainWindow(QMainWindow):
-    def runLongTask(self):
-        # Step 2: Create a QThread object
-        self.thread = QThread()
-        # Step 3: Create a worker object
-        self.worker = Worker()
-        self.worker.setScopeObject(self.scope)
-        # Step 4: Move worker to the thread
-        self.worker.moveToThread(self.thread)
-        # Step 5: Connect signals and slots
-        self.thread.started.connect(self.worker.run)
-        self.worker.finished.connect(self.thread.quit)
-        self.worker.finished.connect(self.worker.deleteLater)
-        self.thread.finished.connect(self.thread.deleteLater)
-        self.worker.progress.connect(self.reportProgress)
-        # Step 6: Start the thread
-        self.thread.start()
-
-        self.startButton.setEnabled(False)
-        self.thread.finished.connect(
-            lambda: self.startButton.setEnabled(True)
-        )
-        self.thread.finished.connect(
-            lambda: self.connectedBox.setChecked(False)
-        )
-    def reportProgress(self):
-        self.connectedBox.setChecked(True)
+class ServerWorker(QObject):
+    finished = pyqtSignal()
+    progress = pyqtSignal(int)
+    msg     = pyqtSignal(str)
 
     def __init__(self):
-        self.scope = Oscilloscope()
-        self.scope.setup()
-        if not self.scope.open_handle():
-            sys.exit( -1 )
+        super().__init__()
+        self.scope = Hantek6022Scope()
+        self.keepRunning = True
+        self.server = None
+        
+        
+    def setScopeObject(self,scopeObj):
+        self.scope = scopeObj
 
-    # upload correct firmware into device's RAM
-        if (not self.scope.is_device_firmware_present):
-            self.scope.flash_firmware()
+    def getScopeObject(self):
+        return self.scope
+    
+    def stopIt(self):
+        
+        self.keepRunning = False
+        mykillsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        mykillsocket.connect( ("127.0.0.1", PORT))
+        #self.server.close()
+        mykillsocket.close()
 
-    # read calibration values from EEPROM
-        calibration = self.scope.get_calibration_values()
+    def run(self):
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server.bind((HOST, PORT))
+        self.server.listen(5)
+        self.progress.emit(1)
+        self.msg.emit(f"SCPI Server luistert op {HOST}:{PORT}")
+        
+        while self.keepRunning:
+            clientSocket, addr = self.server.accept()
+            if self.keepRunning:
+                clientIP, clientPort = clientSocket.getpeername()
+                self.msg.emit(f"SCPI Server heeft connectie met een client geaccepteerd")
+                self.msg.emit(f"Client IP: {clientIP}, client poortnr: {clientPort}")
+                clientThread = threading.Thread(target=handle_client, args=(clientSocket, addr, self.scope))
+                clientThread.start()
+            else:
+                print("terminating server")
+                break
 
-    # set interface: 0 = BULK, >0 = ISO, 1=3072,2=2048,3=1024 bytes per 125 us
-        self.scope.set_interface( 0 ) # use BULK unless you have specific need for ISO xfer
+        self.finished.emit()
+        print("Server: bye bye")
 
-        self.scope.set_num_channels( channels )
-        self.scope.set_sample_rate(1)
-        self.scope.set_ch1_voltage_range(1)
-        self.scope.set_ch2_voltage_range(1)
+class ClientWorker(QObject):
+    finished = pyqtSignal()
+    progress = pyqtSignal(int)
+    msg     = pyqtSignal(str)
 
+    def __init__(self, conn, addr, scope: Hantek6022Scope= None):
+        super().__init__()
+        self.conn = conn
+        self.addr = addr
+        self.scope = scope
 
+    def run(self):
+        if self.conn == None:
+            self.msg.emit("No client connection. Quitting QlientWorker.......")
+            sys.exit(-1)
+        if self.scope == None:
+            self.msg.emit("No Handtek scope object available. Quitting Quitting QlientWorker.......")
+            sys.exit(-1)
+        
+        while True:
+            try:
+                data = self.conn.recv(1024).decode("utf-8").strip()
+                if not data:
+                    break
+                print(f"Ontvangen: {data}")
+                
+                if data == "*IDN?":
+                    self.conn.sendall(b"Hantek,6022BL,123456,1.0\n")
+                elif data == "CAPTURE?":
+                    wave_data = self.scope.read_data()
+                    ch1_data_tuple = wave_data[0]
+                    ch1_samples = ch1_data_tuple.tobytes()
+                    nrOfBytes = len(ch1_samples)
+                    hlength = str(nrOfBytes)
+                    hlength = hlength
+                    str2send = hlength.encode()
+                    self.conn.sendall(b'#')
+                    self.conn.sendall(b'4')
+                    self.conn.sendall(str2send)
+                    #conn.sendall(b'\0')
+                    self.conn.sendall(ch1_samples)
+                    self.conn.sendall(b'\0')
+                    self.conn.sendall(b'\n')
+                elif data == "EXIT":
+                    self.msg.emit("Received EXIT from clienting. ClientWorker will exit now.")
+                    self.conn.sendall(b"Bye\n")
+                    break
+                else:
+                    self.conn.sendall(b"ERROR: Unknown command\n")
+            except Exception as e:
+                print(f"Fout: {e}")
+                break
+        self.conn.close()
+        self.msg.emit("Connection with client closed.")
 
-        super(MainWindow, self).__init__()
-        formpath = Path("C:\\github\\labcontrol\\src\\devices\\Hantek\\form.ui")
-        uic.loadUi(formpath,self)
-        self.startButton = self.findChild(QPushButton, "startButton")
-        self.startButton.clicked.connect(self.starter)
-        self.thread  = None
+        
 
-        self.stopButton = self.findChild(QPushButton, "stopButton")
-        self.stopButton.clicked.connect(self.stopper)
-
-        self.connectedBox = self.findChild(QCheckBox, "connectedBox")
-        self.connectedBox.setChecked(False)
-        self.show()
-
-    def starter(self):
-        print('START GEDRUKT')
-        if self.thread  == None:
-            print("creating thread for server")
-            self.runLongTask()
-
-    def stopper(self):
-        self.worker.stopIt()
-        print('STOP GEDRUKT')
-        self.close()
-
-
-        #killServer()
-
-
-
-def createApp():
-    app = QApplication(sys.argv)
-    UIWindow = MainWindow()
-    app.exec()
+def handle_client(conn: socket.socket, addr, scope: Hantek6022Scope= None):
+        if conn == None:
+            print("No client connection. Quitting.......")
+            sys.exit(-1)
+        if scope == None:
+            print("No Handtek scope object available. Quitting.......")
+            sys.exit(-1)
+        
+        while True:
+            try:
+                data = conn.recv(1024).decode("utf-8").strip()
+                if not data:
+                    break
+                print(f"Ontvangen: {data}")
+                
+                if data == "*IDN?":
+                    conn.sendall(b"Hantek,6022BL,123456,1.0\n")
+                elif data == "CAPTURE?":
+                    wave_data = scope.read_data()
+                    ch1_data_tuple = wave_data[0]
+                    ch1_samples = ch1_data_tuple.tobytes()
+                    nrOfBytes = len(ch1_samples)
+                    hlength = str(nrOfBytes)
+                    hlength = hlength
+                    str2send = hlength.encode()
+                    conn.sendall(b'#')
+                    conn.sendall(b'4')
+                    conn.sendall(str2send)
+                    #conn.sendall(b'\0')
+                    conn.sendall(ch1_samples)
+                    conn.sendall(b'\0')
+                    conn.sendall(b'\n')
+                elif data == "EXIT":
+                    conn.sendall(b"Bye\n")
+                    break
+                else:
+                    conn.sendall(b"ERROR: Unknown command\n")
+            except Exception as e:
+                print(f"Fout: {e}")
+                break
+        conn.close()

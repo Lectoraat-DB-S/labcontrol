@@ -25,11 +25,13 @@ import unittest
 from unittest.mock import call, patch, MagicMock
 from pyvisa import ResourceManager
 from pyvisa import ResourceManager as rm
-from devices.Hantek import HantekServer
+from devices.Hantek import ServerGui
+
+from tests import checkTDS
 
 def testHantek():
-    t = threading.Thread(target=HantekServer.createApp())
-    t.start()
+    ServerGui.createApp()
+    
 
 
 def readConfig():
@@ -77,6 +79,7 @@ if __name__ == "__main__":
     #rc = ResourceManager(visa_library="@mock")
     
     
+    #checkTDS.checkMathFunctions()
     #print(rm.list_resources_info())  
     testHantek()
     #dummyUse()

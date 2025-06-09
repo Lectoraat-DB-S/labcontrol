@@ -31,3 +31,13 @@ class TekVertical(BaseVertical):
         except ValueError:
             print("Requested channel not available")
             return None     
+        
+    def getMathSettings(self):
+        """
+        queries the current math setting of a TDS.
+        MATH? will response will look like:
+        MATH:DEFINE "FFT(CH1,HANNING)";
+        VERTICAL:POSITION 0.0E0;SCALE 1.0E0;
+        :MATH:FFT:HORIZONTAL:POSITION 5.0E1;SCALE1.0E0;
+        :MATH:FFT:VERTICAL:POSITION 0.0E0;SCALE 1.0E0"""
+        return self.visaInstr.query("MATH?")

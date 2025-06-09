@@ -117,7 +117,12 @@ class BaseChannel(object):
 
     def getMax(self):
         pass
+
+    def getPhase(self, input):
+        pass
     
+    def getFrequency(self):
+        pass
         
 ########## BASEVERTICAL ###########
     
@@ -159,7 +164,7 @@ class BaseVertical(object):
     def chan(self, chanNr)->BaseChannel: 
         """Get the channel object based on the number. This method should be overridden by the 
         inherting subclass, as this BaseVertical implementation is empty."""
-        pass
+        return None
     
 ############ BaseHorizontal ###########
 class BaseHorizontal(object):

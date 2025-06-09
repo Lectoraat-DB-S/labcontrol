@@ -10,3 +10,4 @@ zeroconf
 psutil
 pyusb
 pyserial
+pyqtgraph

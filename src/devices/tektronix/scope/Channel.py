@@ -48,7 +48,6 @@ class TekChannel(BaseChannel):
     def isVisible(self):
         return self.isVisible
                 
-    
     def getLastTrace(self):
         return self.WF
        
@@ -124,12 +123,10 @@ class TekChannel(BaseChannel):
         trace.scaledYdata = scaled_wave
         trace.scaledXdata = scaled_time
         
-    
     ##### DATA TRANSFER RELATED METHODS ######
     def queryEncoding(self):
         return self.visaInstr.query("DATa:ENCdg?")
     
-
     def queryWaveFormPreamble(self):
         #TODO add intern state for ascii or binary. Defines query or binary_query
         self.setAsSource()
@@ -155,7 +152,7 @@ class TekChannel(BaseChannel):
 
     def immedMeasType(self, measType):
         """Sets the immediate type of measurement to be executed by this TDS oscilloscope.
-        The parameeter measType must be one of:
+        The parameter measType must be one of:
         CRMs        : calculate true Root Mean Square voltage of the first complete cycle in the
                         waveform
         CURSORRms   : Same as CRMs but between start and end point.
@@ -187,32 +184,82 @@ class TekChannel(BaseChannel):
                 self.visaInstr.write(f"MEASUREMENT:IMMED:TYPE {measType}")        
             
     def doImmedMeas(self, measType):
-        """Starts immediate measurements of a prior setted measurement type to be performed periodically by this TDS oscilloscope
-        Remark: this method does not check ESR of events setted or fired, as noted by the programmers manual on page 162:
-        NOTE. If the channel specified by MEASUrement:IMMed:SOUrce is not currently
+        """Starts immediate measurements of a prior setted measurement type to be performed periodically by this
+        TDS oscilloscope
+        Remark: this method does not check ESR of events setted or fired, as noted by the programmers manual on 
+        page 162: NOTE. If the channel specified by MEASUrement:IMMed:SOUrce is not currently
         displayed, the oscilloscope generates event 2225 and returns 9.9E37.
         If Trigger View is active, Scan mode is in effect, or the display format is set to XY,
         this query returns 9.9E37 and generates event 221 (Settings conflict)
         When math is FFT, turned on, and used as a measurement source, attempting to
         query the measurement value returns 9.9e37 and raises error 2225 (no waveform
         to measure)."""
+        if not self.isVisible:
+            self.setVisible(True) #preven event 2225
+        #TODO: prevent event 221: check on a) Trigger View b) Scan mode or c) display mode is XY
+        # Add a) Trigger view seems only settable through the front panel, see programming manual page 2-39:
+        #   NOTE 1. While Trigger View is active (when you push the front-panel TRIG VIEW button), the 
+        #       oscilloscope ignores the set form of most commands. If you send a command at this time, 
+        #       the oscilloscope generates execution error 221 (Settings conflict).
+        #   According to the TDS user manual, page 108:
+        #       "TRIG VIEW Button. Use the Trigger View mode to have the oscillo-
+        #           scope display the conditioned trigger signal. You can use this mode
+        #           to see the following types of information: effects of the Trigger
+        #           Coupling option, AC Line trigger source, and the signal connected to the EXT TRIG BNC.
+        #               NOTE. This is the only button that you must hold down to use. When
+        #               you hold down the TRIG VIEW button, the only other button you can
+        #               use is the PRINT button. The oscilloscope disables all other
+        #               front-panel buttons. The knobs continue to be active."
+        #       The Trigger view state is not queryable by the Tigger State? command. The only way found in the manual to 
+        #       check on this setting, is to send the  "CURSor:HBArs:UNIts? (Query Only)" Command, read page 2-63 for its 
+        #       descriptions: 
+        #               "UNKNOWN indicates that Trigger View is active. This also generates event message
+        #                   221. (Settings conflict)"
+        # Add b) One seems not be able to the TDS in scan mode, see programming manual, page 2-68:
+        #               "In Scan Mode (Sec/div ≥100 ms and AUTO Mode), approximately one division
+        #                   of data points will be invalid due to the blanked moving cursor."
+        #         Also see page 2-198: "AUTO generates a trigger if a trigger is not detected within a specific 
+        #           time period. AUTO also enables scan mode for sweep speeds of 100 ms/div and slower."
+        #       So to prevent situation b) one must check 1) the timebase <100 ms and 2) Trigger mode is NOT AUTO.
+        # Add c) to check on FFT mode, send the "Math?" command, see page 2-130
+        #   To check on XY display mode, issue an "DISplay:FORMat?" Query.
         self.immedMeasType(measType)
         self.visaInstr.write(f"MEASUREMENT:IMMED:SOURCE {self.name}")
         return self.visaInstr.query("MEASUrement:IMMed:VALue?")
         
     def getMean(self):
-        """Gets the mean of this channel's waveform by doing an Immediate Measurement"""
-        response = self.doImmedMeas("MEAN")        
-        return float(response)
+        """Gets the arimethic mean of this channel's waveform by doing an Immediate Measurement"""
+        immedResult = self.doImmedMeas("MEAN")        
+        return float(immedResult)
     
     def getMax(self):
         """Gets the maximum value of highest point in this channel's waveform by doing an Immediate 
         Measurement"""
-        response = self.doImmedMeas("MAXImum")        
-        return float(response)
-
+        immedResult = self.doImmedMeas("MAXImum")        
+        return float(immedResult)
     
+    def getMin(self):
+        """Gets the maximum value of highest point in this channel's waveform by doing an Immediate 
+        Measurement"""
+        immedResult = self.doImmedMeas("MINImum")        
+        return float(immedResult)
+    
+    def getPhase(self, input): #input is een channeltype of een MATH type.
+        """Sets the Tektronix scope for doing a phase IMMED measurement"""
+        self.immedMeasType("PHAse")
+        myinput: TekChannel = input
+        self.visaInstr.write(f"MEASUREMENT:IMMED:SOURCE {self.name}")
+        self.visaInstr.write(f"MEASUREMENT:IMMED:SOURCE2 {myinput.name}")
+        return self.visaInstr.query("MEASUrement:IMMed:VALue?")
 
+    def getFrequency(self):
+        immedResult = self.doImmedMeas("FREQuency")        
+        return float(immedResult)
+    
+    def getDuty(self):
+        immedResult = self.doImmedMeas("PDUty")        
+        return float(immedResult)
+    
 class TekWaveFormPreamble(BaseWaveFormPreample):
     """Class for holding the Tektronix TDS1000 scope series preamble. Extends BaseWaveFormPreamble.
     A preample is data describing the unit, range and spacing of a Waveform."""

@@ -1,0 +1,57 @@
+import time
+import numpy as np
+from devices.BaseGenerator import BaseGenerator, BaseGenChannel
+from devices.BaseScope import BaseScope, BaseChannel, BaseVertical
+
+scope: BaseScope = BaseScope.getDevice()
+scopeVert: BaseVertical = scope.vertical
+gen: BaseGenerator = BaseGenerator.getDevice()
+genChan1: BaseGenChannel = gen.chan(1)
+scopeChan1: BaseChannel = scopeVert.chan(1)
+scopeChan2: BaseChannel = scopeVert.chan(2)
+signalIn = None     #was list(), maar dat lijkt me erg veel ruimte te kosten.
+signalOut =  None   #idem
+phaseDiff = list()
+maxAmps = list()
+measFreqs = list()
+# zet de tijdbasis van de scope goed
+# zet de triggersource goed: triggeren op kanaal 1, signaal van de generator.
+# zet, per kanaal de vdiv goed
+# zet , per kanaal de (vertical) coupling goed (ws AC, dan geen offset.)
+# zet de scope triggering coupling goed
+WAITTIME = 10e-3 #tijd om waarden te laten stabiliseren voor doen van meting.
+
+def measPhaseDiff(a, b) -> list:
+    return None
+
+def measMaxAmplitude(a, b) -> list:
+    return None
+
+def calcPhaseResonse(phaseDiff):
+    return None
+
+def calcMagnitudeResponse(maxAmps) -> list:
+    return None
+
+def calcMin3dBFromMagResp(magResp) -> list:
+    return None
+
+def doACSweep():
+    # step 1: acquire all the data
+    for freq in np.arange (0.5e3, 1000.0e3, 0.01e3):
+        #stel de scoop in op juiste tijdbase en vdiv
+        #zorg voor elk kanaal, tenminste 2 hele perioden sinussignaal in beeld
+        genChan1.setfreq(freq)
+        #effe wachten om te stabiliseren
+        time.sleep(WAITTIME)
+        measFreqs.append(scopeChan1.measfreq())
+        signalIn=scopeChan1.capture()
+        signalOut=scopeChan2.capture()
+        phaseDiff.append(measPhaseDiff(freq, signalIn, signalOut))
+        maxAmps.append(measMaxAmplitude(freq, signalIn, signalOut))
+    
+    # step 2: process the data
+    magResp = calcMagnitudeResponse(maxAmps)
+    phaseResp = calcPhaseResonse(signalIn, signalOut)
+    fc_min3dB = calcMin3dBFromMagResp(magResp)
+    # stap 3: plot the data
