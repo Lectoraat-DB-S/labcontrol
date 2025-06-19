@@ -104,25 +104,76 @@ class BaseChannel(object):
         
     def capture(self):
         """Gets the waveform from the oscilloscope, by initiating a new aqquisition. This BaseChannel implementation 
-        is empty. An inheriting subclass wil have to implement this method by sending the proper SCPI commands 
-        in order need to a. get waveform descriptors, b. get the raw data and take care for store it into the proper
-        datastructures for plotting or processing."""
+        is empty. An inheriting subclass will have to implement this method by sending the proper SCPI commands 
+        in order to: a. get waveform descriptors, b. get the raw data and c. take care for converting it to meaningfull
+        physical quantities and store the data."""
         pass
 
     def getAvailableMeasurements(self):
+        """Gets the available measurements of this oscilloscope. 'Measurements' are build-in, predefined data processing
+        functions. Functionality depends on capabilities of a scope. This BaseChannel implementation 
+        is empty. An inheriting subclass will have to implement this method.
+        """
         pass
     
     def getMean(self):
+        """Calculates the mean of the samples of this channels last waveform. 
+        This BaseChannel implementation is empty. An inheriting subclass will have to implement this method. 
+        Preferable by using the scopes build-in (direct) measurement functionality, but, if not present for the 
+        scope instance used, by a software implementation of the derived class.
+        """
         pass
 
     def getMax(self):
+        """Calculates or finds the maximum value in this channels last waveform. 
+        This BaseChannel implementation is empty. An inheriting subclass will have to implement this method. 
+        Preferable by using the scopes build-in (direct) measurement functionality, but, if not present for the 
+        scope instance used, by a software implementation of the derived class.
+        """
         pass
 
-    def getPhase(self, input):
+    def getMin(self):
+        """Calculates or finds the minimal value in this channels last waveform. 
+        This BaseChannel implementation is empty. An inheriting subclass will have to implement this method. 
+        Preferable by using the scopes build-in (direct) measurement functionality, but, if not present for the 
+        scope instance used, by a software implementation of the derived class.
+        """
+        pass
+
+    def getPkPk(self):
+        """Calculates or finds the peak-to-peak maximum value in this channels last waveform. 
+        This BaseChannel implementation is empty. An inheriting subclass will have to implement this method. 
+        Preferable by using the scopes build-in (direct) measurement functionality, but, if not present for the 
+        scope instance used, by a software implementation of the derived class.
+        """
+        pass
+
+    def getPhaseTo(self, input):
+        """Calculates the phase difference of this channels last waveform with respect to the input parameter. The
+        phase should be calculated by: self.phase - input.phase. 
+        This BaseChannel implementation is empty. An inheriting subclass will have to implement this method. 
+        Preferable by using the scopes build-in (direct) measurement functionality of the physical scope, but, 
+        if not present, by a software implementation of the derived class.
+        """
         pass
     
     def getFrequency(self):
+        """Calculates the frequency of this channels last waveform. 
+        This BaseChannel implementation is empty. An inheriting subclass will have to implement this method. 
+        Preferable by using the scopes build-in (direct) measurement functionality of the physical scope, but, 
+        if not present, by a software implementation of the derived class.
+        """
         pass
+    
+    def getPeriod(self):
+        """Measures the time needed for a full periode of this channels last waveform. 
+        This BaseChannel implementation is empty. An inheriting subclass will have to implement this method. 
+        Preferable by using the scopes build-in (direct) measurement functionality of the physical scope, but, 
+        if not present, by a software implementation of the derived class.
+        """
+        pass
+
+
         
 ########## BASEVERTICAL ###########
     

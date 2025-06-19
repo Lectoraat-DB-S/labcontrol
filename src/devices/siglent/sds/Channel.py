@@ -10,6 +10,7 @@ from devices.siglent.sds.util import splitAndStripHz, splitAndStripSec, splitAnd
 from devices.siglent.sds.util import TIMEBASE_HASHMAP
 import pickle
 
+
 # SDSChannel: abstraction of a Siglent oscilloscope channel.
 # Usage: set or get 'vertical' channel properties of a scope and/or start a capture.
 # Assumption: all channels of a scope model a equivalent.
@@ -67,42 +68,18 @@ class SDSChannel(BaseChannel):
             
             trace = np.frombuffer(data, dtype=np.byte)
             self.WF.rawYdata = trace
-            self.rawXdata = np.linspace(0, self.WFP.nrOfSamples-1, num=int(self.WFP.nrOfSamples),endpoint=False)
-            self.WF.convertRaw_to_voltage()
+            self.WF.rawXdata = np.linspace(0, self.WFP.nrOfSamples-1, num=int(self.WFP.nrOfSamples),endpoint=False)
+            self.WF.rawYToVolts(self.WFP.vdiv, self.WFP.yoff)
+            self.WF.rawXtoTime(self.WFP.trigDelay, self.WFP.xincr,self.WFP.timeDiv, self.WFP.nrOfSamples)
         except Exception as e:
             #TODO: fix logger hassle
             #self.logger.error(e)
             print("Exception during capture SDS!!")
     
-    def setTimeAxis(self):
-        #fix below
-        horOffset = self.WFP.trigDelay
-        sampleInterval = self.WFP.xincr
-        tdiv = self.WF.timeDiv
-        nrOfPoints = self.WF.nrOfSamples
-        FirstSampleTime = horOffset -tdiv*(14/2)
-        lastSampleTime = FirstSampleTime + nrOfPoints*sampleInterval
-        timeArr = np.arange(FirstSampleTime,lastSampleTime,sampleInterval)
-        self.WF.scaledXdata = timeArr
-        
-    
-    def getTimeAxis(self):
-        self.setTimeAxis()
-        return self.WF.scaledXdata
-
-
-    def getTimeAxisRange(self):
-        #See programming manual sds, page 142:
-        #first point = delay - (timebase*(hori_grid_size/2))
-        mydelay = self.WFP.trigDelay
-        mytimebase = self.WFP.timeDiv
-        timeOfFirstSample = mydelay - (mytimebase*(self.WF.hori_grid_size/2))
-        self.WFP.lastValidPoint = timeOfFirstSample +(self.WFP.xincr * self.WF.nrOfSamples)
-        return (self.WFP.firstValidPoint,  self.WFP.lastValidPoint)
-
     ########## PARAMETER MEASUREMENTS (PAVA) ###########
     
-    def getAllParam(self):
+    def getAvailableMeasurements(self):
+        """Gets the available (parameter) measurements of this channel, by using a SDS built-in function."""
         return self.query(f"{self.name}:PAVA? ALL")
 
     def getBase(self):
@@ -113,39 +90,47 @@ class SDSChannel(BaseChannel):
     
     #negative width
     def getNWid(self):
+        """Gets the (negative) pulse widht of the waveform of this channel, by using a SDS built-in function."""
         return float( self.query(f"{self.name}:PAVA? NWID"))
     
     #negative overshoot
     def getOvSN(self):
+        """Gets the (negative) overshoot of the waveform of this channel, by using a SDS built-in function."""
         return float( self.query(f"{self.name}:PAVA? OVSN"))
     
     #mean for cyclic waveform
     def getCMean(self):
+        """Gets the cyclic Mean of the waveform of this channel, by using a SDS built-in function."""
         response = self.query(f"{self.name}:PAVA? CMEAN")
         return splitAndStripV(response)
     
     #positive overshoot
     def getOvSP(self):
+        """Gets the (positive) overshoot of the waveform of this channel, by using a SDS built-in function."""
         response = self.query(f"{self._name}:PAVA? OVSP")
         return float(response)
     
     #root mean square for cyclic part of waveform
-    def getCMean(self):
+    def getCMRS(self):
+        """Gets the cyclic RMS of the waveform of this channel, by using a SDS built-in function."""
         response = self.query(f"{self._name}:PAVA? CRMS")
         return splitAndStripV(response)
      
     #duty cycle
     def getDuty(self):
+        """Gets the dutycycle of the waveform of this channel, by using a SDS built-in function."""
         response =self.query(f"{self._name}:PAVA? DUTY")
         return float(response)
     
     #period
     def getPeriod(self):
+        """Gets the period of the waveform of this channel, by using a SDS built-in function."""
         response = self.query(f"{self._name}:PAVA? PER")
         return splitAndStripSec(response)
 
     #falltime
     def getFall(self):
+        """Gets the fall time of the waveform of this channel, by using a SDS built-in function."""
         response =self.query(f"{self.name}:PAVA? FALL")
         return splitAndStripSec(response)
     
@@ -166,56 +151,74 @@ class SDSChannel(BaseChannel):
     
     #root mean square
     def getRMS(self):
+        """Gets the RMS value of the waveform of this channel, by using a SDS built-in function."""
         response = self.query(f"{self.name}:PAVA? RMS")
         return splitAndStripV(response)
     
     #maximum
     def getMax(self):
+        """Gets the max. value of the waveform of this channel, by using a SDS built-in function."""
         response = self.query(f"{self.name}:PAVA? MAX")
         return splitAndStripV(response)
     
     #risetime
     def getRise(self):
+        """Gets the rise time (10%-90%?) of the waveform of this channel, by using a SDS built-in function."""
         response = self.query(f"{self.name}:PAVA? RISE")
         return float( response)
     
     #minimum
     def getMin(self):
+        """Gets the min. value of the waveform of this channel, by using a SDS built-in function."""
         response =self.query(f"{self.name}:PAVA? MIN")
         return splitAndStripV(response)
     
     #top
     def getTop(self):
+        """Gets the location of the top of the waveform of this channel, by using a SDS built-in function."""
         response = self.query(f"{self.name}:PAVA? TOP")
         return splitAndStripV(response)
     
     #mean
     def getMean(self):
+        """Gets the mean of the waveform of this channel, by using a SDS built-in function."""
         response = self.query(f"{self.name}:PAVA? MEAN")
         return splitAndStripV(response)
     
     #width
     def getWidth(self):
+        """Gets the width of the waveform of this channel, by using a SDS built-in function."""
         response = self.query(f"{self.name}:PAVA? WID")
         return float(response )
     
     #Gets the measured parameter 'amplitude'
     #example response: 'C1:PAVA AMPL,3.20E-01V\n'
     def getAmplitude(self):
+        """Gets the amplitude of the waveform of this channel, by using a SDS built-in function."""
         response =self.query(f"{self.name}:PAVA? AMPL")
         return splitAndStripV(response)
         
     def getPKPK(self):
+        """Gets the peak-to-peak value of the waveform of this channel, by using a SDS built-in function."""
         response =self.query(f"{self.name}:PAVA? PKPK")
         return splitAndStripV(response)
         
     def getFrequency(self):
+        """Gets the frequency of the waveform of this channel, by using a SDS built-in function."""
         response = self.query(f"{self.name}:PAVA? FREQ")
         return splitAndStripHz(response)
     
-    def getPhase(self, input):
-        myinput: SDSChannel = input
-        return self.visaInstr.query(f"MEAD PHA,{self.name}-{myinput.name}")    
+    def getPhaseTo(self, input: 'SDSChannel'): 
+        """Gets the phase between this channel and the input. The phase will be
+        calculated according the fomulae: self.phase - input.phase.
+        Remark: the input parameter has been written as 'SDSChannel' and not
+        SDSChannel (without the qoutes). Reason: the inability of Python to use the type definition
+        SDSChannel as a formal parameter of a method, before its definition. A class is known after
+        finalizing its description.  
+        As described in PEP484, expressing an unresolved name as a string literator is the way to go, 
+        in order to resolve the name later.
+        """
+        return self.visaInstr.query(f"MEAD PHA,{self.name}-{input.name}")    
   
 
 class SDSWaveFormPreamble(BaseWaveFormPreample):
@@ -235,6 +238,7 @@ class SDSWaveFormPreamble(BaseWaveFormPreample):
         Following data members are set:
         TBD """
         super().__init__(visaInstruments)
+        self.descriptor             = None  
         self.nrOfSamples            = None  #Number of points of (last) acquired waveform
         self.vdiv                   = None  #Number of units (e.g. V) per division 
         self.yoff                   = None  #Vertical offset. Calc floating values from raw data : VERTICAL_GAIN * data - VERTICAL_OFFSET
@@ -281,8 +285,21 @@ class SDSWaveFormPreamble(BaseWaveFormPreample):
         self.waveSource             = None
         self.instrumentName         = None
         self.instrumentNr           = None
-       
+        # TODO: horiGridSize is not part of the SDS preamble, its more like a constant belowing to
+        # this scope series. Therefore, it should be a configurable parameter (e.g. in an ini file)
+        # Grid size is the same as div. See also the programming manual, page 142/143, gridsize = 14 .
+        self.horiGridSize           = 14
+        # TODO: just like a horizontal grid size, an oscilloscope has also a vertical grid, which  
+        # is the same as 'vertical divs'. The SDS scope series apparently has two vertigal grids:
+        # a physical range of 10 divs and a visible range of 8 divs.  
+        self.vertGridsize           = 10
+        self.visVertGridSize        = 8
+        
     def decodePreambleStr(self, params):
+        self.descriptor = struct.unpack("16s", params[0:16])[0]
+        # see programming manual: first 8 chars should bij WAVEDESC
+        if self.descriptor[0:8] != b'WAVEDESC':
+            print("ERROR: Siglent SDS wrong discriptor at capture!")
         self.instrumentName = struct.unpack("16s", params[76:92])[0] #string type parameter.
         self.instrumentNr = struct.unpack("L", params[92:96])[0] #long int type parameter.
         temp = struct.unpack('4c', params[96:100])[0] #string type parameter.
@@ -365,18 +382,50 @@ class SDSWaveForm(BaseWaveForm):
         self.scaledYdata    = None #data converted to correct scale e.g untis
         self.scaledXdata    = None #An integer array representing the fysical instants of the scaledYData.
         
+        self.nrOfDivs = 5 # TODO: set this value during initialisation of the scope.
+        self.full_code = 256 # TODO: set this value during initialisation of the scope.
+        self.center_code = 127 # TODO: set this value during initialisation of the scope.
+        self.max_code = self.full_code/2
         self.hori_grid_size = 14 # TODO: See programming manual, pag 142/143 gridsize = 14.
         
-        """
-            To Calculate the voltage value, as shown on scope, can only be performed if one has the limitations
-            of the oscilloscope in mind:
-                - screen of scope consists of 10 'divs', although the fysical scope only shows 8 of them. 
-                    The samples therefore  always represents a range of 5 'divs'. 
+        
+    def rawYToVolts(self, vdiv, voffset):
+        """Method to convert the raw bytevalue returned from the scope to its fysical equivalent.
+        One has to have the SDS limitions in mind, in order to calculate this value correctly:
+                - screen of scope consists of 10 'divs', although the fysical scope only shows 8 
+                divisions. In other words: samples will always be represented in a range of 5 'divs'. 
                 - The (vertical) resolution of the SDS1202X-E is 8 bits
-                - The center of the screen equals to a decimal sample value of 127 (self.center_code),
-                    assuming 0.0 Volt offset (voffset)
-                - The samples are coded as unsigned bytes, so one have to restore the sign in the code.
-                - The range of samples is therefore -128 .... + 127
-            So xnew = (xold * 5/128)-voffset                
+                - The samples are coded as unsigned bytes: 0..255 decimal
+                - Therefor, the center of the screen corresponds to 127 (decimal), if no vertical offset.
+                    The center is represented by: self.center_code)
+                - The formula to convert a raw unsigned byte value into a signed potential value is
+                y_volts = (y_raw * 5/128)-voffset or y_volts = (y_raw * vdiv/25)-voffset TODO: check latter.               
+        """ 
+        y = self.rawYdata
+        #np.where(y > self.center_code , y, y - self.full_code)
+
+        voltfactor = vdiv/25
+        tempVolt = np.multiply(y,voltfactor)
+        res = np.subtract(tempVolt, voffset)
+        self.scaledYdata = res
+
+        return res
+    
+    def rawXtoTime(self, horOffset, sampleInterval, tdiv, nrOfPoints):
+        """Method for converting the raw sample numbers, or the indices of the samples, to an array with sample time 
+        instances. The formulae to calculate the time instances, see SDS programming manual on page 142/143, is:
+        timeVal = trdl-( timebase*grid/2), where:
+            trdl : Trigger delay, or horizontal offset.
+            timebase : tdiv, or time per division (horizontally)
+            grid: the number of division of the fysical scope screen, for SDS this is 14 divisions.
+        This method sets the scaleXdata member of this SDSWaveForm object and also returns array with time values. 
         """
+
+        FirstSampleTime = horOffset -tdiv*(self.hori_grid_size/2)
+        lastSampleTime = FirstSampleTime + nrOfPoints*sampleInterval
+        timeArr = np.arange(FirstSampleTime,lastSampleTime,sampleInterval)
+        self.scaledXdata = timeArr
+        
+        return timeArr
+
 

@@ -5,7 +5,8 @@ import unittest
 from unittest.mock import patch, MagicMock
 #from tests.testKorad import TestKoradSupply
 #from tests.testTDS import TestTDSCreate
-from tests.testSDS import TestSDSCreate
+from tests.testSDS import TestSDSCase
+from tests.testSDS import suite
 
 
 if __name__ == "__main__":
@@ -15,7 +16,9 @@ if __name__ == "__main__":
     #dummyUse()
     #performTransCurve()
     print("Start testing.")
-    unittest.main()
+    #unittest.main()
+    runner = unittest.TextTestRunner()
+    runner.run(suite())
     print("Finished testing.")
 
 DeviceName = "HantekDSO6022BE"

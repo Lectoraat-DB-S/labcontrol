@@ -1,3 +1,6 @@
+### import for using undefined names as parameters, which will be resolved later
+from __future__ import annotations #is this import still necessary. It is not defined by pep484
+
 #### import for autoregistration of BaseScope subclasses ##########
 # section: Tektronix scope
 from devices.tektronix.scope.TekScopes import TekScope 

@@ -244,8 +244,27 @@ class TekChannel(BaseChannel):
         immedResult = self.doImmedMeas("MINImum")        
         return float(immedResult)
     
-    def getPhase(self, input): #input is een channeltype of een MATH type.
-        """Sets the Tektronix scope for doing a phase IMMED measurement"""
+    def getNWidth(self):
+        """Gets the maximum value of highest point in this channel's waveform by doing an Immediate 
+        Measurement. It is the negative pulse width, between the first falling edge and the next rising 
+        edge at the waveform 50% level. Falling and rising edges must be displayed to measure. 
+        The oscilloscope automatically calculates the 50% measurement point."""
+        immedResult = self.doImmedMeas("NWIdth")        
+        return float(immedResult)
+    
+    
+    def getPhaseTo(self, input: 'TekChannel'): #input is een channeltype of een MATH type.
+        """Sets the Tektronix scope in doing a phase IMMED measurement. Only for
+        TBS1000B/EDU, TBS1000, TDS2000C, TDS1000C-EDU Series. The phase will be
+        calculated according the fomulae: self.phase - input.phase.
+        Remark on coding: the type of the input parameter has been written as 'TekChannel' and not
+        TekChannel (without the qoutes). Reason is the inability of Python to use the type definition
+        TekChannel as a formal parameter of a method, as this TekChannel class definition file has not 
+        been ended yet. Therefore the class has not been defined yet and can't by used as a parameter. 
+        As described in PEP484, expressing an (temporary) unresolved name as a string literator is 
+        the way to go, by the assumption it will be resolved later.
+        """
+        #TODO: check if scope is able to perform the measurement.
         self.immedMeasType("PHAse")
         myinput: TekChannel = input
         self.visaInstr.write(f"MEASUREMENT:IMMED:SOURCE {self.name}")
@@ -256,10 +275,17 @@ class TekChannel(BaseChannel):
         immedResult = self.doImmedMeas("FREQuency")        
         return float(immedResult)
     
+    def getPeriod(self):
+        immedResult = self.doImmedMeas("PERIod")        
+        return float(immedResult)
+    
     def getDuty(self):
         immedResult = self.doImmedMeas("PDUty")        
         return float(immedResult)
     
+    """CRMs | CURSORRms | DELay | FALL |
+FREQuency | MAXImum | MEAN | MINImum | NONe |  | PDUty
+|PERIod | PHAse | PK2pk | PWIdth| RISe"""
 class TekWaveFormPreamble(BaseWaveFormPreample):
     """Class for holding the Tektronix TDS1000 scope series preamble. Extends BaseWaveFormPreamble.
     A preample is data describing the unit, range and spacing of a Waveform."""

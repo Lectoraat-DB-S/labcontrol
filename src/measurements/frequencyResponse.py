@@ -14,6 +14,8 @@ signalOut =  None   #idem
 phaseDiff = list()
 maxAmps = list()
 measFreqs = list()
+chan1CaptureList = list()
+chan2CaptureList = list()
 # zet de tijdbasis van de scope goed
 # zet de triggersource goed: triggeren op kanaal 1, signaal van de generator.
 # zet, per kanaal de vdiv goed
@@ -44,11 +46,13 @@ def doACSweep():
         genChan1.setfreq(freq)
         #effe wachten om te stabiliseren
         time.sleep(WAITTIME)
-        measFreqs.append(scopeChan1.measfreq())
+        measFreqs.append(scopeChan1.getFrequency())
         signalIn=scopeChan1.capture()
         signalOut=scopeChan2.capture()
-        phaseDiff.append(measPhaseDiff(freq, signalIn, signalOut))
-        maxAmps.append(measMaxAmplitude(freq, signalIn, signalOut))
+        chan1CaptureList.append(signalIn)
+        chan2CaptureList.append(signalOut)
+        phaseDiff.append(scopeChan1.getPhaseTo(scopeChan2))
+        maxAmps.append(scopeChan1.getPkPk(), scopeChan2.getPkPk())
     
     # step 2: process the data
     magResp = calcMagnitudeResponse(maxAmps)

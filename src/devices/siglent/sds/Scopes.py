@@ -7,7 +7,7 @@ import pyvisa
 import logging
 import time
 #from devices.BaseScope import BaseScope
-from devices.siglent.sds.Channels import SDSChannel
+from devices.siglent.sds.Channel import SDSChannel
 from devices.siglent.sds.util import INR_HASHMAP
 import devices.siglent.sds.util as util
 from devices.siglent.sds.util import SiglentIDN 
