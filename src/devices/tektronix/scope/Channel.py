@@ -52,10 +52,14 @@ class TekChannel(BaseChannel):
         return self.WF
        
     def setVertScale(self, scale):
+        """Sets the vertical sensitivity of this channel. Has same functionality as 'setVoltsDiv'"""
         #TODO check validity of param
         self.visaInstr.write(f"{self.name}:SCALE {scale}") #Sets V/DIV CH1
   
-    def setVoltsDiv(self, scale):
+    def setVoltsDiv(self, scale): 
+        """Sets the vertical sensitivity (i.e. Vdiv) of this channel. This is the alternative method for setting  
+        Vdiv. Same functionality as 'setVdiv'.
+        """
         #TODO check validity of param
         vertscalelist = [2e-3, 5e-3, 10e-3, 20e-3, 50e-3, 100e-3, 200e-3, 500e-3, 1, 2, 5]
         if scale in vertscalelist:
@@ -63,19 +67,48 @@ class TekChannel(BaseChannel):
         else:   
             self.log.addToLog("invalid VDIV input, ignoring.....") 
     
-    def setAsSource(self):
-        """Sets or queries which waveform will be transferred from the oscilloscope by the
-        CURVe, WFMPre, or WAVFrm? queries. You can transfer only one waveform
-        at a time.
+    def setVdiv(self, value):
+        """Sets the vertical sensitivity (i.e. Vdiv) of this channel. This is the default method for setting  
+        Vdiv, defined in BaseChannel.
+        """
+        self.setVoltsDiv(value) 
+    
+    def getVdiv(self):
+        """Sets the vertical sensitivity (i.e. Vdiv) of this channel. This is the default method for setting  
+        Vdiv, defined in BaseChannel.
+        """
+        return self.visaInstr.query(f"{self.name}:SCALE ?") 
+    
+    def getYzero(self):
+        """Gets the vertical offset of this channel. For this TDS implementation the parameter 
+        'yzero' has been selected. Remark a TDS has also an 'yoff' parameter, which is an offset value in digitizer
+        levels. The y value of a sample is to be calculated by: 
+        value_in_YUNits = ((curve_in_dl - YOFF_in_dl) * YMUlt) + YZERO_in_YUNits 
+        The yoff parameter is accessible through the WaveFormPreamble object of this channel
+        """
+        return self.WFP.yzero
+    
+    def getXzero(self):
+        """Gets the vertical offset of this channel on display. This BaseChannel implementation 
+        is empty. An inheriting subclass will have to implement this method.
+        """
+        return self.WFP.xzero
+
+
+    def setSource(self):
+        """Sets this channel as the source for transferring waveform or measurements from this oscilloscope by queries 
+        like CURVe, WFMPre, or WAVFrm?. As specified by the manual, one can transfer only one waveform at a time.
         """ 
         #check if channel is valid 
         self.visaInstr.write(f"DATA:SOURCE {self.name}") #Sets the channel as data source     
     
-    def getSource(self):   
+    def getSource(self): 
+        """Gets the current source (i.e. which channel) of which the waveform will be retrieved at a capture, for 
+        instance"""  
         return self.visaInstr.query(f"DATA:SOURCE?")
     
     def getNrOfPoints(self):
-        #TODO:
+        """Gets the number of datapoints present when the waveform of this channel will be retrieved."""
         # correct handling of event code 2244
         return int(self.visaInstr.query(f"wfmpre:{self.name}:nr_pt?")) #For a channel version of this command:see programming guide page 231
           
@@ -95,14 +128,14 @@ class TekChannel(BaseChannel):
         3. It sets the binary data format for transerring data.
         4. It sets the number of bytes per data point to 1. 
         5. It will query the preamble of this channel.
-        6. It will set the relevant data members of this channels waveformdata structure.
+    ge    6. It will set the relevant data members of this channels waveformdata structure.
         7. It will query the scope for the data.
         8. When data has been transferred, this method will set the relevant datamembers of this channel's waveform
             struct. """
         wfp = self.WFP
         trace = self.WF
         self.setVisible(True)
-        self.setAsSource()
+        self.setSource()
         self.visaInstr.write(f"DATa:ENCdg RIBinary")
         self.visaInstr.write(f"DATA:WIDTH 1")
         wfp.queryPreamble()
@@ -118,18 +151,21 @@ class TekChannel(BaseChannel):
         scaled_time = np.linspace( wfp.xzero, tstop, num=int(wfp.nrOfSamples))
         # vertical (voltage)
         unscaled_wave = np.array(bin_wave, dtype='double') # data type conversion
-        scaled_wave = (unscaled_wave - trace.yoff) *  trace.ymult  + trace.yzero
+        # See programming manual, page 240, formulae below for calculatie y-values. 
+        scaled_wave = (unscaled_wave - trace.yoff) *  trace.ymult  + trace.yzero 
         #put the data into internal 'struct'
         trace.scaledYdata = scaled_wave
         trace.scaledXdata = scaled_time
         
     ##### DATA TRANSFER RELATED METHODS ######
-    def queryEncoding(self):
+    def getEncoding(self):
+        """Gets the current encoding used by this scope."""
         return self.visaInstr.query("DATa:ENCdg?")
     
-    def queryWaveFormPreamble(self):
+    def getWaveformPreamble(self):
+        """Gets the description of the current waveform (i.e. preamble) of this channel."""
         #TODO add intern state for ascii or binary. Defines query or binary_query
-        self.setAsSource()
+        self.setSource()
         response = self.visaInstr.query('WFMPRE?')
         self.WFP.decode(response)
 
@@ -272,20 +308,23 @@ class TekChannel(BaseChannel):
         return self.visaInstr.query("MEASUrement:IMMed:VALue?")
 
     def getFrequency(self):
+        """Gets the frequency [Hz] of this channel's waveform by doing an Immediate 
+        Measurement"""
         immedResult = self.doImmedMeas("FREQuency")        
         return float(immedResult)
     
     def getPeriod(self):
+        """Gets the period time [s] of this channel's waveform by doing an Immediate 
+        Measurement"""
         immedResult = self.doImmedMeas("PERIod")        
         return float(immedResult)
     
     def getDuty(self):
+        """Gets the positive duty cycle of this channel's waveform by doing an Immediate 
+        Measurement"""    
         immedResult = self.doImmedMeas("PDUty")        
         return float(immedResult)
     
-    """CRMs | CURSORRms | DELay | FALL |
-FREQuency | MAXImum | MEAN | MINImum | NONe |  | PDUty
-|PERIod | PHAse | PK2pk | PWIdth| RISe"""
 class TekWaveFormPreamble(BaseWaveFormPreample):
     """Class for holding the Tektronix TDS1000 scope series preamble. Extends BaseWaveFormPreamble.
     A preample is data describing the unit, range and spacing of a Waveform."""
@@ -313,8 +352,9 @@ class TekWaveFormPreamble(BaseWaveFormPreample):
         self.xzero                 : Location of X=0 on screen horizontally
         self.xUnitStr              : Horizontal axis unit
         self.ymult                 : Vertical gain, or VDIV
-        self.yzero                 : Location of Y=0 on screen vertically
-        self.yoff                  : Vertical offset on the display
+        self.yzero                 : Is a value, expressed in YUNits, used to convert waveform record
+                                     values to YUNitLocation of Y=0 on screen vertically
+        self.yoff                  : Vertical offset in digitizer levels
         self.yUnitStr              : Vertical axis unit"""
         super().__init__(dev=dev)
         ##### START OF TEKTRONIX TDS TYPICAL PARAMETERS DEFINITION ####### 

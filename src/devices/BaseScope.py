@@ -1,4 +1,5 @@
 import pyvisa
+import matplotlib.pyplot as plt
 
 class BaseScope(object):
     """BaseScope: base class for oscilloscope implementation.
@@ -47,18 +48,20 @@ class BaseScope(object):
 
     def __init__(self, visaInstr:pyvisa.resources.MessageBasedResource=None):
         """This method takes care of the intialisation of a BaseScope object. This implementation leaves most
-        datamembers uninitialised. A subclass should therefore override this function, by initialising the datamembers 
-        needed. Remark: if the subclass relies the intialisation done below, don't forget to call super().__init()__ !"""
+        datamembers uninitialised. A subclass should therefore override this function and initialise the datamembers. 
+        Remark: don't forget to call super().__init()__ if needed!"""
         self.brand = None
         self.model = None
         self.serial = None
         self.firmware = None
         self.visaInstr : pyvisa.resources.MessageBasedResource = visaInstr
-        self.horizontal = None
-        self.vertical = None
-        self.trigger = None
+        self.horizontal : BaseHorizontal = None
+        self.vertical : BaseVertical = None
+        self.trigger : BaseTriggerUnit = None
         self.utility = None
         self.host = None
+        self.horiGridSize = None # Every scope has a horizontal grid, ie a number of divs. To plot, one need tdiv
+        self.vertiGridSize = None # Every scope has a vertical grid or divisions. To plot vertically one need e.g. vdiv
         
     #@property 
     def visaInstr(self) -> pyvisa.resources.MessageBasedResource: 
@@ -100,14 +103,44 @@ class BaseChannel(object):
         self.chanNr = chan_no
         self.WF = BaseWaveForm()            # the waveform ojbect of this channel
         self.WFP = BaseWaveFormPreample(visaInstr) # the waveformpreamble object for this channel
-        
+
+    def getWaveformPreamble(self):
+        """Gets the description of the current waveform (i.e. preamble) of this channel. This BaseChannel implementation 
+        is empty. An inheriting subclass will have to implement this method by sending the proper SCPI commands."""
+        pass 
         
     def capture(self):
         """Gets the waveform from the oscilloscope, by initiating a new aqquisition. This BaseChannel implementation 
         is empty. An inheriting subclass will have to implement this method by sending the proper SCPI commands 
-        in order to: a. get waveform descriptors, b. get the raw data and c. take care for converting it to meaningfull
-        physical quantities and store the data."""
+        in order to: a. set this channel object as the source for the capture b. get waveform descriptors, c. get the 
+        raw data and e. take care for converting the raw data to meaningfull physical quantities and handel the storage 
+        it."""
         pass
+
+    def setVdiv(self, value):
+        """Sets the vertical sensitivity (i.e. Vdiv) of this channel. This BaseChannel implementation 
+        is empty. An inheriting subclass will have to implement this method.
+        """
+        pass
+
+    def getVdiv(self):
+        """Gets the current vertical sensitivity (i.e. Vdiv) of this channel. This BaseChannel implementation 
+        is empty. An inheriting subclass will have to implement this method.
+        """
+        pass
+
+    def getYzero(self):
+        """Gets the vertical offset of this channel on display. This BaseChannel implementation 
+        is empty. An inheriting subclass will have to implement this method.
+        """
+        pass
+
+    def getXzero(self):
+        """Gets the vertical offset of this channel on display. This BaseChannel implementation 
+        is empty. An inheriting subclass will have to implement this method.
+        """
+        pass
+
 
     def getAvailableMeasurements(self):
         """Gets the available measurements of this oscilloscope. 'Measurements' are build-in, predefined data processing
@@ -173,8 +206,40 @@ class BaseChannel(object):
         """
         pass
 
-
+    def configPlot(self, plot: plt):
+        """Method for configuring Matplotlib plots, based on the channels preamble data capture. This method
+        implements the following base functionality:
+        1. Setting x and y axes ranges.
+        2. Setting x and y axes units
+        3. Setting linear, logplot or loglogplot.
+        4. Setting a base title for the plot.
+        5. ....?.....
+        Pre-condition: 1. waveform captured on this channel (at least once). 2. Matlibplot plot instance created   
+        Input parameter : plot. A valid Matplotlib plot handle to be configured.
+        Return: a configured plot handle. Plot data has to be supplied and show() to be called."""
+        pass
         
+    def getConfigPlot(self):
+        """Method for getting a configured Matplotlib plot, based on the channels preamble data capture. This method
+        implements the following base functionality:
+        1. Creating a Matplotlib.pyplot instance
+        2. Setting x and y axes ranges.
+        3. Setting x and y axes units
+        4. Setting linear, logplot or loglogplot.
+        5. Setting a base title for the plot.
+        6. ....?.....
+        Pre-condition: 1. waveform captured on this channel (at least once).    
+        Input parameter : None.
+        Return: a created and configured plot handle, invisible with no data in it."""
+        pass
+
+    def getPlot(self):
+        """Method for getting a completely configured plot. This method has the same functionality as getConfigPlot, but 
+        this method actually plots the data, based on the current WaveForm of this channel.
+        Precondition: waveform available
+        Input parameter: None
+        return: handle to matplotlib object."""
+        pass 
 ########## BASEVERTICAL ###########
     
 class BaseVertical(object):
@@ -343,6 +408,23 @@ class BaseWaveFormPreample(object):
 
     def __init__(self, dev:pyvisa.resources.MessageBasedResource=None):
         self.visaInstr = dev
+        #TODO: to prevent definition of a vast number of query-like method, it might be a good idea
+        # to define some basic members of this preamble. A number of possible parameters will be defined, but 
+        # if applicable, these parameters then must be incorporated into the subclasses.
+        # These parameters should be the bare minimum of parameters to create a nice plot of the transferred
+        # scope data.
+        self.xzero      = None # The horizontal offset on screen
+        self.yzero      = None # The vertical offset on screen
+        self.ydiv       = None # The amount of vertical displacement per division   
+        self.xdiv       = None # The amount of horizontal displacement per division
+        self.vdiv       = None # same as ydiv
+        self.tdiv       = None # same as xdiv
+        self.xincr      = None # The amount of horizontal displacement between two subsequent samples.
+        self.yincr      = None # The minimal amount of vertical displacement (compare resolution or number of bits, inverted)
+        self.points     = None # The number of samples of the waveform
+        self.vertMode   = None # Y, XY, or FFT.
+        self.xUnitStr   = None # String, e.g. 's', 'f' or 'w'
+        self.yUnitStr   = None # String, e.g. 'V' or 'DC'
 
     def queryPreamble(self):
         """Method for getting the preamble of the scope and set the correct data members

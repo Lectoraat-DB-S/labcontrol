@@ -8,7 +8,7 @@ import logging
 import time
 from devices.siglent.sds.util import splitAndStripHz, splitAndStripSec, splitAndStripV 
 from devices.siglent.sds.util import TIMEBASE_HASHMAP
-import pickle
+import configparser
 
 
 # SDSChannel: abstraction of a Siglent oscilloscope channel.
@@ -46,12 +46,37 @@ class SDSChannel(BaseChannel):
         self.visaInstr.write(cmd)
 
     def getVdiv(self):
+        """Gets the vertical sensitivity (i.e. Vdiv) of this channel. This is the default method for setting  
+        Vdiv, as defined in BaseChannel.
+        """
         VDIV = self.query(f"{self.name}:VDIV?")
         return VDIV
+    
+    def setVdiv(self, value):
+        """Sets the vertical sensitivity (i.e. Vdiv) of this channel. This is the default method for setting  
+        Vdiv, as defined in BaseChannel.
+        """
+        self.write(f"{self.name}:VDIV {value}")
 
-    def getVofs(self):
+    def setVoltsDiv(self, value):
+        """Sets the vertical sensitivity (i.e. Vdiv) of this channel. This is the alternative method for setting  
+        Vdiv. Same functionality as 'setVdiv'.
+        """
+        self.setVdiv(value)
+
+    def getYzero(self):
+        """Gets the vertical offset of this channel. For this SDS implementation the parameter 
+        'yoff' will be queried. 
+        """
         VOFS = self.query(f"{self.name}:OFST?")
         return VOFS
+    
+    def getXzero(self):
+        """Gets the horizontal offset of this channel on display. For this SDS implementation, the trigger delay parameter 
+        has been selected.
+        """
+        return self.WFP.trigDelay
+
     
     def getWaveformPreamble(self):
         """The query returns the parameters of the source using by the command

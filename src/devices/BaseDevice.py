@@ -1,4 +1,9 @@
 import pyvisa
+
+class BaseInstrument(object):
+    def __init__(self):
+        pass
+
 class LabEnvironment(object):
     visa_error_resp      = ["error"]
     visa_sim_error_resp  = ["error"]

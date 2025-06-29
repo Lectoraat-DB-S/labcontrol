@@ -285,14 +285,6 @@ class SiglentScope(BaseScope):
     def default_setup(self):
         pass
 
-class SiglentSDSTriggerStatus(Enum):
-    ARM = "Arm"
-    READY = "Ready"
-    AUTO = "Auto"
-    TRIGD = "Trig'd"
-    STOP = "Stop"
-    ROLL = "Roll"
-
 
 
             

@@ -8,6 +8,8 @@ from serial.tools.list_ports import comports
 import configparser
 import os
 
+from src import CONFIGPARSERPATH
+
 
 
 class KoradChannel(BaseSupplyChannel):
@@ -96,6 +98,7 @@ class Korad3305P(BaseSupply):
     def readConfig(cls):
         config = configparser.ConfigParser()
         print(os.getcwd())
+        config.read(CONFIGPARSERPATH)
         config.read('.\\src\\labcontrol.ini')
         if "Korad3305P" in config.sections():
                 if 'VisaInterface' in config['Korad3305P']:
