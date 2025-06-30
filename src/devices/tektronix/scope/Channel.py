@@ -156,6 +156,7 @@ class TekChannel(BaseChannel):
         #put the data into internal 'struct'
         trace.scaledYdata = scaled_wave
         trace.scaledXdata = scaled_time
+        return trace
         
     ##### DATA TRANSFER RELATED METHODS ######
     def getEncoding(self):
@@ -169,6 +170,15 @@ class TekChannel(BaseChannel):
         response = self.visaInstr.query('WFMPRE?')
         self.WFP.decode(response)
 
+    ### BaseScope Measurements ##
+    def getPkPk(self):
+        """Calculates or finds the peak-to-peak maximum value in this channels last waveform. This TDS
+        implementation use immed measurements to implement this functionality. TDS doesnot have a pk2pk method, therefore the
+        min and max immed measurements will be used.
+        """
+        max = self.getMax()
+        min = self.getMin()
+        return (max - min)
 
     #### IMMED MEASUREMENT METHODS #####
     def getAvailableMeasurements(self):
