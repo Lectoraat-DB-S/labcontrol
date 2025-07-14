@@ -34,10 +34,22 @@ class TekScope(BaseScope):
                 for url in urls:
                     if urlPattern in url:
                         mydev = rm.open_resource(url)
-                        mydev.timeout = 10000  # ms
-                        mydev.read_termination = '\n'
-                        mydev.write_termination = '\n'
+                        mydev.timeout = 10000
+                        mydev.chunk_size = 20480
+                        #mydev.timeout = 10000  # ms
+                        #mydev.read_termination = '\n'
+                        #mydev.write_termination = '\n'
+                        #mydev.write("DATA:ENC RPB")
+
+                        #source of code below: https://github.com/tektronix/Programmatic-Control-Examples/blob/master/Examples/Oscilloscopes/BenchScopes/src/SimplePlotExample/tbs_simple_plot.py
+
+                        mydev.encoding = 'latin_1'
+                        mydev.read_termination = None # See discussion https://github.com/pyvisa/pyvisa/issues/741
+                        mydev.write_termination = None 
+                        mydev.write('*cls') # clear ESR
+                        mydev.write("HEADER OFF\n") # No header => less data. TDS used during test was configured with no header. To be sure: turn it off.
                         desc = mydev.query("*IDN?")
+                      
                         if desc.find("TEKTRONIX,TDS") > -1: #Tektronix device found via IDN.
                             return (cls, mydev)
                 
@@ -63,6 +75,8 @@ class TekScope(BaseScope):
             the autoregristration scheme for subclasses of PEP487 which is available since python 3.6. 
         """
         super().__init__(visaInstr) #baseclass will store referentie to the device.
+        self.visaInstr.write(f"DATa:ENCdg RIBinary")
+        self.visaInstr.write(f"DATA:WIDTH 1")
         self.horizontal = TekHorizontal(visaInstr)
         self.vertical = TekVertical(2, visaInstr)
         self.trigger = TekTrigger(self.vertical,visaInstr)

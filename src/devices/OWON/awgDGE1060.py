@@ -21,8 +21,6 @@ dev.write("OUTPut1:STATe ON")
 """
 
 class OWONGenChannel(BaseGenChannel):
-    C1 = "C1"
-    C2 = "C2"
 
     @classmethod
     def getGenChannelClass(cls,  chan_no, dev):
@@ -35,7 +33,6 @@ class OWONGenChannel(BaseGenChannel):
         super().__init__(chan_no, None)
         self.name = f"C{chan_no}"
         self.usbDev = dev
-        #self.WVP = WaveformParam()
 
     def write(self, command):
         self.usbDev.write(1, command)
@@ -127,9 +124,6 @@ class OWONGenerator(BaseGenerator):
         creation by the __new__ method of BaseGenerator.     
         """    
         if cls is OWONGenerator:
-            #myrm=pyvisa.ResourceManager('@py')
-            #myurls = myrm.list_resources()
-            #urlPattern = "USB" 
             if host == None:
                 #for url in myurls:
                     #if urlPattern in url:
@@ -146,8 +140,7 @@ class OWONGenerator(BaseGenerator):
 
     def __init__(self, nrOfChan=0, visaInstr=None):
         super().__init__(nrOfChan=nrOfChan, instr=visaInstr)
-        #self.idn = IDN()
-        backend = usb.backend.libusb1.get_backend(find_library=lambda x: "C:\\pyenv\\labcontrol\\Scripts\\libusb-1.0.dll")
+        backend = usb.backend.libusb1.get_backend(find_library=lambda x: "C:\\Users\\p78511225\\.pyenv\pyenv-win\\versions\\3.13.3\\Scripts\\libusb-1.0.dll")
         dev = usb.core.find(idVendor=0x5345, idProduct=0x1235, backend=backend)
         self.nrOfChan = nrOfChan
 

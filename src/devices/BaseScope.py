@@ -104,6 +104,19 @@ class BaseChannel(object):
         self.WF = BaseWaveForm()            # the waveform ojbect of this channel
         self.WFP = BaseWaveFormPreample(visaInstr) # the waveformpreamble object for this channel
 
+    def query(self, cmdString):
+        return self.visaInstr.query(cmdString)
+    
+    def write(self, cmdString: str):
+        return self.visaInstr.write(cmdString) #returns number of bytes written.
+
+    def writeRaw(self, cmdString:str):
+        bytesToWrite = cmdString.encode()
+        return self.visaInstr.write_raw(bytesToWrite) #returns the number of bytes written.
+
+    def readRaw(self, nrOfBytes): # nrOfBytes defaults to None, meaning the resource wide set value is set.
+        return self.visaInstr.read_raw(size=nrOfBytes)
+
     def getWaveformPreamble(self):
         """Gets the description of the current waveform (i.e. preamble) of this channel. This BaseChannel implementation 
         is empty. An inheriting subclass will have to implement this method by sending the proper SCPI commands."""

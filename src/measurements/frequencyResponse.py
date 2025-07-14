@@ -14,7 +14,7 @@ def measMaxAmplitude(a, b) -> list:
 def calcPhaseResonse(phaseDiff):
     return None
 
-def calcMagnitudeResponse(maxAmps) -> list:
+def calcMagnitudeResponse(outPut, inPut = None) -> list:
     return None
 
 def calcMin3dBFromMagResp(magResp) -> list:
@@ -37,13 +37,13 @@ def doACSweep():
     chan2CaptureList = list()
     startFreq = 500
     stopFreq = 1e6
-    stepFreq = 100
+    stepFreq = 10000
     # zet de tijdbasis van de scope goed
     # zet de triggersource goed: triggeren op kanaal 1, signaal van de generator.
     # zet, per kanaal de vdiv goed
     # zet , per kanaal de (vertical) coupling goed (ws AC, dan geen offset.)
     # zet de scope triggering coupling goed
-    WAITTIME = 10e-3 #tijd om waarden te laten stabiliseren voor doen van meting.
+    WAITTIME = 1e-3 #tijd om waarden te laten stabiliseren voor doen van meting.
     # step 0: set generator at first freq point + enable
     genChan1.setfreq(startFreq)
     genChan1.enableOutput(True)
@@ -51,23 +51,32 @@ def doACSweep():
     for freq in np.arange (startFreq, stopFreq, stepFreq):
         #stel de scoop in op juiste tijdbase en vdiv
         #zorg voor elk kanaal, tenminste 2 hele perioden sinussignaal in beeld
+        start = time.time()
         genChan1.setfreq(freq)
+        end = time.time()
+        print(f"generator freqzetten kost: {end-start}")
         #set the time base of the scope for two periods atleast.
         divtime = (1/(2*freq))
         scope.horizontal.setTimeDiv(divtime)
         #effe wachten om te stabiliseren
-        time.sleep(WAITTIME)
-        measFreqs.append(scopeChan1.getFrequency())
+        #time.sleep(WAITTIME)
+        #measFreqs.append(scopeChan1.getFrequency())
+        #print(scopeChan1.query("MEASUrement?"))
+        #print(scopeChan1.query("MEASUrement:IMMed?"))
+        start = time.time()
         signalIn=scopeChan1.capture()
         signalOut=scopeChan2.capture()
-        chan1CaptureList.append(signalIn)
-        chan2CaptureList.append(signalOut)
-        phaseDiff.append(scopeChan1.getPhaseTo(scopeChan2))
-        maxAmpIN.append(scopeChan1.getPkPk())
-        maxAmpOUT.append(scopeChan2.getPkPk())
+        end = time.time()
+        print(f"2 maal een capture kost: {end-start}")
+        #chan1CaptureList.append(signalIn)
+        #chan2CaptureList.append(signalOut)
+        #phaseDiff.append(scopeChan1.getPhaseTo(scopeChan2))
+        #maxAmpIN.append(scopeChan1.getPkPk())
+        #AmaxAmpOUT.append(scopeChan2.getPkPk())
+        print(f"huidige frequentie: {freq}")
     
     # step 2: process the data
-    magResp = calcMagnitudeResponse(maxAmps)
+    magResp = calcMagnitudeResponse(maxAmpOUT, maxAmpIN)
     phaseResp = calcPhaseResonse(signalIn, signalOut)
     fc_min3dB = calcMin3dBFromMagResp(magResp)
     # stap 3: plot the data

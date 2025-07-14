@@ -1,8 +1,42 @@
 import pyvisa
 
 class BaseInstrument(object):
-    def __init__(self):
-        pass
+    instrumentList = []        
+    
+    def __init_subclass__(cls, **kwargs):
+        """Method for auto registration of BaseInstrument subclasses according to PEP487.
+        DO NOT ALTER THIS METHOD NOR TRY TO OVERRIDE IT.
+        """
+        super().__init_subclass__(**kwargs)
+        cls.instrumentList.append(cls)
+         
+    @classmethod
+    def getInstrumentClass(cls, rm, urls, host=None):
+        """Method for getting the right type of instrument, so it can be created by the runtime.
+        This BaseInstrument implementation does nothing other than returning the BaseInstrument type. The inheriting
+        subclass should implement the needed logic"""
+        return cls
+    
+    @classmethod
+    def getDevice(cls,host=None):
+        """Method for handling the creation of the correct Scope object, by implementing a factory process. 
+        Firstly, this method calls getScopeClass() for getting the right BaseScope derived type. If succesfull, this 
+        method, secondly, returns this (class)type together with the needed parameters, to enable
+        the Python runtime to create and initialise the object correctly.
+        DON'T TRY TO CALL THE CONSTRUCTOR OF THIS CLASS DIRECTLY"""
+        rm = pyvisa.ResourceManager()
+        urls = rm.list_resources()
+
+        for instrument in cls.instrumentList:
+            instrtype, dev = instrument.getInstrumentClass(rm, urls, host)
+            if instrtype != None:
+                cls = instrtype # check if the type of this class corresponds with the identiy of the instrument.
+                return cls(dev)
+            
+        return None # if getDevice can't find an instrument, return None.
+
+    def __init__(self, instr:pyvisa.resources.MessageBasedResource=None):
+        self.visaInstr: pyvisa.resources.MessageBasedResource = instr
 
 class LabEnvironment(object):
     visa_error_resp      = ["error"]

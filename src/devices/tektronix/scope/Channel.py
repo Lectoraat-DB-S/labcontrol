@@ -29,6 +29,10 @@ class TekChannel(BaseChannel):
         self.WFP= TekWaveFormPreamble(visaInstr)
         self.WF = TekWaveForm()
         self.nrOfDivs = 5          # TODO: should be set during initialisation of the scope.
+        self.setSource()
+        self.WFP.queryPreamble()
+        self.WF.setWaveFormID(self.WFP)
+        
         
         #self.setVisible(state=True)
         self.encoding = None
@@ -134,14 +138,14 @@ class TekChannel(BaseChannel):
             struct. """
         wfp = self.WFP
         trace = self.WF
-        self.setVisible(True)
+        #self.setVisible(True)
         self.setSource()
-        self.visaInstr.write(f"DATa:ENCdg RIBinary")
-        self.visaInstr.write(f"DATA:WIDTH 1")
-        wfp.queryPreamble()
-        trace.setWaveFormID(wfp)
-        self.log.addToLog("start querying scope")
-        bin_wave = self.visaInstr.query_binary_values('curve?', datatype='b', container=np.array)
+        #self.visaInstr.write(f"DATa:ENCdg RIBinary")
+        #self.visaInstr.write(f"DATA:WIDTH 1")
+        #wfp.queryPreamble()
+        #trace.setWaveFormID(wfp)
+        #self.log.addToLog("start querying scope")
+        bin_wave = self.visaInstr.query_binary_values('curve?\n', datatype='b', container=np.array)
         #bin_wave = bin_wave - trace.yoff
         self.log.addToLog("scope query ended")
         trace.rawYdata = bin_wave
