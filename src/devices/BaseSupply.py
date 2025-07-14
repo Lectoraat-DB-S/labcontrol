@@ -12,7 +12,13 @@ class BaseSupplyChannel(object):
     will override all methods of this baseclass, as this baseclass hasn't got any functional implementation. 
     """
     supplyChannelList = list()
-    
+
+    @classmethod
+    def getSupplyChannelClass(cls,  chan_no, dev):
+        """getGenChannelClass: factory method for generator channel objects. 
+        Remark: this baseclass implementation is empty, must be implemented by the subclass. """
+        pass 
+
     def __init_subclass__(cls, **kwargs):
         """ __init_subclass__: method for autoregistration, according to pep487, See:  
         https://peps.python.org/pep-0487/. This way of registration requires a Python environment with version >= 3.6.
@@ -26,13 +32,12 @@ class BaseSupplyChannel(object):
         super().__init_subclass__(**kwargs) 
         cls.supplyChannelList.append(cls)
     
-    
-    def __init__(self, chanNr : int = None, dev : pyvisa.resources.Resource = None):
+    def __init__(self, chanNr : int = None, dev : pyvisa.resources.MessageBasedResource = None):
         """__init__: This method will be called after creation of a channel object. 
         Parameters: 
             chanNr:     an integer index number representing this channelobject.
             visaInstr:  a VISA reference to an succesfully opened VISA instrument"""
-        self.visaInstr = dev
+        self.visaInstr:pyvisa.resources.MessageBasedResource = dev
         self.name = chanNr
     
         
@@ -129,40 +134,33 @@ class BaseSupply(object):
         cls.supplyList.append(cls)
          
     @classmethod
-    def getDevice(cls, rm, urls, host):
-        """ Tries to get (instantiate) the device, based on the url. REMARK: this baseclass implementation is empty.
-        Inheriting subclasses must implement this functionality."""
-        return None #Base class implementation: return None, because this class can't do shit.
+    def getSupplyClass(cls, rm, urls, host=None):
+        """Method for getting the right type of supply, so it can be created by the runtime.
+        This method only returns BaseSupply's baseclass type (e.g. it returns the BaseSupply type). The inheriting
+        subclass should implement the needed logic to return the neede derived subtype."""
+        return cls
     
-        
-    def __new__(cls, host=None):
-        """__new__ : method for creation of a new BaseSupply object
-        Don't override this method when inheriting: this method implements the logic which takes care of instantiating
-        the correct subclass for controlling the actual connect power supply. In this way labcontrol is able to provide its 
-        users with a transparent interface for every VISA device.
-        
-        Implemented logic: this method traverses a list of know subclasses and will call the getDevice implementation of 
-        each registered subclass, which works like a kind of factory pattern. 
-        
-        This coding scheme relies on the (automatic) registration of subclasses according to pep487:
-        see: https://peps.python.org/pep-0487/
-        
-        """
-        instance = super().__new__(cls) #to have Pylance detect the proper type of a variable, call this!
-
+    @classmethod
+    def getDevice(cls,host=None):
+        """Method for handling the creation of the correct Supply object, by implementing a factory process. 
+        Firstly, this method calls getSupplyClass() for getting the right BaseSupply derived type. If succesfull, 
+        this method, secondly, returns this (class)type together with the needed parameters, to enable Python's 
+        runtime to create and initialise the object correctly.
+        DON'T TRY TO CALL THE CONSTRUCTOR OF THIS CLASS DIRECTLY"""
         rm = pyvisa.ResourceManager()
-        devUrls = rm.list_resources()
+        urls = rm.list_resources()
+
         for supply in cls.supplyList:
-            dev = supply.getDevice(rm, devUrls, host)
-            if dev != None:
-                return dev
+            supplyType, nrOfChan, dev = supply.getSupplyClass(rm, urls, host)
+            if supplyType != None:
+                cls = supplyType
+                return cls(nrOfChan, dev)
+    
+        return None # if getDevice can't find an instrument, return None.    
         
-        return instance   #needed for codecompletion by Pylance  
-        
-    def __init__(self, dev=None, host=None, nrOfChan=1): #For now, init should get the nrOfChan for this scope as a param.
+    def __init__(self, nrOfChan : int = None, visaInstr : pyvisa.resources.MessageBasedResource = None): 
         """abstract init function. A subclass should be override this function, which wil intitialize object below"""
-        self.visaInstr : pyvisa.Resource = dev
-        self.host = None
+        self.visaInstr : pyvisa.resources.MessageBasedResource = visaInstr
         self.nrOfChan = nrOfChan
         self.channels = None
 

@@ -1,15 +1,20 @@
-# some info on module reference: see https://stackoverflow.com/questions/448271/what-is-init-py-for
 import time
 import numpy as np
 from enum import Enum
 import socket
-import pyvisa as visa
+
+import pyvisa
 import logging
 import time
 #from devices.BaseScope import BaseScope
-from devices.siglent.sds.Channels import SDSChannel
+from devices.siglent.sds.Channel import SDSChannel
 from devices.siglent.sds.util import INR_HASHMAP
 import devices.siglent.sds.util as util
+from devices.siglent.sds.util import SiglentIDN 
+from devices.BaseScope import BaseScope
+from devices.siglent.sds.Vertical import SDSVertical
+from devices.siglent.sds.Horizontal import SDSHorizontal
+from devices.siglent.sds.Trigger import SDSTrigger
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -19,102 +24,73 @@ class SiglentWaveformWidth(Enum):
     BYTE = "BYTE"
     WORD = "WORD"
 
-class SiglentScope(object):
+class SiglentScope(BaseScope):
 
-    KNOWN_MODELS = [
-        "SDS2504X Plus",
-        "SDS1202X",
-        "SDS1202X-E",
-    ]
-
-    MANUFACTURERS = {
-        "SDS2504X Plus": "Siglent",
-        "SDS1202X": "Siglent",
-    }
-    
     @classmethod
-    def getDevice(cls, rm, urls, host):
+    def getScopeClass(cls, rm: pyvisa.ResourceManager, urls, host):
         """
             Tries to get (instantiate) this device, based on matched url or idn response
             This method will ONLY be called by the BaseScope class, to instantiate the proper object during
             creation by the __new__ method of BaseScope.     
         """  
-        if host is None:
-            pattern = "SDS"
-            for url in urls:
-                if pattern in url:
-                    mydev = rm.open_resource(url)
-                    cls.__init__(cls,**kwargs)
-                    return cls
+        TCPIP_OPEN_MSG_LONG ="Welcome to the SCPI Instrument 'Siglent SDS1202X-E'"
+        TCPIP_OPEN_MSG_SHORT ="SDS"
+        if cls is SiglentScope:
+            if host is None:
+                pattern = "SDS"
+                for url in urls:
+                    if pattern in url:
+                        mydev:pyvisa.resources.MessageBasedResource = rm.open_resource(url)
+                        mydev.timeout = 10000  # ms
+                        mydev.read_termination = '\n'
+                        mydev.write_termination = '\n'
+                        idnRespStr=str(mydev.query("*IDN?"))
+                        myidn = util.checkIDN(idnstr=idnRespStr)
+                        if myidn != None:
+                            return (cls, mydev)
+                        else:
+                            return (None, None)
+                        
+            else:
+                try:
+                    logger.info(f"Trying to resolve host {host}")
+                    ip_addr = socket.gethostbyname(host)
+                except socket.gaierror:
+                    logger.error(f"Couldn't resolve host {host}")
+                    return None
+                mydev = rm.open_resource("TCPIP::"+str(ip_addr)+"::INSTR")
+                mydev.timeout = 10000  # ms
+                mydev.read_termination = '\n'
+                mydev.write_termination = '\n'
+                if util.checkIDN(mydev):
+                    cls.__init__(cls, mydev)
+                    return (cls, mydev)
+                else:
+                    return (None, None)
         else:
-            try:
-                logger.info(f"Trying to resolve host {host}")
-                ip_addr = socket.gethostbyname(host)
-            except socket.gaierror:
-                logger.error(f"Couldn't resolve host {host}")
-                return None
-            mydev = rm.open_resource("TCPIP::"+str(ip_addr)+"::INSTR")
-            return cls
-        
+            return (None, None)
+            
 
-    def __init__(self, host = None):
-        
-        #self._inst = dev
-        
-        rm = visa.ResourceManager()
-        if host is None:
-            theList = rm.list_resources()
-            pattern = "SDS"
-            for url in theList:
-                if pattern in url:
-                    mydev = rm.open_resource(url)
-                    self._inst = mydev
-                    break
-        else:
-            self._host = host
-            try:
-                logger.info(f"Trying to resolve host {self._host}")
-                ip_addr = socket.gethostbyname(self._host)
-            except socket.gaierror:
-                logger.error(f"Couldn't resolve host {self._host}")
-            mydev = rm.open_resource("TCPIP::"+str(ip_addr)+"::INSTR")
-            self._inst = mydev
-        
-        self.CH1 = SDSChannel(1, self, logger)
-        self.CH2 = SDSChannel(2, self, logger)
-
-    def __enter__(self):
-        try:
-            dsc = self.query("*IDN?")
-        except visa.errors.VisaIOError:
-            self._inst.close()
-            raise
-        identity_items = dsc.split(",")
-        if len(identity_items) == 3:
-            model, _, _ = dsc.split(",")
-            mnf = self.MANUFACTURERS.get(model, "[Unknown]")
-        else:
-            # Proper Siglent device probably.
-            mnf, model, _, _ = identity_items
-        logger.debug(f"Discovered {model} by {mnf}")
-        if model not in self.KNOWN_MODELS:
-            raise Exception(f"Device {model} not supported")
-        #controle of onderstaande niet definitie eruit kan, 
-        #self.CH1 = SDSChannel(1, self)
-        #self.CH2 = SDSChannel(2, self)
-        return self
-
-
-    #   @classmethod
-    #    def usb_device(cls, visa_rscr: str = None):
-    #        return USBDevice(visa_rscr)
-        
-    def query(self, cmd: str):
-        return self._inst.query(cmd)
+    def __init__(self, visaResc: pyvisa.resources.MessageBasedResource = None ):
+        """ 
+            init: initialise a newly  created SiglentScope object. Because the pyvisa resource handle will be saved
+            during the initing of BaseScope, this method calls super().__init__() 
+        """
+        super().__init__(visaResc)
+        self.horizontal = SDSHorizontal(visaResc)
+        self.vertical = SDSVertical(2, visaResc)
+        self.trigger = SDSTrigger(self.vertical,visaResc)
     
-
+   
     def __exit__(self, *args):
-        self._inst.close()
+        self.visaInstr.close()
+
+    
+    def query(self, cmd: str):
+        return self.visaInstr.query(cmd)
+    
+    def write(self, cmd: str):
+        self.visaInstr.write(cmd)
 
 
     @property
@@ -126,7 +102,7 @@ class SiglentScope(object):
 
             return: Siglent Technologies,<model>,<serial_number>,<firmware>
         """
-        return self._inst.query("*IDN?")
+        return self.query("*IDN?")
     
     def inr(self):
         """
@@ -134,20 +110,20 @@ class SiglentScope(object):
             The INR register (see table programming manual) records the completion of various internal operations 
             and state transitions.
         """
-        inrResp = self._inst.query("*INR?")
+        inrResp = self.query("*INR?")
         return INR_HASHMAP[inrResp]        
     
     def rst(self):
         """
             The RST command initiates a device reset. The RST sets recalls the default setup.
         """
-        self._inst.write("*RST")
+        self.write("*RST")
     
     def sav(self, panelNr):
         """
             The SAV command stores the current state of the instrument in internal memory. The SAV command stores 
             the complete front-panel setup of the instrument at the time the command is issued."""
-        self._inst.write(f"*SAV{panelNr}")
+        self.write(f"*SAV{panelNr}")
 
     def rcl(self, panelNr):
         """
@@ -155,19 +131,19 @@ class SiglentScope(object):
             recalling the complete front-panel setup of the instrument. Panel setup 0 corresponds to the default panel 
             setup.
         """
-        self._inst.write(f"*RCL{panelNr}")
+        self.write(f"*RCL{panelNr}")
 
     def lock(self, enable):
         """
             The LOCK command enables or disables the panel keyboard of the instrument.
         """
         if (enable):
-            self._inst.write(f"LOCK ON")
+            self.write(f"LOCK ON")
         else:
-            self._inst.write(f"LOCK OFF")
+            self.write(f"LOCK OFF")
     
     def isLocked(self):
-        retstr = self._inst.query(f"LOCK?")
+        retstr = self.query(f"LOCK?")
         if (retstr=="LOCK ON"):
             return True
         else:
@@ -175,39 +151,31 @@ class SiglentScope(object):
         
     def menu(self, enable):
         if (enable):
-            self._inst.write(f"MENU ON")
+            self.write(f"MENU ON")
         else:
-            self._inst.write(f"MENU OFF")
+            self.write(f"MENU OFF")
     
     def define(self, funct, param):
         match funct:
             case util.MATH_FUNC_ADD:
-                self._inst.write(f"DEFine EQN,'C1+C2'")
+                self.write(f"DEFine EQN,'C1+C2'")
             case util.MATH_FUNC_SUB:
-                self._inst.write(f"DEFine EQN,'C1-C2'")
+                self.write(f"DEFine EQN,'C1-C2'")
             case util.MATH_FUNC_MUL:
-                self._inst.write(f"DEFine EQN,'C1*C2'")
+                self.write(f"DEFine EQN,'C1*C2'")
             case util.MATH_FUNC_DIF:
-                self._inst.write(f"DEFine EQN,'C1/C2'")
+                self.write(f"DEFine EQN,'C1/C2'")
             case util.MATH_FUNC_FFT:
-                self._inst.write(f"DEFine EQN,'FFT({param})'")
+                self.write(f"DEFine EQN,'FFT({param})'")
             case util.MATH_FUNC_INT:
-                self._inst.write(f"DEFine EQN,'INTG({param})'")
+                self.write(f"DEFine EQN,'INTG({param})'")
             case util.MATH_FUNC_DIF:
-                self._inst.write(f"DEFine EQN,'DIFF({param})'")
+                self.write(f"DEFine EQN,'DIFF({param})'")
             case util.MATH_FUNC_SQR:
-                self._inst.write(f"DEFine EQN,'SQRT({param})'")
+                self.write(f"DEFine EQN,'SQRT({param})'")
 
 
-    """
-    def timebase_scale(self, new_timebase):
-        The command sets the horizontal scale per division for the main window.
-
-        :param new_timebase: Value to set the horizontal timebase
     
-        self.write(":TIMebase:SCALe {}".format(new_timebase))
-
-    """
     @property
     def memory_depth(self) -> int:
         """The query returns the maximum memory depth.
@@ -258,119 +226,7 @@ class SiglentScope(object):
         """
         self.write(":AUToset")
 
-    def set_trigger_run(self):
-        """The command sets the oscilloscope to run
-        """
-        self.write(":TRIGger:RUN")
-
-    def set_single_trigger(self):
-        """The command sets the mode of the trigger.
-
-        The backlight of SINGLE key lights up, the oscilloscope enters the
-        waiting trigger state and begins to search for the trigger signal that meets
-        the conditions. If the trigger signal is satisfied, the running state shows
-        Trig'd, and the interface shows stable waveform. Then, the oscilloscope stops
-        scanning, the RUN/STOP key becomes red, and the running status shows Stop.
-        Otherwise, the running state shows Ready, and the interface does not display
-        the waveform.
-
-        :return: Nothing
-        """
-        self.write(":TRIGger:MODE SINGle")
-
-    def set_normal_trigger(self):
-        """The command sets the mode of the trigger.
-
-        The oscilloscope enters the wait trigger state and begins to search for
-        trigger signals that meet the conditions. If the trigger signal is satisfied,
-        the running state shows Trig'd, and the interface shows stable waveform.
-        Otherwise, the running state shows Ready, and the interface displays the last
-        triggered waveform (previous trigger) or does not display the waveform (no
-        previous trigger).
-
-        :return: Nothing
-        """
-        self.write(":TRIGger:MODE NORMal")
-
-    def set_auto_trigger(self):
-        """The command sets the mode of the trigger.
-
-        The oscilloscope begins to search for the trigger signal that meets the
-        conditions. If the trigger signal is satisfied, the running state on the top
-        left corner of the user interface shows Trig'd, and the interface shows stable
-        waveform. Otherwise, the running state always shows Auto, and the interface
-        shows unstable waveform.
-
-        :return: Nothing
-        """
-        self.write(":TRIGger:MODE AUTO")
-
-    def set_force_trigger(self):
-        """The command sets the mode of the trigger.
-
-        Force to acquire a frame regardless of whether the input signal meets the
-        trigger conditions or not.
-
-        :return: Nothing
-        """
-        self.write(":TRIGger:MODE FTRIG")
-
-    def get_trigger_mode(self):
-        """The query returns the current mode of trigger.
-
-        :return: str
-                    Returns either "SINGle", "NORMal", "AUTO", "FTRIG"
-        """
-        return self.query(":TRIGger:MODE?")
-
-    def set_rising_edge_trigger(self):
-        """The command sets the slope of the slope trigger to Rising Edge
-
-        :return: Nothing
-        """
-        self.write(":TRIGger:SLOPe:SLOPe RISing")
-
-    def set_falling_edge_trigger(self):
-        """The command sets the slope of the slope trigger to Falling Edge
-
-        :return: Nothing
-        """
-        self.write(":TRIGger:SLOPe:SLOPe FALLing")
-
-    def set_alternate_edge_trigger(self):
-        """The command sets the slope of the slope trigger to Falling Edge
-
-        :return: Nothing
-        """
-        self.write(":TRIGger:SLOPe:SLOPe ALTernate")
-
-    def get_edge_trigger(self):
-        """The query returns the current slope of the slope trigger
-
-        :return: str
-                    Returns either "RISing", "FALLing", "ALTernate"
-        """
-        return self.query(":TRIGger:SLOPe:SLOPe?")
-
-    def set_trigger_source(self):
-        """The query returns the current trigger source of the slope trigger
-
-        :param trig_channel: Trigger source
-        """
-        self.write(":TRIGger:SLOPe:SOURce {}".format(self._name))
-
-    def set_trigger_edge_level(self, level: float):
-        """The command sets the trigger level of the edge trigger
-
-        :param level: Trigger level
-        """
-
-        """
-        TODO: trigger level needs to be between:
-        [-4.1*vertical_scale-vertical_offset, 4.1*vertical_scale-vertical_offset]
-        """
-        self.write(":TRIGger:EDGE:LEVel {}".format(str(level)))
-
+   
     def save_setup(self, file_location: str):
         """This command saves the current settings to internal or external memory
         locations.
@@ -429,75 +285,6 @@ class SiglentScope(object):
     def default_setup(self):
         pass
 
-class SiglentSDSTriggerStatus(Enum):
-    ARM = "Arm"
-    READY = "Ready"
-    AUTO = "Auto"
-    TRIGD = "Trig'd"
-    STOP = "Stop"
-    ROLL = "Roll"
 
 
-class EthernetDevice(SiglentScope):
-    def __init__(self, host: str):
-        self._host = host
-        super().__init__()
-
-    def __enter__(self):
-        try:
-            logger.debug(f"Trying to resolve host {self._host}")
-            ip_addr = socket.gethostbyname(self._host)
-        except socket.gaierror:
-            logger.error(f"Couldn't resolve host {self._host}")
-        #mydev = vxi11.Instrument(ip_addr)
-        rm = visa.ResourceManager()
-        mydev = rm.open_resource('TCPIP::'+str(ip_addr)+'::INSTR')
-        self._inst = mydev
-        return super().__enter__()
-
-    def write(self, cmd: str):
-        self._inst.write(cmd)
-        time.sleep(0.1)
-
-    def query(self, cmd: str):
-        return self._inst.query(cmd)
-
-    def query_raw(self, message, *args, **kwargs):
-        """
-        Write a message to the scope and read a (binary) answer.
-
-        This is the slightly modified version of :py:meth:`vxi11.Instrument.ask_raw()`.
-        It takes a command message string and returns the answer as bytes.
-
-        :param str message: The SCPI command to send to the scope.
-        :return: Data read from the device
-        """
-        data = message.encode('utf-8')
-        return self._inst.query(data, *args, **kwargs)
-
-class SiglentIDN(object):
-    def __init__(self) -> None:
-        self._brand = None
-        self._model = None
-        self._serial = None
-        self._firmware = None
-        
-    def decode(self, idnstr:str):
-        """
-        example
-        Siglent Technologies,SDS1204X-E,SDS1EBAC0L0098,7.6.1.15
-        """
-        splitted = idnstr.split(",")
-        if len(splitted) != 4:
-            return False
-        brand  = "Siglent"
-        if brand in splitted[0]:
-            if SiglentScope.KNOWN_MODELS in splitted[1]:
-                if len(splitted[2]==14):
-                    self._brand = splitted[0]
-                    self._model = splitted[1]
-                    self._serial = splitted[2]
-                    self._firmware = splitted[3]
-                    return True
-        return False
             

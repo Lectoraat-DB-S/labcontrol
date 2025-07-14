@@ -1,16 +1,25 @@
-import pyvisa as visa
+import pyvisa
 from devices.BaseScope import BaseTriggerUnit
 from devices.tektronix.scope.Vertical import TekVertical, TekChannel
 
 class TekTrigger(BaseTriggerUnit):
+
+    @classmethod
+    def getTriggerUnitClass(cls, vertical:TekVertical, visaInstr:pyvisa.resources.MessageBasedResource=None):
+        """ Tries to get (instantiate) the correct object."""
+        if cls is TekTrigger:
+            return cls
+        else:
+            return None      
     
-    def __init__(self, vertical = None, dev=None):
-        super().__init__(vertical, dev)
+    def __init__(self, vertical: TekVertical = None, dev=None):
+        super().__init__()
         self.vertical: TekVertical = vertical
         self.source = 1
+        self.visaInstr: pyvisa.resources.MessageBasedResource = dev
         
     def level(self):
-        self.visaInstr.query("TRIGger:MAIn:LEVel?")
+        return self.visaInstr.query("TRIGger:MAIn:LEVel?")
         
     def level(self, level):
         self.visaInstr.write(f"TRIGGER:MAIN:LEVEL {level}") #Sets Trigger Level in V 

@@ -4,3 +4,6 @@
 [submodule "src/tests/pyvisa-mock"]
 	path = src/tests/pyvisa-mock
 	url = https://github.com/microsoft/pyvisa-mock.git
+[submodule "documentatie/OpenHantek6022"]
+	path = documentatie/OpenHantek6022
+	url = https://github.com/OpenHantek/OpenHantek6022.git

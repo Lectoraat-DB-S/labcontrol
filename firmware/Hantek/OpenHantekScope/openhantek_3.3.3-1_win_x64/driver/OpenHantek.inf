@@ -1,0 +1,28 @@
+[Version]
+Signature = "$Windows NT$"
+Class = USBDevice
+ClassGuid = {88BAE032-5A81-49F0-BC3D-A4FF138216D6}
+Provider = "Windows"
+CatalogFile = OpenHantek.cat
+DriverVer = 01/01/2023, 1.0.0.0
+
+[Manufacturer]
+"Hantek" = Device, NTamd64
+
+[Device.NTamd64]
+"Cypress FX2" = Install, USB\VID_04B4&PID_8613
+"Hantek DSO-6022BE" = Install, USB\VID_04B4&PID_6022
+"Hantek DSO-6022BE" = Install, USB\VID_04B5&PID_6022
+"Hantek DSO-6022BL" = Install, USB\VID_04B4&PID_602A
+"Hantek DSO-6022BL" = Install, USB\VID_04B5&PID_602A
+"Voltcraft DSO-2020" = Install, USB\VID_04B4&PID_2020
+"Hantek 6XXX Sigrok" = Install, USB\VID_1D50&PID_608E
+"Saleae Logic Analyzer" = Install, USB\VID_0925&PID_3881
+
+[Install]
+Include = WinUSB.inf
+Needs = WinUSB.NT
+
+[Install.Services]
+Include = WinUSB.inf
+Needs = WinUSB.NT.Services

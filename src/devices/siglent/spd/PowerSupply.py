@@ -8,7 +8,6 @@ logger = logging.getLogger(__name__)
 #logging.basicConfig(filename='SiglentSupply.log', level=logging.INFO)
 logger.setLevel(logging.INFO)
 
-
 class SiglentPowerSupply(BaseSupply):
     KNOWN_MODELS = [
         "SPD3303X",
@@ -19,7 +18,9 @@ class SiglentPowerSupply(BaseSupply):
     }
 
     @classmethod
-    def getDevice(cls, rm, urls, host):
+    def getSupplyClass(cls, rm:pyvisa.ResourceManager, urls:list, host:str):
+        if rm == None:
+            raise Exception("Siglent Powersupply: ERROR: VISA ResourceManager empty")
         mydev = None
         if host is None:
             pattern = "SPD"
@@ -29,31 +30,27 @@ class SiglentPowerSupply(BaseSupply):
                     mydev.timeout = 10000  # ms
                     mydev.read_termination = '\n'
                     mydev.write_termination = '\n'
-                    break
+                    #TODO: idn nog decoderen en aantal kanalen daarop instellen!
+                    return (cls, 2, mydev)
+                else:
+                    return (None, None, None)
+                    
         else:
             try:
                 logger.info(f"Trying to resolve host {host}")
                 ip_addr = socket.gethostbyname(host)
                 mydev = rm.open_resource('TCPIP::'+str(ip_addr)+'::INSTR')
+                return (cls, 2, mydev)
             except socket.gaierror:
                 logger.error(f"Couldn't resolve host {host}")
                 mydev = None
+                return (None, None, None)
+        return (None, None, None)
+    
+    def __init__(self, nrOfChan : int = None, dev : pyvisa.resources.MessageBasedResource = None):
+        super.__init__(nrOfChan, dev)
         
-        if mydev != None:
-            if cls is SiglentPowerSupply:
-                cls.__init__(cls,dev=mydev)
-                return cls
-            else:
-                return None  
-
-        return mydev #always return something even it is None.
-
-    def __init__(self, dev= None, host=None, nrOfChan=2):
-        self.visaInstr : pyvisa.Resource = dev
-        
-        self.host = host
-        self.nrOfChan = nrOfChan
-        self.channels:SPDChannel = list()
+        self.channels = list()
         for i in range(1, self.nrOfChan+1):
             self.channels.append({i:SPDChannel(i, dev)})
         

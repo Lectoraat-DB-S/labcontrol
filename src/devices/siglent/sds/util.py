@@ -1,6 +1,7 @@
 import struct
 import numpy as np
-
+import pyvisa
+from enum import Enum
 MATH_FUNC_ADD = 0
 MATH_FUNC_SUB = 1
 MATH_FUNC_MUL = 2
@@ -9,7 +10,85 @@ MATH_FUNC_FFT = 4
 MATH_FUNC_INT = 5
 MATH_FUNC_DIF = 6
 MATH_FUNC_SQR = 7
- 
+
+class SIGLENT_TIME_STAMP(object):
+    def __init__(self):
+        self.seconds    = None  #float => 64 bits
+        self.minutes    = None  #byte => 8 bits, signed
+        self.hours      = None  #byte => 8 bits
+        self.days       = None  #byte => 8 bits
+        self.month      = None  #byte => 8 bits
+        self.years      = None  #word => 16 bits
+        self.unused     = None  #word => 16 bits
+
+    def decode(self, byteArray):
+        self.seconds = struct.unpack('f', byteArray[296:304])[0] #time parameter? how to decode?
+        self.minutes = struct.unpack('B', byteArray[304:305])[0]
+
+class BANDWIDTH_LIMIT(Enum): # for bwlimtit param of preamble
+    OFF     = 0
+    M20     = 1
+    M200    = 3
+
+class RECORDTYPE(Enum):
+    single_sweep        = 0
+    interleaved         = 1
+    histogram           = 2
+    graph               = 3
+    filter_coefficient  = 4
+    complex             = 5
+    extrema             = 6
+    sequence_obsolete   = 7
+    centered_RIS        = 8
+    peak_detect         = 9
+
+KNOWN_MODELS = [
+        "SDS1000CFL",   #non-SPO model Series
+        "SDS1000A",     #non-SPO model Series
+        "SDS1000CML+",  #non-SPO model Series
+        "SDS1000CNL+",  #non-SPO model Series
+        "SDS1000DL+",   #non-SPO model Series
+        "SDS1000E+",    #non-SPO model Series
+        "SDS1000F+",    #non-SPO model Series
+        "SDS2000",      #SPO model Series
+        "SDS2000X",     #SPO model Series
+        "SDS1000X",     #SPO model Series
+        "SDS1000X+",    #SPO model Series
+        "SDS1000X-E",   #SPO model Series
+        "SDS1000X-C",   #SPO model Series
+        #USED MODEL (TESTED) SHOWN BELOW
+        "SDS2504X Plus",
+        "SDS1202X",
+        "SDS1202X-E",
+    ]
+
+class SiglentIDN(object):
+    def __init__(self, mybrand, mymodel, myserial, myfirmware) -> None:
+        self.brand = mybrand
+        self.model = mymodel
+        self.serial = myserial
+        self.firmware = myfirmware
+        
+
+def checkIDN(idnstr:str):
+        """
+        example
+        Siglent Technologies,SDS1204X-E,SDS1EBAC0L0098,7.6.1.15
+        """
+        splitted = idnstr.split(",")
+        if len(splitted) != 4:
+            return None
+        manufacturer  = "Siglent"
+        if manufacturer in splitted[0]:
+            if splitted[1] in KNOWN_MODELS:
+                if len(splitted[2])==14:
+                    brand = splitted[0]
+                    model = splitted[1]
+                    serial = splitted[2]
+                    firmware = splitted[3]
+                    siglentIdn = SiglentIDN(brand,model, serial, firmware) 
+                    return siglentIdn
+        return None
 
 def saveTrace():
     columnNames ={"s"}
@@ -115,194 +194,7 @@ TIMEBASE_HASHMAP = {
                     "32": "10", "33": "20", "34": "50",
                     "35": "100"
                     }
-class WaveFormTrace(object):
-    def __init__(self):
-        self._nrOfDivs = 5 # TODO: should be set during initialisation of the scope.
-        self.full_code = 256 # TODO: should be set during initialisation of the scope.
-        self.center_code = 127 # TODO: should be set during initialisation of the scope.
-        self.max_code = self.full_code/2
-        self._hori_grid_size = 14 # TODO: is this a fixed number for Siglent? Check this.
-        self._rawdata = None
-        self._tracedata = None
-        self._WVP = WaveFormPreamble()
-        
-    def calculate_voltage(self):
-        x = self.getRawTrace()
-        fc =self.full_code
-        #np.where(x>5, x, temp)
-        np.where(x > self.center_code , x, x - self.full_code)
-        #FS=10 hokjes=top-top
-        #0->1.0 = 127 stapjes
-        #0->1.0 = 5 hokjes
 
-        """
-            To Calculate the voltage value, as shown on scope, can only be performed if one has the limitations
-            of the oscilloscope in mind:
-                - screen of scope consists of 10 'divs', although the fysical scope only shows 8 of them. 
-                    The samples therefore  always represents a range of 5 'divs'. 
-                - The (vertical) resolution of the SDS1202X-E is 8 bits
-                - The center of the screen equals to a decimal sample value of 127 (self.center_code),
-                    assuming 0.0 Volt offset (voffset)
-                - The samples are coded as unsigned bytes, so one have to restore the sign in the code.
-                - The range of samples is therefore -128 .... + 127
-            So xnew = (xold * 5/128)-voffset                
-        """
-        voltfactor = self._WVP._vdiv/25
-        tempVolt = np.multiply(x,voltfactor)
-        res = np.subtract(tempVolt, self._WVP._voffset)
-        
-        return res
-    
-    def convertRaw_to_voltage(self):
-        # Get the parameters of the source
-        raw_array = self.getRawTrace()
-        vect_voltage = self.calculate_voltage()
-        self.setTrace(vect_voltage)
-        
-    def getWVP(self):
-        return self._WVP
-    
-    def getTrace(self):
-        return self._tracedata
-    
-    def setTrace(self, data):
-        self._tracedata = data
-        
-    def getRawTrace(self):
-        return self._rawdata
-    
-    def setRawTrace(self, data):
-        self._rawdata = data
-
-class WaveFormPreamble(object):
-    def __init__(self):
-        #TODO: put subsequent in order of the waveform template.
-        self._total_points = None               #Number of points of (last) acquired waveform
-        self._vdiv  = None                      #Number of units (e.g. V) per division 
-        self._voffset  = None                   #Vertical offset. Calc floating values from raw data : VERTICAL_GAIN * data - VERTICAL_OFFSET
-        self._maxGridVal  = None                #Maximum allowed value. It corresponds to the upper edge of the grid.
-        self._minGridVal  = None                #Minimum allowed value. It corresponds to the lower edge of the grid.
-        self._nomBits = None                    #Measure of the intrinsic precision of the observation: ADC data is 8 bit, 
-                                                #when averaged it is 10-12 bit, etc. TODO: implement 
-        self._timebase  = None                  #TDIV: the amount of time per division. SEE TIMEBASE_HASHMAP.
-        self._delay = None                      #HORIZ_OFFSET: trigger offset, seconds between the trigger and the first data point
-        self._interval = None                   #HORIZ_INTERVAL: float sampling interval for time domain waveforms. 
-                                                    #TODO: check if is same as sample interval.
-        self._timeOfFirstValidSample = None     #FIRST_VALID_PNT count of number of points to skip before first good point
-                                                #   FIRST_VALID_POINT = 0
-                                                #   for normal waveforms.
-        self._timeOfLastValidSample = None      #Index of last good data point in record before padding (blanking) was started. 
-                                                #   LAST_VALID_POINT = WAVE_ARRAY_COUNT-1
-                                                #   except for aborted sequence and rollmode acquisitions
-        self._firstPoint = None
-        self._sparsingFactor = None
-        #The definition of subsequent parameter is somewhat vague: it should be the same as the SN param of the WFSU command, but the
-        #programming manual does not mentions such a param. Probably the NP param is referred.
-        self._segmentIndex = None               #SEGMENT_INDEX: see Above
-        
-        
-        self._subArrayCount = None #For sequences acquisitions
-        self._nrOfSweepsPerAcq = None
-        self._pairPoints = None
-        self._pairOffset = None
-        self._horizontalInterval = None         #HORIZ_INTERVAL: sampling interval for time domain waveforms
-        self._horizontalOffset =  None              #HORIZ_OFFSET: trigger offset for the first sweep of the trigger
-                                                #   seconds between the trigger and the first data point
-        self._pixelOffset = None                #PIXEL_OFFSET: needed to know how to display the waveform
-        self._vertUnit = None                   #VERTUNIT: units of the vertical axis
-
-        self._horUnit = None                    #HORUNIT: units of the horizontal axis
-        self._horUncertainty = None             #uncertainty from one acquisition to the  next, of the horizontal offset in seconds
-        self._triggerTime = None                #TRIGGER_TIME: time of the trigger
-        
-        self._recordType = None
-        self._processingDone = None
-        self._vertCoupling = None
-        self._vertGain = None
-        self._bwLimit = None
-        self._waveSource = None
-        #NOM_SUBARRAY_COUNT
-        #HORIZ_INTERVAL: float2
-        #HORIZ_OFFSET: double;
-        # PIXEL_OFFSET: double;
-        #VERTUNIT: unit_definition;4
-        ##HORUNIT: unit_definition;
-        # HORIZ_UNCERTAINTY: float;
-        # TRIGGER_TIME: time_stamp;
-        # ACQ_DURATION: float;
-        # Acquisition_TYPE:
-        # PROCESSING_DONE: enum
-        # < 320 > RESERVED5: word;
-        # RIS_SWEEPS: word;
-        # TIMEBASE: enum
-        # VERT_COUPLING: enum
-        # PROBE_ATT: float
-        # FIXED_VERT_GAIN: enum
-        # BANDWIDTH_LIMIT: enum
-        # VERTICAL_VERNIER: float#
-        # ACQ_VERT_OFFSET: float
-        # WAVE_SOURCE: enum
-    def isEmpty(self):
-        if ((self._total_points == None) and  (self._vdiv  == None) and (self._voffset == None)):
-            return True
-        else:
-            return False
-
-    def set(self, total_points, vdiv, voffset, code_per_div, timebase, delay, interval):
-        self._total_points = total_points
-        self._vdiv  = vdiv
-        self._voffset  = voffset
-        self._code_per_div  = code_per_div
-        self._timebase  = timebase
-        self._delay = delay
-        self._interval = interval
-        
-    def decodeWaveFormDescriptor(self, params):
-        instrument_name = struct.unpack("16s", params[76:92])[0] #string type parameter.
-        instrument_number = struct.unpack("L", params[92:96])[0] #long int type parameter.
-        temp = struct.unpack('4c', params[96:100])[0] #string type parameter.
-        trace_label = str(temp)
-        total_points = struct.unpack('i', params[116:120])[0]
-        probe = struct.unpack('f', params[328:332])[0]
-        sweeps_per_acq = struct.unpack('L', params[148:152])[0] #for Long sized parameter, use 'L'
-        #points_per_pair=struct.unpack('x', params[152:154])[0] #Word= kind of parameter, use 'x' for hex decoding?
-        #pair_offset=struct.unpack('x', params[154:156])[0] #Word= kind of parameter, use 'x' for hex decoding?
-        vdiv = struct.unpack('f', params[156:160])[0] * probe
-        voffset = struct.unpack('f', params[160:164])[0] * probe
-        code_per_div = struct.unpack('f', params[164:168])[0] * probe
-        nom_bits = struct.unpack('H', params[172:174])[0]  # for Word sized parameter, use 'H'
-        horiz_interval = struct.unpack( 'f', params[176:180])[0]
-        delay = struct.unpack('d', params[180:188])[0]
-        pixel_offset = struct.unpack('d', params[188:196])[0]  #
-        verti_unit_str = str(struct.unpack('48s', params[196:244])[0])  # vertaling naar string lijkt niet ok.
-        hori_unit_str = str(struct.unpack('48s', params[244:292])[0])
-        # trigger_time=struct.unpack('time', params[296:312])[0] #time parameter? how to decode?
-        record_type = struct.unpack('H', params[316:318])[0]  # enum, 2 bytes use 'H' for now. need check!
-        processing_done = struct.unpack('H', params[318:320])[0]  # enum, 2 bytes use 'H' for now. need check!
-
-        #### timebase is a enum, need to convert first
-        timebase_enum = struct.unpack('h', params[324:326])[0]
-        timebase = float(TIMEBASE_HASHMAP.get(str(timebase_enum)))
-        #TODO: if hashmap doesn't  contain requested key:
-        #   It's an error, but probably not a  showstopper, because script is not fit
-        #   for the current connected sds, or scope is not a siglent.
-        #   FIX: a. create a error class/enum with corresponding exception or combination of the two and
-        #   need to classify the error based on more or better information
-        #   For now: just print an error message and keep on!
-        if timebase == None:
-            self._logger.error("ERROR TIMEBASE CONVERT: UNKNOWN KEY!\n")
-        #### end timebase convert
-
-        vert_coupling=struct.unpack('H', params[326:328])[0] # enum, 2 bytes use 'H' for now. need check!
-        # fixed_vert_gain=struct.unpack('x', params[332:334])[0] # enum = kind of parameter, use 'x' for now.Don't what this really means need check!
-        BW_limit=struct.unpack('H', params[334:336])[0] #enum, 2 bytes use 'H' for now. need check!
-        # vert_vernier=struct.unpack('f', params[336:340])[0] # enum = kind of parameter, use 'x' for now.Don't what this really means need check!
-        # acq_vert_offset=struct.unpack('f', params[340:344])[0] # enum = kind of parameter, use 'x' for now.Don't what this really means need check!
-        wave_src=struct.unpack('H', params[344:346])[0] # enum, 2 bytes use 'H' for now. need check!
-
-        self._WFP.set(total_points, vdiv, voffset, code_per_div, timebase, delay, horiz_interval)
-        return (total_points, vdiv, voffset, code_per_div, timebase, delay, horiz_interval)
-    
 
 class Utils():
     def index2time(length, samp_rate, start_time = 0):

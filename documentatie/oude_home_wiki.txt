@@ -1,0 +1,26 @@
+Welcome to the labcontrol wiki!
+
+# Labcontrol 
+Labcontrol is software for controlling typical lab devices such as functiongenerators, power supplies and oscilloscopes. Labcontrol uses VISA to access the instruments and will be written in Python. See: [VISA Product Page](https://www.ni.com/nl-nl/shop/product/ni-visa.html)  
+Controlling exotic measurement hardware, such as myDAQ or myRio (both NI), often requires additional Python packages and/or Windows drivers. For Python control of myRio, see this [link]([https://nidaqmx-python.readthedocs.io/en/latest/#installation](https://eur01.safelinks.protection.outlook.com/?url=https%3A%2F%2Fnidaqmx-python.readthedocs.io%2Fen%2Flatest%2F%23installation&data=05%7C02%7Ce.snijder%40windesheim.nl%7C1e803c3f7fc74a62f9c508dd5cefd1e9%7Ce36377b770c44493a338095918d327e9%7C0%7C0%7C638768907285208165%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=%2BBBwPABufG4ISQULER7KDqAHgkK8jwr2HeeboSU3%2FXk%3D&reserved=0)
+
+# What do you want to control in your Lab
+A typical setup of an electronic laboratory is de gathering of a number of measurement equipment like a power supply, an oscilloscope etc. The picture below show such a setup.
+![afbeelding](https://github.com/user-attachments/assets/14b6918b-01e9-44c5-b921-7e2a2d21313c)
+
+
+ 
+
+## Why Labcontrol
+Labcontrol is a system in development for circumventing some of today’s ‘educational trends ’ such as insufficient reading skills and having difficulties to memorize some important rules of thumbs. These problems prevent students from doing their labs the right way, yielding to incorrect measurements and there confusing results, preventing them to learn effectively. Labcontrol: a combination of “electronic laboratory” and “digital control”. It aims to  control test and measurement device to be found at a lab bench  of an educational institute and trying help the student during its lab, by forcing correct order of each step of the measurement, by assessing the results of each step and to check the final results and conclusions drawn by the student.
+VISA is the standard for configuring, programming, and troubleshooting instrumentation systems. It's owned and maintained by National Instrument. 
+
+## Background
+The desire to control equipment remotely goes back to the very early days of computing. Hewlett Packard (HP), not only creator of early computing systems, also designed and produced very nice measurement equipment those days, which HP wanted to interconnect by a standard bus system. By the late 1960s, HP had gained and enormous experience in connecting equipment via bus systems. This resulted in het design of the so called ‘Hewlett-Packard Interface Bus or HP-IB’ during the early 1970s, which led to the IEEE48.1 standard in 1975, for defining he hardware and the IEEE48.2 in 1987, for the protocol and messages specification. In 1990 the successor of IEEE48.2 was founded: the Standard Commands for Programmable Instruments (SCPI), which defined not only classes of controllable instruments but also gave a standard syntax and commands for all programmable test and measurement devices. Although originally created for the IEEE-488.1 (GPIB) bus, SCPI nowadays works seamlessly with all kinds of communication protocols such as RS-232, RS-422, Ethernet and USB. [[1]](#1).
+
+
+Oscilloscoopkunde: zie https://www.tek.com/en/documents/primer/oscilloscope-systems-and-controls
+
+## References
+<a id="1">[1]</a> 
+https://www.hp9845.net/9845/tutorials/hpib/

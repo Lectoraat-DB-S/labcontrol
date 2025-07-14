@@ -1,0 +1,1 @@
+CONFIGPARSERPATH = '.\\src\\labcontrol.ini'

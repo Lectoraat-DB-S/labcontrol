@@ -1,0 +1,983 @@
+2011-11-12  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* MANIFEST.in, TODO: Update TODO file for alpha 2 release
+
+2011-11-12  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* MANIFEST.in: Removed old test firmware from manifest file
+
+2011-11-10  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* ACKNOWLEDGEMENTS: Updated ACKNOWLEDGEMENTS file
+
+2011-11-10  Peter A. Bigot <bigotp@acm.org>
+
+	* usb/core.py: Signed-off-by: Peter A. Bigot <bigotp@acm.org>
+
+2011-11-05  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* ReleaseNotes.rst: Updated ReleaseNotes
+
+2011-11-05  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* ACKNOWLEDGEMENTS: Updated ACKNOWLEDGEMENTS file
+
+2011-10-28  wander.costa <wander.costa@igs-software.com>
+
+	* usb/backend/libusb10.py, usb/backend/openusb.py: Fixed: use None
+	when errno value is not available
+
+2011-10-27  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/utils.py: Fixed Python 3 string test case for ctrl_transfer In Python 3, string is 4 bytes long, so ctrl_transfer test case was
+	failing with 'Broken error' message. This was caused because control
+	buffer in the benchmark firmware can only hold 8 bytes, thus it
+	could not handle more than a two character length string.
+
+2011-10-25  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/backend/libusb01.py: Fixed correct device enumeration for
+	libusb01 backend
+
+2011-10-24  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* setup.py: Updated version to 1.0.0 alpha 2
+
+2011-10-23  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* docs/tutorial.rst: Added description of the bus and address
+	attributes
+
+2011-10-23  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* : commit a804fe9b7a5711f1b80af1f3c9b4deb3260ce314 Author: Wander
+	Lairson Costa <wander.lairson@gmail.com> Date:   Sun Oct 23 09:51:11
+	2011 -0200
+
+2011-10-23  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/core.py: Fixed: put address and bus attributes in the
+	DeviceDescriptor, not in the InterfaceDescriptor
+
+2011-10-21  wander.costa <wander.costa@igs-software.com>
+
+	* ACKNOWLEDGEMENTS: Updated ACKNOWLEDGEMENTS file
+
+2011-10-21  Emmanuel Blot <emmanuel.blot@free.fr>
+
+	* usb/__init__.py, usb/_debug.py: Disable do trace method evaluation
+	when PYUSB_DEBUG_LEVEL is not defined
+
+2011-10-21  wander.costa <wander.costa@igs-software.com>
+
+	* usb/backend/libusb10.py: Fixed typos on libusb10
+
+2011-10-21  wander.costa <wander.costa@igs-software.com>
+
+	* docs/tutorial.rst: Fixed tutorial sample to use
+	usb.control.get_interface
+
+2011-10-21  wander.costa <wander.costa@igs-software.com>
+
+	* usb/backend/libusb01.py, usb/backend/libusb10.py,
+	usb/backend/openusb.py, usb/core.py: Added support for dev and
+	address attributes
+
+2011-10-19  wander.costa <wander.costa@igs-software.com>
+
+	* usb/core.py: Prepare core module to support bus and address
+	properties
+
+2011-10-19  wander.costa <wander.costa@igs-software.com>
+
+	* usb/backend/openusb.py: Fixed typos on the module
+
+2011-10-19  wander.costa <wander.costa@igs-software.com>
+
+	* usb/backend/libusb01.py, usb/backend/libusb10.py,
+	usb/backend/openusb.py, usb/core.py: Implemented backend_error_code
+	member variable to USBError class.  This member variable allows application to get details about the
+	error occurred specific to the backend.  Implemented a mapping of the backend error to IOError.errno This allows an application to check specific errors independent of
+	the backend that is being used.
+
+2011-10-18  wander.costa <wander.costa@igs-software.com>
+
+	* ReleaseNotes.rst: Fixed typo in the ReleaseNotes file
+
+2011-10-18  wander.costa <wander.costa@igs-software.com>
+
+	* README.rst: README file update
+
+2011-10-18  wander.costa <wander.costa@igs-software.com>
+
+	* ACKNOWLEDGEMENTS: Update ACKNOWLEDGEMENTS file
+
+2011-10-18  wander.costa <wander.costa@igs-software.com>
+
+	* usb/backend/libusb10.py: Make libusb 1.0 error codes public
+
+2011-10-18  wander.costa <wander.costa@igs-software.com>
+
+	* usb/backend/libusb01.py, usb/backend/libusb10.py,
+	usb/backend/openusb.py: Added to USBError.errno the error code of
+	the failing function
+
+2011-10-18  wander.costa <wander.costa@igs-software.com>
+
+	* README, README.rst, ReleaseNotes.rst, ReleaseNotes.txt,
+	docs/tutorial.rst, docs/tutorial.txt: Changed extension of doc files
+	to match RestructuredText
+
+2011-10-16  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/test_integration.py: test_integration changed to support new
+	test firmware
+
+2011-10-16  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/test_control.py: test_control changed to support new test
+	firmware
+
+2011-10-16  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/test_util.py: test_util changed to support new test firmware
+
+2011-10-16  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/devinfo.py, tests/test_backend.py, tests/utils.py: 
+	test_backend changed to support new test firmware
+
+2011-10-16  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/pic18f4550/Microchip Solutions/IMPORTANT README.txt,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/BDT_transfer.h,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/Benchmark.c,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/Benchmark.h,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/CleanUp.bat,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/HardwareProfile - Low Pin Count USB
+	Development Kit.h, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/HardwareProfile - PIC18F46J50
+	PIM.h, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/HardwareProfile - PIC18F87J50
+	PIM.h, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/HardwareProfile - PIC24F Starter
+	Kit.h, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/HardwareProfile - PIC24FJ256GB110
+	PIM.h, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/HardwareProfile - PIC24FJ64GB002
+	BreadBoard.h, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/HardwareProfile - PIC24FJ64GB004
+	PIM.h, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/HardwareProfile - PIC32 USB Starter
+	Kit.h, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/HardwareProfile - PIC32MX460F512L
+	PIM.h, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/HardwareProfile - PICDEM FSUSB.h,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/HardwareProfile.h,
+	tests/pic18f4550/Microchip Solutions/TestFirmware/Firmware/PIC24
+	HID Bootloader Remapping.s, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/PicFWCommands.h,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/PyUSB_C18_LowPinCountDevKit.mcp,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/PyUSB_C18_P18F46J50_PIM.mcp,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/PyUSB_C18_P18F87J50_PIM.mcp,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/PyUSB_C18_PICDEM_FSUSB.mcp,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/PyUSB_C18_PICDEM_FSUSB.mcs,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/PyUSB_C30.mcp,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/PyUSB_C32_P32MX460F512L_PIM.mcp,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/PyUSB_C32_StarterKit.mcp,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/PyUSB_C32_StarterKit.mcs,
+	tests/pic18f4550/Microchip Solutions/TestFirmware/Firmware/main.c,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/p24FJ256GB110 - HID Bootloader.gld,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/procdefs.ld.boot,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/projects/VStudio/CompilerSettings.t
+	xt, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/projects/VStudio/PyUSB.C18.FSUSB.lk
+	r, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/projects/VStudio/PyUSB.C18.FSUSB.sl
+	n, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/projects/VStudio/PyUSB.C18.FSUSB.vc
+	proj, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/projects/VStudio/PyUSB.C30.sln,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/projects/VStudio/PyUSB.C30.vcproj,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/projects/VStudio/_vcDummy.cpp,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/projects/VStudio/clean.cmd,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/projects/VStudio/p24FJ64GB002.gld,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/rm18f14k50.lkr,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/rm18f4550 - HID Bootload.lkr,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/rm18f4550 - MCHPUSB Bootload.lkr,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/rm18f46j50_g.lkr,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/rm18f87j50.lkr,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/superClean.bat,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/usb_config.h,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/usb_descriptors.c,
+	tests/pic18f4550/README: Removed old test firmware.
+
+2011-09-20  wander.costa <wander.costa@igs-software.com>
+
+	* setup.py: Updated version info in the setup.py file
+
+2011-09-19  Peter Bigot <pabigot@users.sourceforge.net>
+
+	* ACKNOWLEDGEMENTS, usb/core.py: Fixed: get_active_configuration seg
+	fault get_active_configuration crashes when called before other functions
+	because the managed_open function has not been called yet.
+
+2011-08-30  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* ACKNOWLEDGEMENTS, usb/__init__.py: Fixed: do not dispatch log
+	messages to the root logger by default.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@91
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2011-02-26  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/legacy.py: Fixed: claimInterface accepts Interface object as
+	parameter.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@90
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2011-01-08  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/backend/libusb01.py, usb/backend/libusb10.py: Fixed libusb
+	library paths for cygwin. Fixed libusb01 to work on cygwin.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@89
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-12-29  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* docs/tutorial.txt: Tutorial update.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@87
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-12-29  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/util.py: Documentation update.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@86
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-12-24  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/legacy.py: Finish implementation of 0.4 API emulation.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@85
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-12-24  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/test_control.py, usb/util.py: Implemented util.get_string
+	function.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@84
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-12-24  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* README, ReleaseNotes.txt, TODO: Documentation update.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@83
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-12-24  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/test_control.py, tests/test_integration.py, usb/control.py: 
+	Implemented standard control requests.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@82
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-12-17  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/core.py: Removed get_interface_altsetting function from Device
+	interface.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@81
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-12-15  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/core.py, usb/legacy.py: Fixed some pychecker warnings.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@80
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-12-15  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/test_backend.py, tests/test_integration.py, tests/utils.py,
+	usb/_debug.py, usb/backend/libusb01.py, usb/backend/libusb10.py,
+	usb/backend/openusb.py, usb/core.py: Fixed pyflakes warnings.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@79
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-12-14  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/test_integration.py, usb/backend/__init__.py,
+	usb/backend/libusb01.py, usb/backend/libusb10.py,
+	usb/backend/openusb.py, usb/core.py: Implemented get_cofiguration on
+	backends. Now Device issue a get_configuration request when a
+	configuration is not set.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@78
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-12-14  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* docs/tutorial.txt: Update documentation with minimum Python
+	version info.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@77
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-12-14  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* README, setup.py: Dropped Python 2.3 support.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@76
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-12-14  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* LICENSE, setup.py, tests/devinfo.py, tests/test_backend.py,
+	tests/test_find.py, tests/test_integration.py, tests/test_util.py,
+	tests/testall.py, tests/utils.py, usb/__init__.py, usb/_debug.py,
+	usb/_interop.py, usb/backend/__init__.py, usb/backend/libusb01.py,
+	usb/backend/libusb10.py, usb/backend/openusb.py, usb/core.py,
+	usb/legacy.py, usb/util.py: Update year copyright information.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@75
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-12-14  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/test_backend.py, tests/test_integration.py,
+	tests/test_util.py, tests/utils.py: Fixed to not fail the tests when
+	the test device is not connected.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@74
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-12-12  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/test_backend.py, tests/test_integration.py, tests/utils.py,
+	usb/_interop.py, usb/backend/libusb01.py, usb/backend/libusb10.py,
+	usb/core.py: Fixed python3 support.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@73
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-12-09  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/core.py: Minor code refactoring.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@72
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-09-06  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* ACKNOWLEDGEMENTS, README, tests/test_util.py, usb/core.py: Fixed
+	docs. Stronger checking of find_descriptor.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@71
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-07-30  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* docs/tutorial.txt, usb/backend/libusb01.py,
+	usb/backend/openusb.py, usb/util.py: Docs update. RequestType bit
+	field now can optionally be ORed with constants in util module.
+	Fixed libusb01 backend to find the library in Ubuntu. Fixed openusb
+	backend (thanks to Cris Wolf) git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@70
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-07-30  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/pic18f4550/Microchip Solutions/IMPORTANT README.txt,
+	tests/pic18f4550/Microchip Solutions/Microchip/Include/Compiler.h,
+	tests/pic18f4550/Microchip
+	Solutions/Microchip/Include/GenericTypeDefs.h,
+	tests/pic18f4550/Microchip Solutions/Microchip/Include/USB/usb.h,
+	tests/pic18f4550/Microchip
+	Solutions/Microchip/Include/USB/usb_ch9.h,
+	tests/pic18f4550/Microchip
+	Solutions/Microchip/Include/USB/usb_common.h,
+	tests/pic18f4550/Microchip
+	Solutions/Microchip/Include/USB/usb_device.h,
+	tests/pic18f4550/Microchip
+	Solutions/Microchip/Include/USB/usb_function_generic.h,
+	tests/pic18f4550/Microchip
+	Solutions/Microchip/Include/USB/usb_hal.h,
+	tests/pic18f4550/Microchip
+	Solutions/Microchip/Include/USB/usb_hal_pic18.h,
+	tests/pic18f4550/Microchip
+	Solutions/Microchip/Include/USB/usb_hal_pic24.h,
+	tests/pic18f4550/Microchip
+	Solutions/Microchip/Include/USB/usb_hal_pic32.h,
+	tests/pic18f4550/Microchip Solutions/Microchip/USB/Generic Device
+	Driver/usb_function_generic.c, tests/pic18f4550/Microchip
+	Solutions/Microchip/USB/usb_device.c, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/Benchmark.c, tests/test_backend.py,
+	tests/test_integration.py: Removed reset call from regression tests
+	because of portability reasons. Removed from sources the Microchip
+	USB stack. Changed test firmware to reset control buffer upon a
+	set_configuration.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@69
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-07-16  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/test_backend.py, tests/test_integration.py, tests/utils.py,
+	usb/core.py: Fixed bug in the reset() method. Test hardware
+	detection changed to use supplied backend.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@68
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-07-10  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/arm_str9/PyUSB_TestFw.Opt, tests/arm_str9/PyUSB_TestFw.Uv2,
+	tests/arm_str9/src/91x_it.c, tests/arm_str9/src/STR91x.s,
+	tests/arm_str9/src/main.c, tests/arm_str9/src/ring_buffer.c,
+	tests/arm_str9/src/ring_buffer.h, tests/arm_str9/src/startup_gcc.s,
+	tests/arm_str9/src/usb_conf.h, tests/arm_str9/src/usb_desc.c,
+	tests/arm_str9/src/usb_desc.h, tests/arm_str9/src/usb_endp.c,
+	tests/arm_str9/src/usb_istr.c, tests/arm_str9/src/usb_prop.c,
+	tests/arm_str9/src/usb_prop.h, tests/arm_str9/src/usb_pwr.c,
+	tests/arm_str9/src/usb_pwr.h, tests/arm_str9/src/util.c,
+	tests/arm_str9/src/util.h, tests/pic18f4550/Microchip
+	Solutions/IMPORTANT README.txt, tests/pic18f4550/Microchip
+	Solutions/Microchip/Include/Compiler.h, tests/pic18f4550/Microchip
+	Solutions/Microchip/Include/GenericTypeDefs.h,
+	tests/pic18f4550/Microchip Solutions/Microchip/Include/USB/usb.h,
+	tests/pic18f4550/Microchip
+	Solutions/Microchip/Include/USB/usb_ch9.h,
+	tests/pic18f4550/Microchip
+	Solutions/Microchip/Include/USB/usb_common.h,
+	tests/pic18f4550/Microchip
+	Solutions/Microchip/Include/USB/usb_device.h,
+	tests/pic18f4550/Microchip
+	Solutions/Microchip/Include/USB/usb_function_generic.h,
+	tests/pic18f4550/Microchip
+	Solutions/Microchip/Include/USB/usb_hal.h,
+	tests/pic18f4550/Microchip
+	Solutions/Microchip/Include/USB/usb_hal_pic18.h,
+	tests/pic18f4550/Microchip
+	Solutions/Microchip/Include/USB/usb_hal_pic24.h,
+	tests/pic18f4550/Microchip
+	Solutions/Microchip/Include/USB/usb_hal_pic32.h,
+	tests/pic18f4550/Microchip Solutions/Microchip/USB/Generic Device
+	Driver/usb_function_generic.c, tests/pic18f4550/Microchip
+	Solutions/Microchip/USB/usb_device.c, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/BDT_transfer.h,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/Benchmark.c,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/Benchmark.h,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/CleanUp.bat,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/HardwareProfile - Low Pin Count USB
+	Development Kit.h, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/HardwareProfile - PIC18F46J50
+	PIM.h, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/HardwareProfile - PIC18F87J50
+	PIM.h, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/HardwareProfile - PIC24F Starter
+	Kit.h, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/HardwareProfile - PIC24FJ256GB110
+	PIM.h, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/HardwareProfile - PIC24FJ64GB002
+	BreadBoard.h, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/HardwareProfile - PIC24FJ64GB004
+	PIM.h, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/HardwareProfile - PIC32 USB Starter
+	Kit.h, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/HardwareProfile - PIC32MX460F512L
+	PIM.h, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/HardwareProfile - PICDEM FSUSB.h,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/HardwareProfile.h,
+	tests/pic18f4550/Microchip Solutions/TestFirmware/Firmware/PIC24
+	HID Bootloader Remapping.s, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/PicFWCommands.h,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/PyUSB_C18_LowPinCountDevKit.mcp,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/PyUSB_C18_P18F46J50_PIM.mcp,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/PyUSB_C18_P18F87J50_PIM.mcp,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/PyUSB_C18_PICDEM_FSUSB.mcp,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/PyUSB_C18_PICDEM_FSUSB.mcs,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/PyUSB_C30.mcp,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/PyUSB_C32_P32MX460F512L_PIM.mcp,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/PyUSB_C32_StarterKit.mcp,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/PyUSB_C32_StarterKit.mcs,
+	tests/pic18f4550/Microchip Solutions/TestFirmware/Firmware/main.c,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/p24FJ256GB110 - HID Bootloader.gld,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/procdefs.ld.boot,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/projects/VStudio/CompilerSettings.t
+	xt, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/projects/VStudio/PyUSB.C18.FSUSB.lk
+	r, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/projects/VStudio/PyUSB.C18.FSUSB.sl
+	n, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/projects/VStudio/PyUSB.C18.FSUSB.vc
+	proj, tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/projects/VStudio/PyUSB.C30.sln,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/projects/VStudio/PyUSB.C30.vcproj,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/projects/VStudio/_vcDummy.cpp,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/projects/VStudio/clean.cmd,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/projects/VStudio/p24FJ64GB002.gld,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/rm18f14k50.lkr,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/rm18f4550 - HID Bootload.lkr,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/rm18f4550 - MCHPUSB Bootload.lkr,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/rm18f46j50_g.lkr,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/rm18f87j50.lkr,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/superClean.bat,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/usb_config.h,
+	tests/pic18f4550/Microchip
+	Solutions/TestFirmware/Firmware/usb_descriptors.c,
+	tests/pic18f4550/README, tests/test_backend.py,
+	tests/test_integration.py: New test firmware based on the
+	libusbdotnet benchmark firmware. Thank you Travis for allow me use
+	your code.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@67
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-07-10  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/pic18f4550/18f87j50.lkr, tests/pic18f4550/CleanUp.bat,
+	tests/pic18f4550/MCHPUSB.mcp, tests/pic18f4550/MCHPUSB.mcs,
+	tests/pic18f4550/MCHPUSB.mptags, tests/pic18f4550/MCHPUSB.tagsrc,
+	tests/pic18f4550/autofiles/usbcfg.h,
+	tests/pic18f4550/autofiles/usbdsc.c,
+	tests/pic18f4550/autofiles/usbdsc.h, tests/pic18f4550/io_cfg.h,
+	tests/pic18f4550/main.c, tests/pic18f4550/rm18f4550.lkr,
+	tests/pic18f4550/system/interrupt/interrupt.c,
+	tests/pic18f4550/system/interrupt/interrupt.h,
+	tests/pic18f4550/system/typedefs.h,
+	tests/pic18f4550/system/usb/class/pyusb/pyusb.c,
+	tests/pic18f4550/system/usb/class/pyusb/pyusb.h,
+	tests/pic18f4550/system/usb/usb.h,
+	tests/pic18f4550/system/usb/usb9/usb9.c,
+	tests/pic18f4550/system/usb/usb9/usb9.h,
+	tests/pic18f4550/system/usb/usb_compile_time_validation.h,
+	tests/pic18f4550/system/usb/usbctrltrf/usbctrltrf.c,
+	tests/pic18f4550/system/usb/usbctrltrf/usbctrltrf.h,
+	tests/pic18f4550/system/usb/usbdefs/usbdefs_ep0_buff.h,
+	tests/pic18f4550/system/usb/usbdefs/usbdefs_std_dsc.h,
+	tests/pic18f4550/system/usb/usbdrv/usbdrv.c,
+	tests/pic18f4550/system/usb/usbdrv/usbdrv.h,
+	tests/pic18f4550/system/usb/usbmmap.c,
+	tests/pic18f4550/system/usb/usbmmap.h: Removed old PIC test
+	firmware.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@66
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-04-16  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* ReleaseNotes.txt:  * Minor fix in the ReleaseNotes file git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@63
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-04-16  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* ACKNOWLEDGEMENTS, MANIFEST.in, README, ReleaseNotes.txt, TODO,
+	setup.py:  * Minor docs changes git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@62
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-04-13  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/test_backend.py, tests/test_find.py,
+	tests/test_integration.py, tests/test_util.py, tests/testall.py,
+	tests/utils.py, usb/__init__.py, usb/_debug.py, usb/_interop.py,
+	usb/backend/libusb01.py, usb/backend/libusb10.py,
+	usb/backend/openusb.py, usb/core.py:  * Included trace of backend calls.   * Test cases now can be runned individually.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@61
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-04-12  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/backend/libusb01.py, usb/backend/libusb10.py:  * cygwin compatibility issues fixed git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@60
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-04-07  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/testall.py:  * Changed testall script to only add usb package to python path
+	 when we are at pyusb source tree git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@59
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-04-06  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/backend/libusb01.py, usb/backend/libusb10.py:  * Cygwin support git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@58
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-04-06  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* TODO, docs/tutorial.txt:  * Docs update git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@57
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-04-05  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/test_backend.py, tests/test_integration.py, tests/utils.py,
+	usb/__init__.py, usb/_interop.py, usb/backend/libusb01.py,
+	usb/backend/libusb10.py, usb/backend/openusb.py, usb/core.py:  * Refactored _interop module  * Added logging support facility git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@56
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-04-05  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* ACKNOWLEDGEMENTS, usb/backend/libusb01.py,
+	usb/backend/libusb10.py:  * Implemented support for FreeBSD in the libusb 1.0 backend. Thanks
+	 to Xiaofan Chen.  * Implemented partial support for libusb 1.0 Windows backend. Thanks
+	to Xiaofan Chen.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@55
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-02-11  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* docs/tutorial.txt: Fixed spelling errors in the tutorial.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@52
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-02-10  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/core.py: Fixed some minor spelling errors.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@51
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-02-10  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/_interop.py, usb/legacy.py: Fixed several Python 2.3
+	compatibility issues in the legacy module.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@50
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-02-06  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* TODO, usb/core.py:  * TODO list updated.   * Fixed import in the find function.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@49
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-02-06  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* LICENSE: License update git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@48
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-02-06  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/devinfo.py, tests/test_backend.py, tests/test_find.py,
+	tests/test_integration.py, tests/test_util.py, tests/testall.py,
+	tests/utils.py, usb/_interop.py: Updated license information for
+	test scripts.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@47
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-02-06  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* docs/tutorial.txt: Fixed Python version information in the
+	tutorial.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@46
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-02-05  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* README, TODO, usb/__init__.py, usb/core.py, usb/legacy.py,
+	usb/util.py: Damn it! 10 secs after commiting the code and dropping
+	Python 2.3 and 2.4, I got an idea about how to solve the imports
+	problem without the drop... Back with 2.3 and 2.4 versions again...  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@45
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-02-05  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* LICENSE, README, TODO, docs/tutorial.txt, setup.py,
+	tests/utils.py, usb/__init__.py, usb/_interop.py,
+	usb/backend/__init__.py, usb/backend/libusb01.py,
+	usb/backend/libusb10.py, usb/backend/openusb.py, usb/core.py,
+	usb/legacy.py, usb/util.py:  * [1.0] License update.   * [1.0] Dropped support for Python version < 2.5.   * [1.0] Fixed problems to work for Python 2 and Python 3.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@44
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-02-04  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* ACKNOWLEDGEMENTS, LICENSE, MANIFEST.in, README, TODO, setup.py,
+	usb/backend/libusb01.py:  * [1.0] Added README, LICENSE, TODO and ACKNOWLEDGEMENTS files.   * [1.0] Version update.   * [0.1] Applied patch to make getString returning a Python string
+	 when langid != -1. By Tormod Volden.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@43
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-02-03  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/backend/libusb01.py:  * Fixed issue #2945033.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@42
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2010-02-02  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* docs/tutorial.txt, usb/core.py:  * Fixed ctrl_transfer issue when we don't have a payload buffer.   * Fixed tutorial example spelling...  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@41
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-12-22  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/legacy.py:  * Applied patch 2905610.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@40
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-10-15  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* docs/tutorial.txt:  * Tutorial update.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@39
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-10-09  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* docs/tutorial.rst, docs/tutorial.txt:  * Tutorial update.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@38
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-09-24  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* docs/tutorial.rst, usb/backend/libusb10.py, usb/core.py:  * Better error description for libusb 1.0 backend.   * Implemented get_interface_altsetting method.   * Tutorial update.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@37
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-09-24  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/utils.py, usb/_interop.py, usb/core.py:  * Fixes for Python 2.3 interoperability git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@36
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-09-24  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/test_backend.py, tests/test_integration.py, tests/utils.py,
+	usb/_interop.py, usb/backend/__init__.py, usb/backend/libusb01.py,
+	usb/backend/libusb10.py, usb/backend/openusb.py, usb/core.py,
+	usb/util.py:  * Python 3 compatibility fixes  * Minor improvements  * Code cleanup git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@35
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-09-23  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* docs/tutorial.rst:  * Tutorial update.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@34
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-09-21  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* docs/tutorial.rst, docs/tutorial/tutorial.rst:  * Minor docs and messages improvements.   * Tutorial update.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@33
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-09-19  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/test_integration.py, tests/testall.py,
+	usb/backend/libusb01.py, usb/backend/libusb10.py,
+	usb/backend/openusb.py, usb/core.py, usb/util.py:  * Fixed issue #2860940. Thanks to Nicholas Wheeler.   * Implementation of the get_active_configuration() method  * Lots of other bug fixes git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@32
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-09-17  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* docs/tutorial/tutorial.rst:  * PyUSB 1.0 tutorial (incomplete).  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@31
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-09-14  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* setup.py, tests/test_util.py, usb/__init__.py, usb/core.py,
+	usb/legacy.py, usb/util.py:  * Update version for 0.x branch.   * Included information for mailing in the 0.x branch.   * Included tests for find_descriptor and build_request_type
+	 functions.  * Bug fixes.   * Update legacy module.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@30
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-09-11  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/backendtest.py, tests/fakebackend.py,
+	tests/fakebackendtest.py, tests/inttest.py, tests/test.py,
+	tests/test_backend.py, tests/test_find.py,
+	tests/test_integration.py, tests/test_util.py, tests/testall.py,
+	tests/utiltest.py, usb/core.py, usb/util.py:  * Code refactoring git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@29
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-09-04  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/util.py:  * Changed name of the function from release_resources to
+	 dispose_resources git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@28
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-09-04  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/backend_test.py, tests/backendtest.py, tests/core_test.py,
+	tests/device_info.py, tests/devinfo.py, tests/fakebackend.py,
+	tests/fakebackendtest.py, tests/inttest.py, tests/test.py,
+	tests/util_test.py, tests/utils.py, tests/utiltest.py,
+	usb/backend/__init__.py, usb/core.py, usb/util.py:  * Refactoring of core module  * Refactoring of tests  * Initial implementation of a fake backend for tests  * New functions in util module  * IBackend exported in usb.backend git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@27
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-09-03  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/backend_test.py, tests/core_test.py,
+	usb/backend/__init__.py, usb/backend/libusb01.py,
+	usb/backend/libusb10.py, usb/backend/openusb.py, usb/core.py:  * Documentation improvement.   * Automatic predefined backend selection in usb.core.find function.   * Predefined backends return None in get_backend function when the
+	 underline library is not available.  * Tests include backends testing only when they are available.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@26
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-09-03  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/backend_test.py, tests/core_test.py,
+	usb/backend/libusb01.py, usb/backend/libusb10.py,
+	usb/backend/openusb.py:  * Fixes to work under Windows git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@25
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-09-02  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/backend/__init__.py, usb/backend/libusb01.py,
+	usb/backend/libusb10.py, usb/backend/openusb.py, usb/core.py,
+	usb/legacy.py, usb/util.py:  * Documentation improvement git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@24
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-09-02  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/backend_test.py, tests/core_test.py, tests/utils.py,
+	usb/backend/libusb01.py, usb/core.py:  * Bug fixes git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@23
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-09-01  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/backend/__init__.py:  * Backend documentation improvement.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@22
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-08-28  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/backend/__init__.py:  * Documentation improvement git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@21
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-08-25  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/backend_test.py, tests/core_test.py, usb/core.py,
+	usb/util.py:  * Code refactoring  * Documentation improved  * Added default_timeout property to Device class  * Changed policy to determine default configuration and interface
+	   values for the methods of the Device class (see Device
+	 documentation).  * Included new function in the util module to build the bmRequetType
+	field of the control requests.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@20
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-08-25  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/backend_test.py, tests/core_test.py, tests/utils.py:  * Refactoring of tests  * Write more tests for core git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@19
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-08-24  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/core_test.py, usb/core.py:  * Fix some issues in the core test module git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@18
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-08-24  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/backend_test.py, tests/core_test.py, tests/test.py,
+	tests/util_test.py:  * Draft core test cases git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@17
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-08-24  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/backend_test.py:  * Some syntax tweaks in the backend_test module git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@16
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-08-24  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/backend_test.py, tests/test.py, tests/util_test.py:  * Included util test case git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@15
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-08-22  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/backend_test.py, tests/device_info.py, tests/test.py,
+	usb/backend/libusb01.py, usb/backend/libusb10.py,
+	usb/backend/openusb.py, usb/core.py:  * Included backend test case (v1.0)  * Backend instance now is get through get_backend() function (v1.0)  * Fixed some issues in libusb01 backend (v1.0)  * Added support to compilation to macports (v0.4). Thanks to
+	 rossetti.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@14
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-08-18  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/backend/libusb01.py, usb/backend/libusb10.py,
+	usb/backend/openusb.py:  * Fix: buffer type convertions in the backends. Thanks to Thomas
+	 Reitmayr to point out this problem.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@13
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-08-17  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/backend/libusb10.py, usb/core.py, usb/util.py:  * Patch '2837638' applied.   * Patch '2837639' applied.   * Patch '2837642' applied.   * Patch '2837643' applied.   * Patch '2837646' applied.   * Patch '2837648' applied.   * Patch '2837650' applied.   * Patch '2837651' applied.   * Patch '2837652' applied.   * Patch '2837653' applied.   * Patch '2837654' applied.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@12
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-08-05  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/backend/libusb10.py:  * Fixed bug 2832279  * Fixed bug 2832277  * Fixed bug 2832276 git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@11
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-07-27  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/core.py:  * Fixed some minor issues in usb.core.find() git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@10
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-07-27  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/backend/libusb10.py, usb/core.py:  * Applied patch 2827110  * Applied patch 2827111 git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@9
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-06-12  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/pic18f4550/18f87j50.lkr, tests/pic18f4550/CleanUp.bat,
+	tests/pic18f4550/MCHPUSB.mcp, tests/pic18f4550/MCHPUSB.mcs,
+	tests/pic18f4550/MCHPUSB.mptags, tests/pic18f4550/MCHPUSB.tagsrc,
+	tests/pic18f4550/autofiles/usbcfg.h,
+	tests/pic18f4550/autofiles/usbdsc.c,
+	tests/pic18f4550/autofiles/usbdsc.h, tests/pic18f4550/io_cfg.h,
+	tests/pic18f4550/main.c, tests/pic18f4550/rm18f4550.lkr,
+	tests/pic18f4550/system/interrupt/interrupt.c,
+	tests/pic18f4550/system/interrupt/interrupt.h,
+	tests/pic18f4550/system/typedefs.h,
+	tests/pic18f4550/system/usb/class/pyusb/pyusb.c,
+	tests/pic18f4550/system/usb/class/pyusb/pyusb.h,
+	tests/pic18f4550/system/usb/usb.h,
+	tests/pic18f4550/system/usb/usb9/usb9.c,
+	tests/pic18f4550/system/usb/usb9/usb9.h,
+	tests/pic18f4550/system/usb/usb_compile_time_validation.h,
+	tests/pic18f4550/system/usb/usbctrltrf/usbctrltrf.c,
+	tests/pic18f4550/system/usb/usbctrltrf/usbctrltrf.h,
+	tests/pic18f4550/system/usb/usbdefs/usbdefs_ep0_buff.h,
+	tests/pic18f4550/system/usb/usbdefs/usbdefs_std_dsc.h,
+	tests/pic18f4550/system/usb/usbdrv/usbdrv.c,
+	tests/pic18f4550/system/usb/usbdrv/usbdrv.h,
+	tests/pic18f4550/system/usb/usbmmap.c,
+	tests/pic18f4550/system/usb/usbmmap.h:  * PIC 184550 Test FW complete.   * 0.x regression tests scripts complete.  git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@6
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-05-08  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/backend/__init__.py, usb/backend/libusb01.py,
+	usb/backend/libusb10.py, usb/backend/openusb.py, usb/core.py,
+	usb/legacy.py, usb/util.py:  * Separated write and read endpoint methods  * Transfer type in automatic inferred in the Device object  * Documentation for util module  * libusb backend modules refactored  * Initial openusb implementation git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@5
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-05-05  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/backend/libusb10.py:  * Initial implementation of libusb 1.0 backend git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@4
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-04-30  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* usb/__init__.py, usb/backend/__init__.py,
+	usb/backend/libusb01.py, usb/core.py, usb/legacy.py, usb/util.py:  * Initial PyUSB 1.0 implementation git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@3
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2009-04-29  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* tests/arm_str9/PyUSB_TestFw.Opt, tests/arm_str9/PyUSB_TestFw.Uv2,
+	tests/arm_str9/src/91x_it.c, tests/arm_str9/src/STR91x.s,
+	tests/arm_str9/src/main.c, tests/arm_str9/src/ring_buffer.c,
+	tests/arm_str9/src/ring_buffer.h, tests/arm_str9/src/startup_gcc.s,
+	tests/arm_str9/src/usb_conf.h, tests/arm_str9/src/usb_desc.c,
+	tests/arm_str9/src/usb_desc.h, tests/arm_str9/src/usb_endp.c,
+	tests/arm_str9/src/usb_istr.c, tests/arm_str9/src/usb_prop.c,
+	tests/arm_str9/src/usb_prop.h, tests/arm_str9/src/usb_pwr.c,
+	tests/arm_str9/src/usb_pwr.h, tests/arm_str9/src/util.c,
+	tests/arm_str9/src/util.h, tests/fw/PyUSB_TestFw.Opt,
+	tests/fw/PyUSB_TestFw.Uv2, tests/fw/src/91x_it.c,
+	tests/fw/src/STR91x.s, tests/fw/src/main.c,
+	tests/fw/src/ring_buffer.c, tests/fw/src/ring_buffer.h,
+	tests/fw/src/startup_gcc.s, tests/fw/src/usb_conf.h,
+	tests/fw/src/usb_desc.c, tests/fw/src/usb_desc.h,
+	tests/fw/src/usb_endp.c, tests/fw/src/usb_istr.c,
+	tests/fw/src/usb_prop.c, tests/fw/src/usb_prop.h,
+	tests/fw/src/usb_pwr.c, tests/fw/src/usb_pwr.h,
+	tests/fw/src/util.c, tests/fw/src/util.h:  * Moved 0.x version from cvs to svn  * ARM Test FW folder renamed git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@2
+	3043e840-054b-0410-bc1a-858b58f158f7
+
+2008-04-16  Wander Lairson Costa <wander.lairson@gmail.com>
+
+	* git-svn-id: https://pyusb.svn.sourceforge.net/svnroot/pyusb/trunk@1
+	3043e840-054b-0410-bc1a-858b58f158f7
+

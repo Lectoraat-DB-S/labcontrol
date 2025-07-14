@@ -88,7 +88,7 @@ class KoradChannel(BaseSupplyChannel):
         self.visaInstr.write(f"IDOWN{self.name}")    
 
 class Korad3305P(BaseSupply):
-    VISAInsterface = "ASRL"
+    VISAInterface = "ASRL"
     targetCom = "COM10"
     prefMethod = None
     
@@ -96,23 +96,24 @@ class Korad3305P(BaseSupply):
     def readConfig(cls):
         config = configparser.ConfigParser()
         print(os.getcwd())
+        config.read(CONFIGPARSERPATH = '.\\src\\labcontrol.ini')
         config.read('.\\src\\labcontrol.ini')
         if "Korad3305P" in config.sections():
                 if 'VisaInterface' in config['Korad3305P']:
-                    Korad3305P.VISAInsterface=literal_eval(config['Korad3305P']['VisaInterface'])
+                    Korad3305P.VISAInterface=literal_eval(config['Korad3305P']['VisaInterface'])
                 if 'ComPort' in config['Korad3305P']:
                     Korad3305P.targetCom=literal_eval(config['Korad3305P']['ComPort'])
                 if 'PrefSearchMethod' in config['Korad3305P']:
                     Korad3305P.prefMethod = literal_eval(config['Korad3305P']['PrefSearchMethod'])
         else:
-            Korad3305P.VISAInsterface = "ASRL"
+            Korad3305P.VISAInterface = "ASRL"
             Korad3305P.prefMethod = "IDN"
 
     @classmethod
     def findVISADeviceOnComPortNr(cls, rm, urls):
 
         for url in urls: # traverse al urls
-            if cls.VISAInsterface in url: #select only applicable interface for this device
+            if cls.VISAInterface in url: #select only applicable interface for this device
                 try: # the open_resource might fail therefore a try/exept clause.
                     mydev = rm.open_resource(url)
                     if cls.targetCom!=mydev.resource_info.alias: #if alias is not the desired comport value, skip it.
@@ -139,8 +140,8 @@ class Korad3305P(BaseSupply):
                 desc = mydev.query("*IDN?")
                 if desc.find("KA3305P") > -1: #Korad KA3305P device found in IDN response.
                     if cls is Korad3305P:
-                        cls.__init__(cls, dev=mydev, host=None, nrOfChan=2)
-                    return cls
+                        return (cls, 2, mydev)
+                    return (None, None, None)
                 else:
                     mydev.close()
                     mydev = None
@@ -157,7 +158,7 @@ class Korad3305P(BaseSupply):
     def findDeviceOnIDN(cls, rm, urls):
         mydev = None
         for url in urls: # traverse al urls
-            if cls.VISAInsterface in url: #select only applicable interface for this device
+            if cls.VISAInterface in url: #select only applicable interface for this device
                 try: # the open_resource might fail therefore a try/exept clause.
                     mydev = rm.open_resource(url)
                     mydev.timeout = 5000  # ms
@@ -166,8 +167,8 @@ class Korad3305P(BaseSupply):
                     desc = mydev.query("*IDN?")
                     if desc.find("KA3305P") > -1: #Korad 3305 device found in IDN response.
                         if cls is Korad3305P:
-                            cls.__init__(cls, dev=mydev, host=None, nrOfChan=2)
-                        return cls
+                            return (cls, 2, mydev)
+                        return (None, None, None)
                     else:
                         mydev.close()
                         mydev = None    
@@ -198,7 +199,6 @@ class Korad3305P(BaseSupply):
         return retval
         
     def __init__(self, dev= None, host=None, nrOfChan=2):
-        super().__init__(self, dev=dev,host=host,nrOfChan=2)
         self.visaInstr : pyvisa.Resource = dev
         self.host = host
         self.nrOfChan = nrOfChan
