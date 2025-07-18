@@ -1,3 +1,4 @@
+from scipy.optimize import curve_fit
 import struct
 import numpy as np
 import pyvisa
@@ -10,6 +11,25 @@ MATH_FUNC_FFT = 4
 MATH_FUNC_INT = 5
 MATH_FUNC_DIF = 6
 MATH_FUNC_SQR = 7
+
+def sine_function(x, A, B, C, D):
+    return A * np.sin(B * x + C) + D
+
+def guessSine(t, y):
+
+    initial_guess = [1,2, 0, 0]
+
+    # Perform the curve fitting
+    params, covariance = curve_fit(sine_function, t, y, p0=initial_guess)
+
+    # Extract the fitted parameters
+    A_fit, B_fit, C_fit, D_fit = params
+
+    print(f"Fitted parameters: A={A_fit}, B={B_fit}, C={C_fit}, D={D_fit}")
+    # Generate y values using the fitted parameters
+    print(f"covariantie = {covariance}")
+    return params, covariance
+
 
 class SIGLENT_TIME_STAMP(object):
     def __init__(self):

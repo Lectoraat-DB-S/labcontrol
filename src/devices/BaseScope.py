@@ -26,7 +26,7 @@ class BaseScope(object):
         """Method for getting the right type of scope, so it can be created by the runtime.
         This Basescope implementation does nothing other the return the BaseScope type. The inheriting
         subclass should implement the needed logic"""
-        return cls
+        pass
     
     @classmethod
     def getDevice(cls,host=None):
@@ -270,7 +270,7 @@ class BaseVertical(object):
     def getVerticalClass(cls, dev):
         """getVerticalClass: factory method for getting the right vertical type of an oscilloscope. 
         Remark: this baseclass implementation is empty, must be implemented by the subclass. """
-        return None 
+        pass 
 
     
     def __init_subclass__(cls, **kwargs):
@@ -318,7 +318,7 @@ class BaseHorizontal(object):
     def getHorizontalClass(cls, dev):
         """getHorizontalClass: a factory method for getting the right horziontal type of an oscilloscope. 
         Remark: this baseclass implementation is empty, all logic must be implemented by the subclass. """
-        return cls
+        pass
         
           
     def __init__(self, dev:pyvisa.resources.MessageBasedResource= None):
@@ -369,7 +369,7 @@ class BaseWaveForm(object):
 
     @classmethod
     def getWaveFormClass(cls):
-        return cls
+        pass
         
     def __init__(self):
         """Class for holding waveform data of a channel capture and the methods to transform raw sample data into soming fysical meaningful, such as voltage."""
@@ -462,15 +462,14 @@ class BaseTriggerUnit(object):
         """Method for getting the right Python type, or the proper subclass of BaseTriggerUnit, based on parameters
         passed. 
             """
-        return cls
+        pass
     
     def __init_subclass__(cls, **kwargs):
         """Method for autoregistration of BaseTriggerUnit subclasses. Don't alter and don't override. Be sure this
         the"""
         super().__init_subclass__(**kwargs)
         cls.triggerUnitList.append(cls)
-    
-    
+        
     def __init__(self, vertical:BaseVertical=None, visaInstr:pyvisa.resources.MessageBasedResource=None):
         """This method takes care of the intialisation of a BaseTriggerUnit object. Subclasses must override this 
         method, by initialising the datamembers needed. Remark: if the subclass relies on the intialisation done 

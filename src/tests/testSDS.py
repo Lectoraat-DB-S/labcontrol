@@ -7,7 +7,7 @@ import tests.utils as utils
 import numpy as np
 import matplotlib.pyplot as plt
 from devices.siglent.sds.Channel import SDSWaveFormPreamble
-from devices.siglent.sds.util import TIMEBASE_HASHMAP
+from devices.siglent.sds.util import TIMEBASE_HASHMAP, guessSine, sine_function
 
 
 """In de documentatie van unittest staat de volgende opmerking:
@@ -23,28 +23,27 @@ fs = 1.0e6
 Amp = 1
 offset = 0
 AantalPer = 2
+noiseAmp =1
+noiseMean = 0
+noiseSigma = 2
 
-
-DESCRIPTOR_NAME = "WAVEDESC"
-descr_bytes = np.fromstring(DESCRIPTOR_NAME, dtype=np.dtype('B'))
+DESCRIPTOR_NAME:str = "WAVEDESC"
+descr_bytes = np.frombuffer( DESCRIPTOR_NAME.encode(), dtype=np.dtype('B'))
 pream.nrOfSamples = 7000
 pream.probeAtt  = 1.0
-pream.vdiv      = 5.0
-pream.yoff      = 0.5
+pream.vdiv      = 0.5
+pream.yoff      = 0.0
 pream.timeDiv   = 1.0e-4
 pream.trigDelay = pream.timeDiv
 pream.xincr     = 1/fs
 
-
-
-
 def qbside_effect(command, datatype,  is_big_endian, container):
     if command == "C1:WaveForm? DESC":
-        buffer = utils.createSDSPreambleStruct()
+        buffer = utils.createSDSPreambleStruct(preamble=pream)
         return buffer
     elif command == "C1:WF? DAT2":  
         return utils.genFakeSineWave(nrOfSamples = pream.nrOfSamples, A = Amp, 
-                                     nrOfPer = AantalPer,offset = offset)
+                                     nrOfPer = AantalPer,offset = offset, noise=(noiseAmp, noiseMean, noiseSigma), preamble=pream)
     else:
         print("unkown side effect!!") 
 
@@ -100,9 +99,25 @@ class TestSDSCase(unittest.TestCase):
         thechan.capture()
         trace = thechan.WF
         y = trace.rawYdata
-        plt.plot(y)
+        x = trace.rawXdata
+        #prams, covar = guessSine(x,y)
+        #A_fit, B_fit= prams
+        A_fit = 50
+        B_fit = 0.0018
+        C_fit = 0
+        D_fit = 0
+        y_fit = sine_function(x, A_fit, B_fit, C_fit, D_fit)
+        #y_fit = sine_function(x, A_fit, B_fit)
+        
+        plt.plot(x, y, x,y_fit)
+        #plt.figure(2)
+        #y = trace.scaledYdata
+        #x = trace.scaledXdata
+        #plt.plot(x,y)
         plt.show()
-    
+        
+        print(f"Fitted parameters: A={A_fit}, B={B_fit}")
+
     def testNewSDS(self):
         print("##testNewSDS##")
         verticaal = self.scope.vertical
@@ -123,18 +138,3 @@ def suite():
     return suite
 
 
-"""
-def testTheSDS():
-    rm = pyvisa.ResourceManager()
-    print(rm.list_resources())
-    scope = SiglentScope()
-    print(scope.CH1.getMean())
-    
-    print(scope.CH1.getPKPK())
-    scope.CH1.capture()
-    waveformTrace = scope.CH1.getTrace()
-    timeAx = scope.CH1.getTimeAxis()
-    plt.plot(timeAx, waveformTrace)
-    plt.show()
-
-"""

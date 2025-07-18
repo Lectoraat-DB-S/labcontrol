@@ -24,9 +24,27 @@ class TekScope(BaseScope):
     @classmethod
     def getScopeClass(cls, rm, urls, host):
         """
-            Tries to get (instantiate) this device, based on matched url or idn response
-            This method will ONLY be called by the BaseScope class, to instantiate the proper object during
-            creation by the __new__ method of BaseScope.     
+            This method will:
+            1. Traverses all url's provided by parameter urls
+            2  returns either the class of a Tektronix TDS 2kC series oscilloscope and the corresponding VISA object,
+            if the url or idn response matches, or 
+            3. returns None for both, if not.
+            
+            This method will be called by the BaseScope class during a factory process of creating a new BaseScope object:
+            a. An user calls BaseScope.getDevice()
+            b. BaseScope.getDevice loops the list of registered subclasses
+            c. Every subclass's getScopeClass will be called, searching for a match.
+            d1. If so, BaseScope. getDevice calls the __init__ method of the matched subclass type to start its creation and
+                exits by returning the correct scope object
+                Or, by not finding a match at all:
+            d2. exits by returning None.
+            
+            BaseScope needs the correct scope type and an opened VISA reference to the TDS scope device to excute above
+            mentioned factory process. 
+
+            getScopeClass returns a tuple (cls ,instr) where cls is the class of the object and instr the opened reference to the 
+            device when matched, or (None, None) if not. 
+          
         """    
         if cls is TekScope:
             urlPattern = "USB" 
@@ -36,13 +54,7 @@ class TekScope(BaseScope):
                         mydev = rm.open_resource(url)
                         mydev.timeout = 10000
                         mydev.chunk_size = 20480
-                        #mydev.timeout = 10000  # ms
-                        #mydev.read_termination = '\n'
-                        #mydev.write_termination = '\n'
-                        #mydev.write("DATA:ENC RPB")
-
-                        #source of code below: https://github.com/tektronix/Programmatic-Control-Examples/blob/master/Examples/Oscilloscopes/BenchScopes/src/SimplePlotExample/tbs_simple_plot.py
-
+                        
                         mydev.encoding = 'latin_1'
                         mydev.read_termination = None # See discussion https://github.com/pyvisa/pyvisa/issues/741
                         mydev.write_termination = None 
@@ -75,6 +87,7 @@ class TekScope(BaseScope):
             the autoregristration scheme for subclasses of PEP487 which is available since python 3.6. 
         """
         super().__init__(visaInstr) #baseclass will store referentie to the device.
+        # set binary encoding and transfer 1 byte per sample, for fast communication between computer and devices.
         self.visaInstr.write(f"DATa:ENCdg RIBinary")
         self.visaInstr.write(f"DATA:WIDTH 1")
         self.horizontal = TekHorizontal(visaInstr)
