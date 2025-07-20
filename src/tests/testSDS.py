@@ -3,7 +3,7 @@ from devices.BaseScope import pyvisa
 import unittest
 from unittest.mock import call, patch, MagicMock
 from devices.siglent.sds.Scopes import SiglentScope
-import tests.utils as utils
+import src.tests.sdsUtils as sdsUtils
 import numpy as np
 import matplotlib.pyplot as plt
 from devices.siglent.sds.Channel import SDSWaveFormPreamble
@@ -23,9 +23,9 @@ fs = 1.0e6
 Amp = 1
 offset = 0
 AantalPer = 2
-noiseAmp =1
+noiseAmp =100
 noiseMean = 0
-noiseSigma = 2
+noiseSigma = 5
 
 DESCRIPTOR_NAME:str = "WAVEDESC"
 descr_bytes = np.frombuffer( DESCRIPTOR_NAME.encode(), dtype=np.dtype('B'))
@@ -39,10 +39,10 @@ pream.xincr     = 1/fs
 
 def qbside_effect(command, datatype,  is_big_endian, container):
     if command == "C1:WaveForm? DESC":
-        buffer = utils.createSDSPreambleStruct(preamble=pream)
+        buffer = sdsUtils.createSDSPreambleStruct(preamble=pream)
         return buffer
     elif command == "C1:WF? DAT2":  
-        return utils.genFakeSineWave(nrOfSamples = pream.nrOfSamples, A = Amp, 
+        return sdsUtils.genFakeSineWave(nrOfSamples = pream.nrOfSamples, A = Amp, 
                                      nrOfPer = AantalPer,offset = offset, noise=(noiseAmp, noiseMean, noiseSigma), preamble=pream)
     else:
         print("unkown side effect!!") 
@@ -91,8 +91,8 @@ class TestSDSCase(unittest.TestCase):
         self.mydev = None
         self.expected = None
  
-    def testCaptureTDS(self):
-        print("testCaptureTDS")
+    def testCaptureSDS(self):
+        print("testCaptureSDS")
         verticaal: BaseVertical = self.scope.vertical
         
         thechan: BaseChannel = verticaal.chan(1)
@@ -100,14 +100,14 @@ class TestSDSCase(unittest.TestCase):
         trace = thechan.WF
         y = trace.rawYdata
         x = trace.rawXdata
-        #prams, covar = guessSine(x,y)
-        #A_fit, B_fit= prams
-        A_fit = 50
-        B_fit = 0.0018
-        C_fit = 0
-        D_fit = 0
+        initial_guess = [45,0.0015, 0, 0]
+        prams, covar = guessSine(x,y, intialGuess=initial_guess)
+        A_fit, B_fit, C_fit, D_fit= prams
+        #A_fit = 50
+        #B_fit = 0.0018
+        #C_fit = 0
+        #D_fit = 0
         y_fit = sine_function(x, A_fit, B_fit, C_fit, D_fit)
-        #y_fit = sine_function(x, A_fit, B_fit)
         
         plt.plot(x, y, x,y_fit)
         #plt.figure(2)
@@ -116,8 +116,8 @@ class TestSDSCase(unittest.TestCase):
         #plt.plot(x,y)
         plt.show()
         
-        print(f"Fitted parameters: A={A_fit}, B={B_fit}")
-
+        
+    
     def testNewSDS(self):
         print("##testNewSDS##")
         verticaal = self.scope.vertical
@@ -134,7 +134,7 @@ class TestSDSCase(unittest.TestCase):
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(TestSDSCase('testNewSDS'))
-    suite.addTest(TestSDSCase('testCaptureTDS'))
+    suite.addTest(TestSDSCase('testCaptureSDS'))
     return suite
 
 

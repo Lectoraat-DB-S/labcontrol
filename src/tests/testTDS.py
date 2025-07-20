@@ -7,9 +7,9 @@ import pyvisa
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-import tests.utils as utils
+import tests.tdsUtils as tdsUtils
 
-preamblstr_toreturn = None
+
 
 #assert: if true, then nothing. If false, assertion
 #blog : https://www.toptal.com/python/an-introduction-to-mocking-in-python
@@ -101,24 +101,14 @@ def query_side_effect(command):
     elif command == "MEAS:VOLT?":
         return "3.3"
     elif command == "curve?":
-        return utils.genFakeSineWave()
+        return tdsUtils.genFakeSineWave()
     elif command == "WFMPRE?":
-        return preamblstr_toreturn
+        return tdsUtils.createTDSPreamble()
     else:
         return "UNKNOWN COMMAND"
     
 
-"""
-# Gebruik je mock in code
-print(mock_resource.query("*IDN?"))       # MyInstrument,Model123,Serial456,1.0
-print(mock_resource.query("MEAS:VOLT?"))  # 3.3
-print(mock_resource.query("MEAS:CURR?"))  # 0.12
-print(mock_resource.query("FOO"))         # UNKNOWN COMMAND
-
-"""
-
-
-class TestTDSCreate(unittest.TestCase):
+class TestTDSCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # 1) Patch pyvisa-functies één keer
@@ -127,7 +117,7 @@ class TestTDSCreate(unittest.TestCase):
         aantal_stappen = 2500
         f=200
         timestep=(starttime-endtime)/aantal_stappen
-        cls.myfakeSin = utils.fakesinewave(starttime, endtime, aantal_stappen, f)
+        cls.myfakeSin = tdsUtils.genFakeSineWave(starttime, endtime, aantal_stappen, f)
         cls.myfakePreamble:FakeWaveFormPreamble = setFakeTekWaveFormPreamble(aantal=aantal_stappen, stepTime=timestep, vdiv=1 )
         
         
@@ -143,7 +133,7 @@ class TestTDSCreate(unittest.TestCase):
         # Wijs de functie toe als side_effect van de mock query methode
         cls.mockdev.query.side_effect = query_side_effect   
         #cls.mockdev.query_binary_values.side_effect = query_side_effect
-        cls.mockdev.query_binary_values.return_value = utils.fakesinewave()   
+        cls.mockdev.query_binary_values.return_value = tdsUtils.genFakeSineWave()   
         cls.MockListResources.return_value = ["INSTR::xxx::USB"]
         # 2) Maak de instrument-instantie aan
         cls.scope:BaseScope = BaseScope.getDevice()
@@ -179,4 +169,10 @@ class TestTDSCreate(unittest.TestCase):
         y = trace.rawYdata
         plt.plot(y)
         plt.show()
-        
+    
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(TestTDSCase('testNewTDS'))
+    suite.addTest(TestTDSCase('testCaptureTDS'))
+    return suite
+
