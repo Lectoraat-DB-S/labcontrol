@@ -70,6 +70,12 @@ class BaseScope(object):
         override in the derived class.
             """
         return self.visaInstr
+    
+    def acquire(self):
+        pass
+    
+    def acquire(self, state, mode=None, nrOfAvg=None, stopAfter=None):
+        pass
 ###################################### BASECHANNEL #########################################################
 class BaseChannel(object):
     """BaseChannel: a baseclass for the abstraction of a channel of an oscilloscope.
@@ -140,6 +146,12 @@ class BaseChannel(object):
         """Gets the current vertical sensitivity (i.e. Vdiv) of this channel. This BaseChannel implementation 
         is empty. An inheriting subclass will have to implement this method.
         """
+        pass
+
+    def position(self):
+        pass
+
+    def position(self, pos):
         pass
 
     def getYzero(self):
@@ -253,6 +265,15 @@ class BaseChannel(object):
         Input parameter: None
         return: handle to matplotlib object."""
         pass 
+
+    def clearMeas(self):
+        pass
+
+    def addMeas(self, measType):
+        pass
+
+    def getAvMeasVals(self):
+        pass
 ########## BASEVERTICAL ###########
     
 class BaseVertical(object):
@@ -474,9 +495,40 @@ class BaseTriggerUnit(object):
         """This method takes care of the intialisation of a BaseTriggerUnit object. Subclasses must override this 
         method, by initialising the datamembers needed. Remark: if the subclass relies on the intialisation done 
         below, don't forget to call the subcalss' super().__init()__ !"""
-        self.vertical = vertical
+        self.vertical :pyvisa.resources.MessageBasedResource = vertical
         self.visaInstr = visaInstr
         self.source = None #the channel to trigger on.
         self.level =None
         
+    def level(self):
+        pass
+        
+    def level(self, level):
+        pass 
     
+    def setSource(self, chanNr):
+        pass
+
+    def getEdge(self):
+        pass
+    
+    def setCoupling(self, coup:str):
+        pass
+
+    def setSlope(self, slope:str):
+        pass
+        
+    def getFrequency(self):
+        pass
+        
+    def getholdOff(self): #Trigger holdoff blz 215 TRIGger:MAIn:HOLDOff:VALue?
+        pass
+
+    def mode(self): #trigger mode blz 216 TRIGger:MAIn:MODe?
+        pass
+
+    def mode(self, modeVal):
+        pass
+
+    def getState(self): #tigger state zie blz 223 TRIGger:STATE?
+        pass

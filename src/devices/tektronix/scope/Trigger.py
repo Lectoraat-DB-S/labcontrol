@@ -13,11 +13,13 @@ class TekTrigger(BaseTriggerUnit):
             return None      
     
     def __init__(self, vertical: TekVertical = None, dev=None):
-        super().__init__()
+        super().__init__(vertical=vertical, visaInstr=dev)
         self.vertical: TekVertical = vertical
         self.source = 1
-        self.visaInstr: pyvisa.resources.MessageBasedResource = dev
         
+    def getTriggerSettings(self):
+        return self.visaInstr.query("TRIGger?")
+    
     def level(self):
         return self.visaInstr.query("TRIGger:MAIn:LEVel?")
         

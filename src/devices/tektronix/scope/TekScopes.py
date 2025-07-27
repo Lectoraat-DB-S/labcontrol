@@ -53,7 +53,7 @@ class TekScope(BaseScope):
                     if urlPattern in url:
                         mydev = rm.open_resource(url)
                         mydev.timeout = 10000
-                        mydev.chunk_size = 20480
+                        #mydev.chunk_size = 20480
                         
                         mydev.encoding = 'latin_1'
                         mydev.read_termination = None # See discussion https://github.com/pyvisa/pyvisa/issues/741
@@ -147,4 +147,69 @@ class TekScope(BaseScope):
     def setStopSampleNr(self, stopNr):
         #TODO check if startNr is correct
         self.visaInstr.write(f"DATA:STOP {stopNr}") #Sets end of sample data
+
+    ######### GPIB & Miscellinaneous COMMANDS ######
+    def DESE(self):
+        return self.visaInstr.query("DESE?")
+    
+    def DESE(self, bitsVal):
+        self.visaInstr.write(f"DESE {bitsVal}")
+
+    def ESE(self):
+        return self.visaInstr.query("*ESE")
+    
+    def ESE(self, bitsVal):
+        self.visaInstr.write(f"*ESE {bitsVal}")
+
+    def ESR(self):
+        return self.visaInstr.query("*ESR?")
+    
+    def ESR(self, bitsVal):
+        self.visaInstr.write(f"*ESR {bitsVal}")
+
+    def getAllEvents(self):
+        return self.visaInstr.query("ALLEV?")
+
+    def getLastEvents(self):
+        return self.visaInstr.query("EVENT?")
+    
+    def getNrOfEvents(self):
+        return self.visaInstr.query("EVQty?")
+
+    def EVMsg(self):
+        """"""
+        return self.visaInstr.query("EVMsg?")
+    
+    def clear(self):
+        self.visaInstr.write("*CLS")
+    
+    def STB(self):
+        """"""
+        return self.visaInstr.query("STB?")
+    
+    def getDefault(self):
+        return self.visaInstr.query("FACtory?")
+    
+    def acquire(self):
+        return self.visaInstr.query("ACQuire?")
+    
+    def acquire(self, state, mode=None, nrOfAvg=None, stopAfter=None):
+        acqStr = ""
+        if state == "OFF" or state =="ON" or state =="RUN" or state =="STOP":
+            pass
+        else:
+            state = "RUN"
+            
+        acqStr += f"ACQUIRE:STATE {state}"
+
+        if nrOfAvg == 4 or nrOfAvg == 16 or nrOfAvg == 64 or nrOfAvg == 128:
+            acqStr += f"; NUMAVG {nrOfAvg}"
+
+        if mode =="SAMPLE" or mode == "PEAKdetect" or mode == "AVErage":
+            acqStr += f"; MODE {mode}"
+
+        if stopAfter== "RUNSTop" or stopAfter == "SEQUENCE":
+            acqStr += f"; STOPAFTER {stopAfter}"
+        
+        self.visaInstr.write(acqStr)
     

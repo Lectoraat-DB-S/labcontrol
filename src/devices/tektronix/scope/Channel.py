@@ -12,7 +12,7 @@ class TekChannel(BaseChannel):
     IMMEDMEASTYPES =["CRMs","CURSORRms","DELay","FALL",
                         "FREQuency","MAXImum","MEAN","MINImum","NONe","NWIdth","PDUty","PERIod","PHAse", 
                         "PK2pk","PWIdth","RISe"]
-    
+
     @classmethod
     def getChannelClass(cls, chan_no, dev):
         """ Tries to get the right device class, based on the url"""
@@ -20,10 +20,11 @@ class TekChannel(BaseChannel):
             return cls
         else:
             return None      
-    def __init__(self, chan_no: int, visaInstr:pyvisa.resources.MessageBasedResource):
+    def __init__(self, chan_no: int, visaInstr:pyvisa.resources.MessageBasedResource, perMeasDict:dict):
         super().__init__(chan_no, visaInstr)
         self.name = f"CH{chan_no}"
         self.log = TekLog()
+        self.perMeasDict:dict = perMeasDict
         #if scope != None:
         #    self._parentScope = scope
         self.WFP= TekWaveFormPreamble(visaInstr)
@@ -83,6 +84,12 @@ class TekChannel(BaseChannel):
         """
         return self.visaInstr.query(f"{self.name}:SCALE ?") 
     
+    def position(self):
+        return self.visaInstr.query(f"{self.name}:POSition?") 
+    
+    def position(self, pos):
+        self.visaInstr.write(f"{self.name}:POSition {pos}")
+
     def getYzero(self):
         """Gets the vertical offset of this channel. For this TDS implementation the parameter 
         'yzero' has been selected. Remark a TDS has also an 'yoff' parameter, which is an offset value in digitizer
@@ -338,6 +345,38 @@ class TekChannel(BaseChannel):
         Measurement"""    
         immedResult = self.doImmedMeas("PDUty")        
         return float(immedResult)
+    
+    ######### Periodic measurements control #####
+    def clearMeas(self):
+        """Clears all previously setted periode measurements"""
+        self.perMeasDict.clear()
+
+    def addMeas(self, measType):
+        """Adds a periodic Measurement to the current set. Maximum of 5 measurements allowed.
+        returns True if measurement added of
+        False if measurement was not added (full)"""
+        index = len(self.perMeasDict)
+        currIndexStr = str(index+1)
+        if measType in TekChannel.IMMEDMEASTYPES and index < 6:
+            self.perMeasDict[currIndexStr]={self.name : measType}
+            print(f"MEASUrement:MEAS{currIndexStr}:TYPe {measType}")
+            print(f"MEASUrement:MEAS{currIndexStr}:VALue?")
+            self.visaInstr.write(f"MEASUrement:MEAS{currIndexStr}:SOUrce {self.name}\n")
+            self.visaInstr.write(f"MEASUrement:MEAS{currIndexStr}:TYPe {measType}\n")
+            print(self.visaInstr.query("*ESR?\n"))
+            print(self.visaInstr.query("ALLEv?\n"))
+            time.sleep(1)
+            self.visaInstr.write(f"MEASUrement:MEAS{currIndexStr}:VALue?\n")
+            time.sleep(1)
+            print(self.visaInstr.query("*ESR?\n"))
+            print(self.visaInstr.query("ALLEv?\n"))
+            return True
+        else:
+            return False
+
+    def getAvMeasVals(self):
+        """"Queries all values of previously set measurement. Values will be returned in a key,value dict"""
+        pass
     
 class TekWaveFormPreamble(BaseWaveFormPreample):
     """Class for holding the Tektronix TDS1000 scope series preamble. Extends BaseWaveFormPreamble.

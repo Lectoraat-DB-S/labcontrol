@@ -136,7 +136,7 @@ def testKorad():
 
 if __name__ == "__main__":
     #rc = ResourceManager(visa_library="@mock")
-    
+    doACSweep()
     #testUSBTMC()
     #testTekTm()
 
@@ -144,38 +144,11 @@ if __name__ == "__main__":
     #checkTDS.checkMathFunctions()
     #print(rm.list_resources_info())  
     #testHantek()
-    testTekVisa()
+    #testTekVisa()
     #dummyUse()
     #testKorad()
     #performTransCurve()
     #logger = logging.getLogger(__name__)
     #logger.setLevel(logging.DEBUG)
 
-    #testPickle(logger)
-    #initLog()0
-    #logging.info('Main Started')
-  
-    #scope = BaseScope()
-    #vertie = scope.vertical
-    #print(vertie)
     
-    #vertie.chan()
-    #chan1 = scope.vertical.getchan(1)
-    #chan1.capture()
-    #print(myList)
-    #mydev = rm.open_resource(myList[0])
-    #print(mydev.timeout)
-    #dev=rm.open_resource("USB0::0x5345::0x1235::23390166::INSTR")
-    #print(dev.query("*IDN?"))
-    #print(dev.query("MMEMory:CATalog?"))
-    #plt.figure(1)
-    #trace=gootje.aquireSampl-esFromDistSensor()
-    #np.save("sanyo_dump.dat",trace)
-    #plt.plot(trace)
-    #plt.show()
-    #testSiglent()
-    #measurement.meetInterneWeerstandGenerator()
-    #curfje.createTransCurve()
-    #scopeTest.testTheSDS()
-    #dmmtest.testDMM()
-    #logging.info('Finished') 

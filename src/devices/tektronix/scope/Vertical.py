@@ -16,11 +16,12 @@ class TekVertical(BaseVertical):
 
     def __init__(self, nrOfChan, dev):
         super().__init__(nrOfChan, dev) # visa dev will be initted by the Baseclass
+        self.perMeasDict = {}
         self.nrOfChan = nrOfChan
         self.channels =list()
         
         for i in range(1, nrOfChan+1):
-            self.channels.append({i:TekChannel(i, dev)})
+            self.channels.append({i:TekChannel(i, dev, self.perMeasDict)})
             
     def chan(self, chanNr): 
         """Gets a channel, based on its index: 1, 2 etc."""
@@ -41,3 +42,17 @@ class TekVertical(BaseVertical):
         :MATH:FFT:HORIZONTAL:POSITION 5.0E1;SCALE1.0E0;
         :MATH:FFT:VERTICAL:POSITION 0.0E0;SCALE 1.0E0"""
         return self.visaInstr.query("MATH?")
+    
+    def getVerticalSettings(self):
+        queryResStr = ""
+        channr = 1
+        for channel in self.channels:
+            if channr != 1:
+                queryResStr += ";:"
+            chan:TekChannel = channel[channr]
+            chanQueryStr = self.visaInstr.query(f"{chan.name}?")
+            queryResStr+=chanQueryStr
+            channr=channr + 1
+        return self.visaInstr.query(queryResStr)
+            
+
