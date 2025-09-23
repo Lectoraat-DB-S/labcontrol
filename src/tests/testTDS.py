@@ -55,7 +55,6 @@ class FakeWaveFormPreamble(TekWaveFormPreamble):
         self.binFirstByteStr       = "MSD"
         self.nrOfSamples           = aantal
         self.vertMode              = "Y" #Y, XY, or FFT.
-        self.sampleStepTime        = stepTime
         self.xincr                 = stepTime
         self.xzero                 = 0
         self.xUnitStr              = "s"

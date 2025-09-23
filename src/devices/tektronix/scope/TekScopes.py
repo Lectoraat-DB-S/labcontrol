@@ -5,6 +5,10 @@ from devices.BaseScope import BaseScope, BaseVertical, BaseHorizontal
 from devices.tektronix.scope.Horizontal import TekHorizontal
 from devices.tektronix.scope.Vertical import TekVertical
 from devices.tektronix.scope.Trigger import TekTrigger
+from devices.tektronix.scope.Acquisition import TekAcquisition
+from devices.tektronix.scope.display import TekDisplay
+
+
 from enum import Enum
 
 from devices.tektronix.scope.TekLogger import TekLog
@@ -90,10 +94,18 @@ class TekScope(BaseScope):
         # set binary encoding and transfer 1 byte per sample, for fast communication between computer and devices.
         self.visaInstr.write(f"DATa:ENCdg RIBinary")
         self.visaInstr.write(f"DATA:WIDTH 1")
-        self.horizontal = TekHorizontal(visaInstr)
-        self.vertical = TekVertical(2, visaInstr)
-        self.trigger = TekTrigger(self.vertical,visaInstr)
+       
         #self.setToDefault(self)
+        self.nrOfHoriDivs = 10 # maximum number of divs horizontally
+        self.nrOfVertDivs = 10 # maximum number of divs vertically 
+        self.visibleHoriDivs = 10 # number of visible divs on screen
+        self.visibleVertDivs = 8 # number of visible divs on screen
+        self.horizontal = TekHorizontal(visaInstr)
+        self.vertical = TekVertical(2, visaInstr, self.nrOfHoriDivs, self.nrOfVertDivs,
+                                         self.visibleHoriDivs, self.visibleVertDivs)
+        self.trigger = TekTrigger(self.vertical,visaInstr)
+        self.acquisition = TekAcquisition(visaInstr)
+        self.display = TekDisplay(visaInstr)
        
        
     def setToDefault(self):

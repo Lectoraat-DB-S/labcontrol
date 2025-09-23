@@ -1,5 +1,6 @@
 import pyvisa
 import matplotlib.pyplot as plt
+import numpy as np
 
 class BaseScope(object):
     """BaseScope: base class for oscilloscope implementation.
@@ -58,10 +59,15 @@ class BaseScope(object):
         self.horizontal : BaseHorizontal = None
         self.vertical : BaseVertical = None
         self.trigger : BaseTriggerUnit = None
+        self.display : BaseDisplay = None
+        self.acquisition : BaseAcquisition = None
         self.utility = None
         self.host = None
-        self.horiGridSize = None # Every scope has a horizontal grid, ie a number of divs. To plot, one need tdiv
-        self.vertiGridSize = None # Every scope has a vertical grid or divisions. To plot vertically one need e.g. vdiv
+        self.nrOfHoriDivs = None # maximum number of divs horizontally
+        self.nrOfVertDivs = None # maximum number of divs vertically 
+        self.visibleHoriDivs = None # number of visible divs on screen
+        self.visibleVertDivs = None # number of visible divs on screen
+        
         
     #@property 
     def visaInstr(self) -> pyvisa.resources.MessageBasedResource: 
@@ -109,6 +115,7 @@ class BaseChannel(object):
         self.chanNr = chan_no
         self.WF = BaseWaveForm()            # the waveform ojbect of this channel
         self.WFP = BaseWaveFormPreample(visaInstr) # the waveformpreamble object for this channel
+        self.mode = "SW" # measurements, pkpk for instance, will be performed in software. Set to "HW" when using scope functions 
 
     def query(self, cmdString):
         return self.visaInstr.query(cmdString)
@@ -127,6 +134,25 @@ class BaseChannel(object):
         """Gets the description of the current waveform (i.e. preamble) of this channel. This BaseChannel implementation 
         is empty. An inheriting subclass will have to implement this method by sending the proper SCPI commands."""
         pass 
+
+    def setVisible(self, state:bool):
+        pass
+
+    def isVisible(self):
+        pass
+    
+    def probe(self, factor):
+        pass
+
+    #def probe(self):
+    #    pass
+
+    def setMeasMode(self, mode):
+        """Sets the measurement mode of this channel to "SW" or "HW". When set to "SW", every subsequent measurement request
+        will be done in software. When set "HW", the request will be done by the oscilloscope (the hardware). If the scope 
+        connect doesn't not offer the measurement requested, the operation will be done in software on the host computer"""
+        if mode == "SW" or mode == "HW":
+            self.mode = mode    
         
     def capture(self):
         """Gets the waveform from the oscilloscope, by initiating a new aqquisition. This BaseChannel implementation 
@@ -149,9 +175,12 @@ class BaseChannel(object):
         pass
 
     def position(self):
+        """Gets the (vertical) position of this channel with respect to the center graticule. Unit of position is divisions (divs)."""
         pass
 
     def position(self, pos):
+        """"Sets the (vertical) position of this channel with respect to center. Parameter pos is the deviation from center in divisions (divs). 
+        A positive value means above center, negative means below center. """
         pass
 
     def getYzero(self):
@@ -204,7 +233,10 @@ class BaseChannel(object):
         Preferable by using the scopes build-in (direct) measurement functionality, but, if not present for the 
         scope instance used, by a software implementation of the derived class.
         """
-        pass
+        if self.mode == "SW":
+            maxVal = max(self.WF.scaledYdata)
+            minVal = min(self.WF.scaledYdata)
+            return maxVal-minVal
 
     def getPhaseTo(self, input):
         """Calculates the phase difference of this channels last waveform with respect to the input parameter. The
@@ -214,7 +246,15 @@ class BaseChannel(object):
         if not present, by a software implementation of the derived class.
         """
         pass
-    
+
+    def getPhaseTo(self, input:'BaseChannel', freqEstimate=1000):
+        if self.mode == 'SW':
+            phShift = self.calcPhaseShiftTo(input, freq=freqEstimate)
+            return phShift
+        else:
+            return None
+        
+
     def getFrequency(self):
         """Calculates the frequency of this channels last waveform. 
         This BaseChannel implementation is empty. An inheriting subclass will have to implement this method. 
@@ -274,6 +314,48 @@ class BaseChannel(object):
 
     def getAvMeasVals(self):
         pass
+
+    def set2_80(self, val):
+        pass
+
+    def findAllZC(self):
+        if self.mode == 'SW':
+            trace = self.WF
+            ysamp = np.array(trace.scaledYdata)
+            
+            # to find the first zero crossing, one need the offset
+            
+            offset = np.mean(ysamp)
+            positive = ysamp > offset
+            idx = np.where(np.bitwise_xor(positive[1:], positive[:-1]))[0]
+            return idx
+        else:
+            return None
+        
+    def calcPhaseShiftTo(self, input: 'BaseChannel', freq): #input is een channeltype of een MATH type.
+        # calcPhaseShiftTo(self, input: 'BaseChannel', targetFreq)
+        # 1. get idx of zcd of this channel
+        mytdata = np.array(self.WF.scaledXdata)
+        inptdata = np.array(input.WF.scaledXdata)
+        myIdx = self.findAllZC()
+        inputIdx = input.findAllZC()
+        myZCtdata = mytdata[myIdx]
+        inpZCtdata = inptdata[inputIdx]
+        
+        bool_mask = myZCtdata >= inpZCtdata[0]
+        myZCtdata = myZCtdata[bool_mask][0]
+        diff =  myZCtdata-inpZCtdata[0]
+
+        return diff*freq*360.0
+        
+        # 2. get idx of zcd of the input channel
+        # 3. As we want to know the phase to the input, the idx value of the input channel must be smaller 
+        # than the idx of the zero crossing of this channel.
+
+
+    def findFirstZC(self):
+        pass
+
 ########## BASEVERTICAL ###########
     
 class BaseVertical(object):
@@ -407,7 +489,6 @@ class BaseWaveForm(object):
         self.xUnitStr       = None # unit of X-as/xdata
         self.xincr          = None # multiplier for scaling time data, time between two sample points.
         self.nrOfSamples    = None # the number of points of trace.
-        self.sampleStepTime = None # same as XINCR, Ts = time between to samples.
         self.yzero          = None 
         self.ymult          = None # vertical step scaling factor. Needed to translate binary value of sample to real stuff.
         self.yoff           = None # vertical offset in V for calculating voltage
@@ -531,4 +612,96 @@ class BaseTriggerUnit(object):
         pass
 
     def getState(self): #tigger state zie blz 223 TRIGger:STATE?
+        pass
+
+class BaseDisplay(object):
+    """BaseDisplay: a baseclass for the abstraction of a Display unit of an oscilloscope.
+    All display implementations have to inherit from this baseclass.
+    1. This base class takes care for subclass auto registration, according to pep487, See:  
+    https://peps.python.org/pep-0487/
+    2. Implementing subclasses HAVE TO fully implement the getChannelClass method of this class.
+    3. Be sure this BaseChannel implementation has access to all inheriting subclasses during creation. If not, 
+    the subclass won't be registered and creating the needed channel object(s) will fail."""
+
+    displayList = []
+
+    def __init_subclass__(cls, **kwargs):
+        """Method for auto registration of BaseChannel subclasses according to PEP487.
+        DO NOT ALTER THIS METHOD NOR TRY TO OVERRIDE IT.
+        """
+        super().__init_subclass__(**kwargs)
+        cls.displayList.append(cls)
+    
+    @classmethod
+    def getDisplayClass(cls, dev):
+        """getChannelClass: factory method for scope channel objects. 
+        Remark: this baseclass implementation is empty, must be implemented by the subclass. """
+        pass
+
+    def __init__(self, visaInstr:pyvisa.resources.MessageBasedResource):
+        """Method voor initialising this Channel object.
+        Remark: if the subclass relies the intialisation done below, don't forget to call super().__init()__ !"""
+        self.visaInstr = visaInstr
+
+    def format(self):
+        pass
+
+    def format(self, mode):
+        pass
+
+    def persist(self):
+        pass
+    
+    def persist(self, persmode):
+        pass
+
+    
+class BaseAcquisition(object):
+    """BaseDisplay: a baseclass for the abstraction of a Display unit of an oscilloscope.
+    All display implementations have to inherit from this baseclass.
+    1. This base class takes care for subclass auto registration, according to pep487, See:  
+    https://peps.python.org/pep-0487/
+    2. Implementing subclasses HAVE TO fully implement the getChannelClass method of this class.
+    3. Be sure this BaseChannel implementation has access to all inheriting subclasses during creation. If not, 
+    the subclass won't be registered and creating the needed channel object(s) will fail."""
+
+    acquisitionList = []
+
+    def __init_subclass__(cls, **kwargs):
+        """Method for auto registration of BaseChannel subclasses according to PEP487.
+        DO NOT ALTER THIS METHOD NOR TRY TO OVERRIDE IT.
+        """
+        super().__init_subclass__(**kwargs)
+        cls.acquisitionList.append(cls)
+    
+    @classmethod
+    def getAcquisitionClass(cls, dev):
+        """getChannelClass: factory method for scope channel objects. 
+        Remark: this baseclass implementation is empty, must be implemented by the subclass. """
+        pass
+
+    def __init__(self, visaInstr:pyvisa.resources.MessageBasedResource):
+        """Method voor initialising this Channel object.
+        Remark: if the subclass relies the intialisation done below, don't forget to call super().__init()__ !"""
+        self.visaInstr = visaInstr
+
+    def mode(self):
+        pass
+
+    def mode(self, acqMode):
+        pass
+
+    def getNumOfAcquisition(self):
+        pass
+
+    def averaging(self):
+        pass
+
+    def averaging(self, nrOfAvg):
+        pass
+
+    def state(self):
+        pass
+
+    def state(self, runMode):
         pass

@@ -1,5 +1,7 @@
 import socket
 import pyvisa
+import math
+import numpy as np
 
 class BaseGenChannel(object):
     """BaseGenChannel: base class for channel implementation of a function generator.
@@ -134,3 +136,42 @@ class BaseGenerator(object):
     def chan(self, chanNr): 
         """Gets a channel, based on its index: 1, 2 etc."""
         pass     
+
+    def createFreqArray(self, start=1, stop=1000, nrOfSteps=10, type='LIN'):
+        """"Creates an array of frequencies for AC sweep. Default type is linear ('LIN'). Other valid types are
+         octave ('OCT') or decade ('DEC')."""
+        #TODO: move to an util kind of library or package?
+        if start >= stop:
+            return
+        if start < 0 or stop < 0 or nrOfSteps < 1:
+            return
+        
+        myFreqArray = None
+        match type:
+            case 'LIN':
+                myFreqArray = np.arange(start, stop, nrOfSteps)
+            case 'OCT':
+                mystart = math.log2(start) # if start = 10 than mystart = 1
+                mystop = math.log2(stop)   # if stop = 100 than mystop = 2
+                if mystart >= mystop:
+                    return
+                mystep = 1.0/nrOfSteps
+                powArray = np.arange(mystart,mystop, mystep)
+                roundPowArr = np.around(powArray, decimals=1) 
+                myFreqArray = np.float_power(2.0, roundPowArr)
+                myFreqArray = np.around(myFreqArray, decimals=1) 
+               
+            case 'DEC':
+                mystart = math.log10(start) # if start = 10 than mystart = 1
+                mystop = math.log10(stop)   # if stop = 100 than mystop = 2
+                if mystart >= mystop:
+                    return
+                mystep = 1.0/nrOfSteps
+                powArray = np.arange(mystart,mystop, mystep)
+                roundPowArr = np.around(powArray, decimals=1) 
+                myFreqArray = np.float_power(10.0, roundPowArr)
+                myFreqArray = np.around(myFreqArray, decimals=1) 
+               
+        return myFreqArray
+
+

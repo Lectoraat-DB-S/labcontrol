@@ -8,6 +8,9 @@ from devices.tektronix.scope.Channel import TekChannel,TekWaveForm, TekWaveFormP
 from devices.tektronix.scope.Vertical import TekVertical
 from devices.tektronix.scope.Horizontal import TekHorizontal
 from devices.tektronix.scope.Trigger import TekTrigger
+from devices.tektronix.scope.Acquisition import TekAcquisition
+from devices.tektronix.scope.display import TekDisplay
+
 
 # section: Siglent scope
 from devices.siglent.sds.Scopes import SiglentScope # For auto registration
