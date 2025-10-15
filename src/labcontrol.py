@@ -25,7 +25,7 @@ from devices.Korad.KoradSupply import Korad3305P
 #import control.gutter as gootje
 from devices.BaseScope import BaseChannel, BaseScope, BaseHorizontal, BaseVertical, BaseWaveForm, BaseWaveFormPreample
 from devices.BaseGenerator import BaseGenerator
-from devices.siglent.sds.Scopes import  SiglentScope
+from devices.siglent.sds.SDS1000.Scopes import  SiglentScope
 from devices.tektronix.scope.TekScopes import TekScope, TekHorizontal, TekTrigger
 
 import matplotlib.pyplot as plt
@@ -43,6 +43,10 @@ from measurements.frequencyResponse import doACSweep
 import devices.BaseLabDeviceUtils as bu
 
 import usbtmc
+
+def testEthConfig():
+    bu.setEthernet()
+
 def testUSBTMC():
     
     for dev in libusb_package.find(find_all=True):
@@ -139,10 +143,11 @@ if __name__ == "__main__":
     rm = pyvisa.ResourceManager()
     urls = rm.list_resources()
     print(urls)
-    #bu.testlmfitDecaySine()
+    #bu.testlmfit()
+    #bf.testlmfit()
     #a  = input()
-    #rc = ResourceManager(vis
-    # a_library="@mock")
+    #bu.setEthernet()
+    
     doACSweep()
     #testUSBTMC()
     #testTekTm()

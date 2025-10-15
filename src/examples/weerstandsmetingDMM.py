@@ -1,5 +1,5 @@
 import devices.siglent.sdm.DigitalMultiMeter as multimeter
-from devices.siglent.sds.Scopes import SiglentScope
+from src.devices.siglent.sds.SDS1000.Scopes import SiglentScope
 
 def meetweerstandTW():
     dmm = multimeter.SiglentDMM()

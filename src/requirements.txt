@@ -12,3 +12,4 @@ pyusb
 pyserial
 python-usbtmc
 pyqtgraph
+numdifftools

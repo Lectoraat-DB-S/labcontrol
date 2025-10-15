@@ -38,7 +38,7 @@ class TekChannel(BaseChannel):
         if self.isVisible():
             self.setSource()
             self.WFP.queryPreamble()
-            self.WF.setWaveFormID(self.WFP)
+            self.WF.setPreamble(self.WFP)
             
         
         #self.setVisible(state=True)
@@ -63,6 +63,14 @@ class TekChannel(BaseChannel):
             return False
         else:
             return True
+        
+
+    def setCoupling(self, coupling):
+        if coupling == "AC" or coupling == "DC" or coupling == "GND":
+            self.write(f"{self.name}:COUPLING AC")
+
+    def setProcMode(self, mode):
+        super().setProcMode(mode)
                 
     def getLastTrace(self):
         return self.WF
@@ -160,7 +168,7 @@ class TekChannel(BaseChannel):
         # correct handling of event code 2244
         return int(self.visaInstr.query(f"wfmpre:{self.name}:nr_pt?")) #For a channel version of this command:see programming guide page 231
           
-    def capture(self):
+    def capture(self)->BaseWaveForm:
         """Capture: getting the waveform data from the oscilloscope. This is the Tektronix TDS2000 series 
         implementation. According to the information in the TDS programming manual on page 54, 86, this method 
         implements the following logic:
@@ -186,12 +194,12 @@ class TekChannel(BaseChannel):
         #self.visaInstr.write(f"DATa:ENCdg RIBinary")
         #self.visaInstr.write(f"DATA:WIDTH 1")
         
-        trace = self.WFP.queryPreamble()
+        self.WFP.queryPreamble()
         wfp = self.WFP
         trace = self.WF
         wfp = self.WFP
         
-        trace.setWaveFormID(wfp)
+        trace.setPreamble(wfp)
         #self.log.addToLog("start querying scope")
         #5-9-2025: when saving data in a file, comma's appears. Might be due transport format of Tektronix 
         bin_wave = self.visaInstr.query_binary_values('curve?\n', datatype='b', container=np.array)
@@ -496,35 +504,24 @@ class TekWaveFormPreamble(BaseWaveFormPreample):
         self.binFirstByteStr       : Location of first byte(? Checken!), see documentation
         self.nrOfSamples           : number of samples of acquired waveform
         self.vertMode              : Indicaties YT,XY, or FFT mode
-        self.xincr                 : Time between to samples
+        self.xincr                 : Time between two samples
         self.xzero                 : Location of X=0 on screen horizontally
         self.xUnitStr              : Horizontal axis unit
         self.ymult                 : Vertical gain, or VDIV
         self.yzero                 : Is a value, expressed in YUNits, used to convert waveform record
                                      values to YUNitLocation of Y=0 on screen vertically
         self.yoff                  : Vertical offset in digitizer levels
-        self.yUnitStr              : Vertical axis unit"""
+        self.yUnitStr              : Vertical axis unit
+        self.couplingstr           : "AC", "DC" or "GND"
+        self.timeDiv               : Amount of time of one horizontal division on screen. Also called 'Timebase' 
+        self.acqModeStr            : The sampling system of an oscilloscope has greater range than the horizontal scale. Therefore a scope is capable to take multiple
+                                            samples for an acquisition interval. Typical Acquisition modes are 'sample mode', 'peak mode', or 'average(ing)' 
+        self.sourceChanStr         : A string indicating the channel of this waveformpreamble, e.g. 'C1' or 'CH1', depending on scope brand or type.
+        self.vdiv                  : the amount of vertical displacement per division of the screen.
+            
+        
+        """
         super().__init__(dev=dev)
-        ##### START OF TEKTRONIX TDS TYPICAL PARAMETERS DEFINITION ####### 
-        self.nrOfBytePerTransfer   = None
-        self.nrOfBitsPerTransfer   = None
-        self.encodingFormatStr     = None
-        self.binEncodingFormatStr  = None
-        self.binFirstByteStr       = None
-        self.nrOfSamples           = None
-        self.vertMode              = None #Y, XY, or FFT.
-        self.xincr                 = None
-        self.xzero                 = None
-        self.xUnitStr              = None
-        self.ymult                 = None
-        self.yzero                 = None
-        self.yoff                  = None
-        self.yUnitStr              = None
-        self.couplingstr           = None
-        self.timeDiv               = None
-        self.acqModeStr            = None
-        self.sourceChanStr         = None
-        self.vdiv                  = None
         
         
     def decode(self, strToDecode):
@@ -584,29 +581,13 @@ class TekWaveForm(BaseWaveForm):
     def __init__(self):
         ####TEKTRONIX TDS SPECIFIC WAVEFORM PARAMS ########
         super().__init__()
-        self.rawYdata       = None #data without any conversion or scaling taken from scope
-        self.rawXdata       = None #just an integer array
-        self.scaledYdata    = None #data converted to correct scale e.g units
-        self.scaledXdata    = None #An integer array representing the fysical instants of the scaledYData.
-        #Horizontal data settings of scope
-        self.chanstr        = None
-        self.couplingstr    = None
-        self.timeDiv        = None # see TDS prog.guide table2-17: (horizontal)scale = (horizontal) secdev 
-        self.vDiv           = None # probably the same as Ymult.
-        self.xzero          = None # Horizontal Position value
-        self.xUnitStr       = None # unit of X-as/xdata
-        self.xincr          = None # multiplier for scaling time data, time between two sample points.
-        self.nrOfSamples    = None # the number of points of trace.
-        self.yzero          = None 
-        self.ymult          = None # vertical step scaling factor. Needed to translate binary value of sample to real stuff.
-        self.yoff           = None # vertical offset in V for calculating voltage
-        self.yUnitStr       = None
         
-    def setWaveFormID(self, wfp: TekWaveFormPreamble):
-        self.chanstr = wfp.sourceChanStr
-        self.couplingstr = wfp.couplingstr
-        self.timeDiv = wfp.timeDiv
-        self.vDiv = wfp.vdiv
+        
+    def setPreamble(self, wfp: TekWaveFormPreamble):
+        self.chanstr        = wfp.sourceChanStr
+        self.couplingstr    = wfp.couplingstr
+        self.timeDiv        = wfp.timeDiv
+        self.vDiv           = wfp.vdiv
         self.xzero          = wfp.xzero
         self.xUnitStr       = wfp.xUnitStr
         self.xincr          = wfp.xincr

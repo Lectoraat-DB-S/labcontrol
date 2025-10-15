@@ -2,6 +2,7 @@ import socket
 import pyvisa
 import math
 import numpy as np
+from devices.BaseConfig import LabcontrolConfig, BaseGeneratorConfig
 
 class BaseGenChannel(object):
     """BaseGenChannel: base class for channel implementation of a function generator.
@@ -101,7 +102,7 @@ class BaseGenerator(object):
         cls.GeneratorList.append(cls)
          
     @classmethod
-    def getGeneratorClass(cls, rm, urls, host=None):
+    def getGeneratorClass(cls, rm, urls, host=None, myConfig: BaseGeneratorConfig = None):
         """Method for getting the right type of scope, so it can be created by the runtime.
         This Basescope implementation does nothing other the return the BaseScope type. The inheriting
         subclass should implement the needed logic"""
@@ -116,22 +117,54 @@ class BaseGenerator(object):
         DON'T TRY TO CALL THE CONSTRUCTOR OF THIS CLASS DIRECTLY"""
         rm = pyvisa.ResourceManager()
         urls = rm.list_resources()
+        myconfig = LabcontrolConfig().find(cls)
 
         for generator in cls.GeneratorList:
-            generatortype, nrOfChannels, dev = generator.getGeneratorClass(rm, urls, host)
+            generatortype, nrOfChannels, dev = generator.getGeneratorClass(rm, urls, host, myconfig)
             if generatortype != None:
                 cls = generatortype
                 return cls(nrOfChannels, dev)
             
         return None # if getDevice can't find an instrument, return None.
+    
+    @classmethod
+    def SocketConnect(cls, rm:pyvisa.ResourceManager = None, scopeConfig: BaseGeneratorConfig = None,
+                timeOut = 10000, readTerm = '\n', writeTerm = '\n')->pyvisa.resources.MessageBasedResource:
+        myConfig: BaseGeneratorConfig = scopeConfig
+        if rm == None:
+            return None
+        
+        if scopeConfig == None:
+            return None
+        else:
+            host = myConfig.IPAddress #property
+            mydev: pyvisa.resources.MessageBasedResource = None
+            if host == None:
+                return None
+            try:
+                #logger.info(f"Trying to resolve host {host}")
+                ip_addr = socket.gethostbyname(host)
+                mydev = rm.open_resource("TCPIP::"+str(ip_addr)+"::INSTR")
+            except (socket.gaierror, pyvisa.VisaIOError) as error:
+                #logger.error(f"Couldn't resolve host {host}")
+                return None
+            
+            mydev.timeout = timeOut  # ms
+            mydev.read_termination = readTerm
+            mydev.write_termination = writeTerm
+            return mydev
+        #No return needed here. Every path within function returns None or resource.
+    
 
 
-    def __init__(self, nrOfChan: int=0, instr:pyvisa.resources.MessageBasedResource=None):
+    def __init__(self, nrOfChan: int=0, instr:pyvisa.resources.MessageBasedResource=None, 
+                 myConfig: BaseGeneratorConfig = None):
         """This method takes care of the intialisation of a BaseGenerator object. This implementation leaves most
         datamembers uninitialised. A subclass should therefore override this function, by initialising the datamembers 
         needed. Remark: if the subclass relies the intialisation done below, don't forget to call super().__init()__ !"""
         self.visaInstr: pyvisa.resources.MessageBasedResource = instr
         self.nrOfChan = nrOfChan
+        self._genConfig = myConfig
 
     def chan(self, chanNr): 
         """Gets a channel, based on its index: 1, 2 etc."""

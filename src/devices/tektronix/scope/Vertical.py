@@ -34,7 +34,7 @@ class TekVertical(BaseVertical):
             self.channels.append({i:TekChannel(i, dev, self.perMeasDict)})
             
     def chan(self, chanNr): 
-        """Gets a channel, based on its index: 1, 2 etc."""
+        """Gets a channel, based on its index: 1, 2 etc.
         try: 
             for  i, val in enumerate(self.channels):
                 if (chanNr) in val.keys():
@@ -42,6 +42,11 @@ class TekVertical(BaseVertical):
         except ValueError:
             print("Requested channel not available")
             return None     
+        """
+        return super().chan(chanNr)
+    
+    def setProcMode(self, mode):
+        super().setProcMode(mode)
         
     def getMathSettings(self):
         """

@@ -1,5 +1,6 @@
 import pyvisa
 from devices.BaseGenerator import BaseGenerator, BaseGenChannel
+from devices.BaseConfig import BaseGeneratorConfig
 import usb.core
 import usb.backend.libusb1
 
@@ -117,7 +118,7 @@ class OWONGenerator(BaseGenerator):
 
 
     @classmethod
-    def getGeneratorClass(cls, rm, urls, host):
+    def getGeneratorClass(cls, rm, urls, host, yConfig: BaseGeneratorConfig = None):
         """
         Tries to get (instantiate) this device, based on matched url or idn response
         This method will ONLY be called by the BaseScope class, to instantiate the proper object during
@@ -138,7 +139,7 @@ class OWONGenerator(BaseGenerator):
         else:
             return (None, 0, None)
 
-    def __init__(self, nrOfChan=0, visaInstr=None):
+    def __init__(self, nrOfChan=0, visaInstr=None, myConfig: BaseGeneratorConfig = None):
         super().__init__(nrOfChan=nrOfChan, instr=visaInstr)
         backend = usb.backend.libusb1.get_backend(find_library=lambda x: "C:\\Users\\p78511225\\.pyenv\pyenv-win\\versions\\3.13.3\\Scripts\\libusb-1.0.dll")
         dev = usb.core.find(idVendor=0x5345, idProduct=0x1235, backend=backend)

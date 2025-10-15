@@ -7,9 +7,73 @@ import math
 import pandas as pd
 from dataclasses import make_dataclass
 from devices.BaseScope import BaseWaveForm
+import lmfit
+from lmfit.model import ModelResult
+from devices.BaseFitter import FitSine, PhaseEstimator
+import subprocess
+import json
+import os
 
 
-    
+###### network configure scripts ###### Needs administrator rights to work ######################-
+CONFIG_FILE = "config.json"
+
+def run_cmd(cmd):
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if result.stdout:
+        print(result.stdout.strip())
+    if result.stderr:
+        print(result.stderr.strip())
+
+def load_config():
+    CONFIG_FILE_PATH = os.getcwd()+"\\src\\devices\\"+CONFIG_FILE
+    with open(CONFIG_FILE_PATH, "r") as f:
+        return json.load(f)
+
+def set_static(adapter, ip, mask, gateway, dns):
+    print(f"[*] Statisch IP instellen voor {adapter} -> {ip}")
+    run_cmd(f'netsh interface ip set address name="{adapter}" static {ip} {mask} {gateway}')
+    if dns:
+        run_cmd(f'netsh interface ip set dns name="{adapter}" static {dns}')
+
+def set_dhcp(adapter):
+    print(f"[*] DHCP instellen voor {adapter}")
+    run_cmd(f'netsh interface ip set address name="{adapter}" source=dhcp')
+    run_cmd(f'netsh interface ip set dns name="{adapter}" source=dhcp')
+
+def setEthernet():
+    print(os.getcwd())
+    config = load_config()
+    adapter = config.get("adapter", "Ethernet")
+    profiles = config["profiles"]
+
+    print("Beschikbare profielen:")
+    for i, name in enumerate(profiles.keys(), 1):
+        print(f"{i}. {name}")
+
+    choice = input("Kies profielnummer: ")
+    try:
+        choice = int(choice) - 1
+        profile_name = list(profiles.keys())[choice]
+    except:
+        print("Ongeldige keuze")
+        return
+
+    profile = profiles[profile_name]
+
+    if profile["mode"] == "dhcp":
+        set_dhcp(adapter)
+    elif profile["mode"] == "static":
+        set_static(adapter, profile["ip"], profile["mask"], profile.get("gateway", ""), profile.get("dns", ""))
+    else:
+        print("Onbekende modus in config.")
+
+################ End network configuration scripts #####################
+
+
+
+def sine_function(x, amp=1, freq=1000, phase=0, offset=0):
+    return amp * np.sin(2*math.pi*freq * x + phase) + offset    
 
 def sine_functionw(x, amp, omega, phase, offset):
     return amp * np.sin(omega * x + phase) + offset
@@ -28,55 +92,33 @@ def wf2df():
     """
     Function to create a DataFrame out of a WaveForm object i.e. the raw x and y data and their scaled version.
     
-        self.xUnitStr       scope setting
-        self.xincr          scope setting
-        self.nrOfSamples    scope setting
-        self.timeDiv        scope setting 
-        
-        self.chanstr        For each chan
-        self.couplingstr    For each chan
-        self.vDiv           each chan
-        self.xzero          each chan
-        self.yzero          each chan
-        self.ymult          each chan.
-        self.yoff           each chan.
-        self.yUnitStr       each chan.
-        0
-        content of file:
-        1. Scope settings
+        content of DF/file:
+        1. Scope or global (horizontal) settings
         2. vertical settings
         3. Data : 4 column raw scaled chan 1 than 4 colom raw scaled chan 2.
         | col1 | col2 | col3 | col4 | col5 | col7 | col8 |    
           date:   dd-mm-yy
           global settings
           ========
-          xUnitStr xxxxx
-          xincr    zzzzz      
-          nrOfSamples yyyyy   
-          timeDiv    xxxxx
-          chan 1 settings
-           chanstr        For each chan
-           couplingstr    For each chan
-           vDiv           each chan
-           xzero          each chan
-           yzero          each chan
-           ymult          each chan.
-           yoff           each chan.
-           yUnitStr       each chan.
-          chan 2 settings   
-           chanstr        For each chan
-           couplingstr    For each chan
-           vDiv           each chan
-           xzero          each chan
-           yzero          each chan
-           ymult          each chan.
-           yoff           each chan.
-           yUnitStr       each chan.
-              data chan 1                        data chan 2
-        indexNr | rawX | rawY | scaledX | scaledY | rawX | rawY | scaledX | scaledY
-        units          X units  Y units                  X units  Y units
-        0         value   value  value     value    value  value   value     value
-        1           ...     ..      ..      ..      ...     ...     ...       ...
+          xUnitStr,<TAB>xxxxx
+          xincr,<TAB>zzzzz      
+          nrOfSamples,<TAB>yyyyy   
+          timeDiv,<TAB>xxxxx
+          chan 1 settings,<TAB><TAB>chan 2 settings
+          chanstr,<TAB>xxxx,chanstr,<TAB>xxxx.
+          couplingstr,<TAB>xxxx,<TAB>couplingstr,<TAB>xxxx.
+          vDiv,<TAB>xxxx,<TAB>vDiv,<TAB>xxxx.
+          xzero,<TAB>xxxx,<TAB>xzero,<TAB>xxxx.
+          yzero,<TAB>xxxx,<TAB>yzero,<TAB>xxxx.
+          ymult,<TAB>xxxx,<TAB>ymult,<TAB>xxxx.
+          yoff,<TAB>xxxx,<TAB>yoff,<TAB>xxxx.
+          yUnitStr,<TAB>xxxx,<TAB>yUnitStr,<TAB>xxxx.
+          
+        <TAB><TAB>data chan 1<TAB><TAB>data chan 2.
+        indexNr<TAB>rawX<TAB>rawY<TAB>scaledX<TAB>scaledY<TAB>rawX<TAB>rawY<TAB>scaledX<TAB>scaledY.
+        0,<TAB>wwww,<TAB>xxxx,<TAB>yyyy,<TAB>zzzz,<TAB>wwww,<TAB>xxxx,<TAB>yyyy,<TAB>zzzz.
+        1,<TAB>wwww,<TAB>xxxx,<TAB>yyyy,<TAB>zzzz,<TAB>wwww,<TAB>xxxx,<TAB>yyyy,<TAB>zzzz.
+        ...     ..      ..      ..      ...     ...     ...       ...
         """
     pass
 
@@ -146,10 +188,11 @@ def fitSineParam2Data(waveformSamples, freq_in, fitmethod="basinhopping"):
     pass
 
 
-def calcPhaseShiftBetweenSampArrays(signalIn: np.array, signalOut: np.array, 
-                                    inTimeArray: np.array, outTimeArray: np.array, freq,
-                                    method = "zcd", fitmethod = "basinhopping", 
-                                    ampVal=1, phaseVal = 0, freqVal = 1000, offVal = 0): 
+#def calcPhaseShiftBetweenSampArrays(signalIn: np.array, signalOut: np.array, 
+def findInOutPhaseShift(signalIn: np.array, signalOut: np.array,
+                        inTimeArray: np.array, outTimeArray: np.array, freq,
+                        method = "zcd", fitmethod = "basinhopping", 
+                        ampVal=1, phaseVal = 0, freqVal = 1000, offVal = 0): 
     
         # calcPhaseShiftTo(self, input: 'BaseChannel', targetFreq)
         # 1. get idx of zcd of this channel
@@ -183,45 +226,13 @@ def calcPhaseShiftBetweenSampArrays(signalIn: np.array, signalOut: np.array,
     elif method == "fit":
         if fitmethod not in VALID_METHODS:
             return {None, None}
-        match fitmethod:
-            case "basinhopping":
-                modelIn = lmfit.Model(sine_function)
-                modelOut = lmfit.Model(sine_function)
-                omegaVal = 2*math.pi*freqVal
-                
-                #Create params for fit input. Amp estimate = amp generator, phase = 0, offset = generator offset (
-                # for now assumed to be zero. TODO: must be changable in future),
-                #omega = generator omega, or freq/2pi, for now the setpoint frequency on generator
-                #TODO: a suggestion for amplitude and offset deviations, one could use min/max values based on the imput
-                # samples, which possibly yields in a more realistic fit.,
-                inParams = modelIn.make_params(amp={'value': ampVal, 'min': ampVal-(ampVal/3), 'max': ampVal+(ampVal/3)},
-                            omega={'value': omegaVal, 'min': omegaVal-(omegaVal/3), 'max': omegaVal+(omegaVal/3)},
-                            phase={'value': phaseVal, 'min': 0.001, 'max': 0.1},
-                            offset={'value': offVal, 'min': -0.1, 'max': 0.1})
-                
-                outParams = modelOut.make_params(amp={'value': ampVal, 'min': ampVal-(ampVal/3), 'max': ampVal+(ampVal/3)},
-                            omega={'value': omegaVal, 'min': omegaVal-(omegaVal/3), 'max': omegaVal+(omegaVal/3)},
-                            phase={'value': phaseVal, 'min': 0.001, 'max': 0.1},
-                            offset={'value': offVal, 'min': -0.1, 'max': 0.1})
-                
-                resultIn = modelIn.fit(signalIn, inParams, x=inTimeArray, method=fitmethod)
-                resultOut = modelOut.fit(signalOut, outParams, x=outTimeArray, method=fitmethod)
-                fitinresult= resultIn.summary()
-                fitoutresult = resultOut.summary()
-
-                bestValIn = fitinresult['best_values']
-                bestValOut = fitoutresult['best_values']
-
-                phaseIn = bestValIn['phase']
-                phaseOut = bestValOut['phase']
-                phaseDiffRad = phaseOut-phaseIn #is diff in rad
-                
-                phasediffDeg = (phaseDiffRad*180.0)/math.pi # conversion to degree
-                #phasedifResDict = {"phasedif":phaseDiff} # this is an answer in rad.
-                #resultdict={"results": phasedifResDict}
-                #return {inParamDict, resultdict}
-                return phasediffDeg
-         
+        estimator = PhaseEstimator(inputSignal=signalIn, 
+                                    outputSignal=signalOut,
+                                    timeData=inTimeArray,
+                                    debugPrint=True)
+        phShift = estimator.estimate()
+        return phShift
+    
 
 def calcPhaseShiftBetweenWFs(wfIn: BaseWaveForm, wfOut: BaseWaveForm, freq, 
                              method = "zcd", fitmethod = "basinhopping", ampVal=1, phaseVal = 0, freqVal = 1000, offVal = 0):    
@@ -346,11 +357,11 @@ def testBodePlot():
 
 def testlmfit():
     
-    x = np.linspace(0, 20, 201)
+    x = np.linspace(0, 0.005, 201)
     np.random.seed(2)
 
     #ydat = sine_function(x, 2, 10000, 4.10, 0) + np.random.normal(size=len(x), scale=1)
-    ydat = sine_function(x, 2, 0.5, math.pi/4, 0) + np.random.normal(size=len(x), scale=0.25)
+    ydat = sine_function(x, 2, 1000, math.pi/4, 0) + np.random.normal(size=len(x), scale=0.25)
 
     model = lmfit.Model(sine_function)
     params = model.make_params(amp={'value': 1.9, 'min': 0, 'max': 2},
@@ -364,7 +375,7 @@ def testlmfit():
     #                        offset=1.0)
 
     # fit with leastsq
-    result0 = model.fit(ydat, params, x=x, method='leastsq')
+    result0 = model.fit(data=ydat, params=params, x=x, method='leastsq')
     print("# Fit using leastsq:")
     print(result0.fit_report())
     tmp = result0.summary()

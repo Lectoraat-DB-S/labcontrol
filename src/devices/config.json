@@ -1,0 +1,22 @@
+{
+    "profiles": {
+        "werk": {
+            "mode": "dhcp"
+        },
+        "apparaatA": {
+            "mode": "static",
+            "ip": "192.168.0.102",
+            "mask": "255.255.255.0",
+            "gateway": "192.168.0.1",
+            "dns": "8.8.8.8"
+        },
+        "apparaatB": {
+            "mode": "static",
+            "ip": "10.0.0.50",
+            "mask": "255.255.255.0",
+            "gateway": "10.0.0.1",
+            "dns": "1.1.1.1"
+        }
+    },
+    "adapter": "Ethernet"
+}

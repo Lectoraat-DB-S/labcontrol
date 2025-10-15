@@ -2,12 +2,12 @@ from devices.BaseScope import BaseScope, BaseChannel, BaseVertical
 from devices.BaseScope import pyvisa
 import unittest
 from unittest.mock import call, patch, MagicMock
-from devices.siglent.sds.Scopes import SiglentScope
+from src.devices.siglent.sds.SDS1000.Scopes import SiglentScope
 import src.tests.sdsUtils as sdsUtils
 import numpy as np
 import matplotlib.pyplot as plt
-from devices.siglent.sds.Channel import SDSWaveFormPreamble
-from devices.siglent.sds.util import TIMEBASE_HASHMAP, guessSine, sine_function
+from src.devices.siglent.sds.SDS1000.Channel import SDSWaveFormPreamble
+from src.devices.siglent.sds.util import TIMEBASE_HASHMAP, guessSine, sine_function
 
 
 """In de documentatie van unittest staat de volgende opmerking:

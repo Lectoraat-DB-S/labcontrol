@@ -1,7 +1,7 @@
 import numpy as np
 import struct
-from devices.siglent.sds.Channel import SDSWaveFormPreamble
-from devices.siglent.sds.util import TIMEBASE_HASHMAP
+from src.devices.siglent.sds.SDS1000.Channel import SDSWaveFormPreamble
+from src.devices.siglent.sds.util import TIMEBASE_HASHMAP
 
 def genFakeSineWave(starttime = 0, fs = 1.0e4, nrOfSamples = 2500, nrOfPer = 2, A=1, offset=0, noise=(None,None,None), preamble: SDSWaveFormPreamble = None):
     timestep = 1/fs

@@ -6,9 +6,9 @@ from enum import Enum
 import pyvisa as visa
 import logging
 import time
-from devices.siglent.sds.util import splitAndStripHz, splitAndStripSec, splitAndStripV 
-from devices.siglent.sds.util import WaveFormTrace
-from devices.siglent.sds.util import TIMEBASE_HASHMAP
+from src.devices.siglent.sds.util import splitAndStripHz, splitAndStripSec, splitAndStripV 
+from src.devices.siglent.sds.util import WaveFormTrace
+from src.devices.siglent.sds.util import TIMEBASE_HASHMAP
 import pickle
 
 # SDSChannel: abstraction of a Siglent oscilloscope channel.

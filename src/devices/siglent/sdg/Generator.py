@@ -10,6 +10,8 @@ from devices.BaseGenerator import BaseGenerator
 from devices.siglent.sdg.Channels import SDGChannel
 #from sdg.util import IDN
 from devices.siglent.sdg.util import IDN
+from devices.BaseConfig import BaseGeneratorConfig
+
 
 logger = logging.getLogger("SiglentGenerator")
 #logging.basicConfig(filename='siglentgenerator.log', level=logging.INFO)
@@ -130,42 +132,43 @@ class SiglentGenerator(BaseGenerator):
 
 
    @classmethod
-   def getGeneratorClass(cls, rm, urls, host):
+   def getGeneratorClass(cls, rm, urls, host, genListConfig: BaseGeneratorConfig = None):
       """
          Tries to get (instantiate) this device, based on matched url or idn response
          This method will ONLY be called by the BaseScope class, to instantiate the proper object during
          creation by the __new__ method of BaseGenerator.     
       """    
       if cls is SiglentGenerator:
+         # first try find the scope on USB,
          urlPattern = "SDG" 
-         if host == None:
-               for url in urls:
-                  if urlPattern in url:
-                     mydev = rm.open_resource(url)
-                     mydev.timeout = 10000  # ms
-                     mydev.read_termination = '\n'
-                     mydev.write_termination = '\n'
-                     desc = mydev.query("*IDN?")
-                     myidn = cls.decodeIDN(desc)
-                     if myidn: #Found a valid Siglent Generator.
-                           return (cls, 2, mydev)
-               return (None, 0, None)
-                              
-         else:
-               try:
-                  ip_addr = socket.gethostbyname(host)
-                  addr = 'TCPIP::'+str(ip_addr)+'::INSTR'
-                  mydev = rm.open_resource('TCPIP::'+str(ip_addr)+'::INSTR')
-                  cls.__init__(cls,mydev)
-                  return (cls, 2, mydev)
-               except socket.gaierror:
-                  print("Socket Error")
-                  return (None, 0, None)
-      else:
-         return (None, 0, None)
+         for url in urls:
+            if urlPattern in url:
+               mydev = rm.open_resource(url)
+               mydev.timeout = 10000  # ms
+               mydev.read_termination = '\n'
+               mydev.write_termination = '\n'
+               desc = mydev.query("*IDN?")
+               myidn = cls.decodeIDN(desc)
+               if myidn: #Found a valid Siglent Generator.
+                     return (cls, 2, mydev)
+         
+         if genListConfig == None:
+            return (None, 0, None)
+            
+            
+         for myConfig in genListConfig:
+               mydev = cls.SocketConnect(rm=rm, scopeConfig=myConfig)
+               if mydev != None:
+                  myidn:IDN = IDN()
+                  idnRespStr=str(mydev.query("*IDN?"))
+                  myidnResp = myidn.decodeIDN(desc=idnRespStr)
+                  if myidnResp:
+                     return (cls, 2, mydev)
+         return (None, 0, None)                
 
-   def __init__(self, nrOfChan: int=0, visaInstr:pyvisa.resources.MessageBasedResource=None):
-      super().__init__(nrOfChan=nrOfChan, instr=visaInstr)
+   def __init__(self, nrOfChan: int=0, visaInstr:pyvisa.resources.MessageBasedResource=None,
+                myConfig: BaseGeneratorConfig = None):
+      super().__init__(nrOfChan=nrOfChan, instr=visaInstr, myConfig=myConfig)
       self.idn = IDN()
       self.channels =list()
       

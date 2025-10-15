@@ -21,12 +21,13 @@ try:
     print(rm.list_resources())
 
     # Connect to device (Make sure to change the resource locator!)
-    device = rm.open_resource('TCPIP::192.168.2.108::INSTR',query_delay=0.25)
+    device = rm.open_resource('TCPIP::192.168.0.105::INSTR',query_delay=0.25)
 except:
     print('Failed to connect to device...')
     sys.exit(0)
 device.timeout = 30000
-
+#device.chunk_size = 20480000
+device.chunk_size = 102400
 CHAN = 1
 
 VDIV= device.query('C1:VDIV?')
@@ -53,7 +54,7 @@ device.write('WFSU SP,1,NP,0,FP,0')
 datapoints = device.query_binary_values('C1:WF? DAT2', datatype='d', is_big_endian=False)
 #datapoints = device.query_binary_values('C1:WF? DAT2')
 #print(datapoints)
-
+print(f"aantal datapoints = {len(datapoints)}")
 #X_AX = time = np.arange(0, len(WAVEFORM), 1);
 #device.write('CURV?')
 #datapoints = device.read_raw()
