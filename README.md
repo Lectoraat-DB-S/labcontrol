@@ -1,3 +1,5 @@
+# Labcontrol - Bestuur al je meetapparatuur met jouw laptop
+Labcontrol is een tool om 
 # Install on Windows.
 Er is op het moment alleen een installatiehandleiding met bijbehorende installer voor Windows. De installer is gebasseerd op WinPython  [[1]](#1) ,een speciaal voor Windows geconfigureerde Python distro, compleet met een rijke verzameling aan grafische (plotting) mogelijke, wiskundige pakketten en de nodig algoritmes voor ML en databewerking. 
 ## Installatiehandleiding labcontrol:
