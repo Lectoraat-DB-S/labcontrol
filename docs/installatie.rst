@@ -1,3 +1,7 @@
+========================================
+Installatie van Labcontrol op Windows 11
+========================================
+
 Deze pagina beschrijft de installatie van Labcontrol op een Windows 11 computer. Er zijn twee opties om Labcontrol te 
 installeren± 1. Handmatig en 2. via een installer geschreven in Powershell script.
 
