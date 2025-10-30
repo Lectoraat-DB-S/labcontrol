@@ -31,62 +31,62 @@ else {
 $appList = winget list
 # vind een string in een string:
 $result = $appList | Select-String -Pattern 'git' -SimpleMatch
-if ($result {
-		Write-Host 'Git staat al op uw systeem';
-	}
-	else {
-		Write-Host 'Git staat niet op uw systeem. Er wordt gepoogd Git te downloaden & te installeren.\n';
-		Write-Host 'Eerst wodt git-scm gedownload......\n';
-		#download git-scm
-		Start-BitsTransfer -Source $git_scm_url  -Destination $dest
-		Write-Host 'Git-scm is gedownload, installatie wordt nu gestart. A.u.b. toestemming verlenen als daar om gevraagd wordt.\n';
+if ($result) {
+	Write-Host 'Git staat al op uw systeem';
+}
+else {
+	Write-Host 'Git staat niet op uw systeem. Er wordt gepoogd Git te downloaden & te installeren.\n';
+	Write-Host 'Eerst wodt git-scm gedownload......\n';
+	#download git-scm
+	Start-BitsTransfer -Source $git_scm_url  -Destination $dest
+	Write-Host 'Git-scm is gedownload, installatie wordt nu gestart. A.u.b. toestemming verlenen als daar om gevraagd wordt.\n';
 	
-		#install git-scm
-		#Start-Process -FilePath "c:\temp\Git-2.51.0.2-64-bit.exe"
-		#bovenstaande start de installer op, maar dan moet je wel als user toestemming geven, daar heb ik niet zo veel zin in.
-		# het kan ook sitlently, maar dan via chocolately.
-		#choco install git -params '"/GitOnlyOnPath"'
-		# maar je kunt de commandline opties ook zien via: c:\temp\Git-2.51.0.2-64-bit.exe /?, dat levert volgende instructie op:
-		c:\temp\Git-2.51.0.2-64-bit.exe /SP- /SILENT #dit lijkt te werken, de vraag of ik wel wil doorgaan komt wel, ondanks de SP-switch. ik krijg geen vraag waar ik de boel wil hebben
-	}
+	#install git-scm
+	#Start-Process -FilePath "c:\temp\Git-2.51.0.2-64-bit.exe"
+	#bovenstaande start de installer op, maar dan moet je wel als user toestemming geven, daar heb ik niet zo veel zin in.
+	# het kan ook sitlently, maar dan via chocolately.
+	#choco install git -params '"/GitOnlyOnPath"'
+	# maar je kunt de commandline opties ook zien via: c:\temp\Git-2.51.0.2-64-bit.exe /?, dat levert volgende instructie op:
+	c:\temp\Git-2.51.0.2-64-bit.exe /SP- /SILENT #dit lijkt te werken, de vraag of ik wel wil doorgaan komt wel, ondanks de SP-switch. ik krijg geen vraag waar ik de boel wil hebben
+}
 
-	#controleer of 7z of 7-zip op de computer staan.
-	$result = $appList | Select-String -Pattern '7-Zip' -SimpleMatch
-	if ($result {
-			Write-Host '7-Zip staat al op uw systeem';
-		}
-		else {
-			Write-Host '7-Zip staat niet op uw systeem. Probeer te installeren';
-			#downloaden van 7zip
-			Write-Host "Dowloaden en (stil) installeren van 7-zip."
-			Start-BitsTransfer -Source $sevenZip_dwl_url -Destination $dest
-			#...en installeren
-			cmd /c .\7z2501-x64.exe /S
-		}
-
-
-		Write-Host 'Downloading & installing WinPython.';
-		# Download Winpython
-		Start-BitsTransfer -Source $url -Destination $dest 
-		# uitpakken van winpython
-		c:\temp\WinPython64-3.13.8.0slimb1.exe  e -o "c:\temp" -y #dit werkt
-		# voor uitpakken op de achtergrond, zonder gui
-		#c:\temp\WinPython64-3.13.8.0slimb1.exe -y -gm2 -InstallPath="C:\\temp"
-
-		#als Winpython is uitgepakt, de directory hernoemen naar labcontrol
-		Rename-Item -Path "C:\WPy64-31241" -NewName "C:\Labcontrol" #dit werkt
-		#Opstarten van Winpython command line + aanroepen van git clone labcontrol
-		cd c:\Labcontrol\notebooks
-		Start-Process PowerShell -ArgumentList "-file c:\Labcontrol\gitclone.ps1" #dit lijkt te werken.
-
-		#VISA R&S (C:\Labcontrol\notebooks\labcontrol\firmware\RhodeSchwartz\RS_VISA_Setup_Win_7_2_5.7z uitpakken naar c:\temp
-		cd C:\Labcontrol\notebooks\labcontrol\firmware\RhodeSchwartz
-		C:\PROGRA~1\7-Zip\7z e .\RS_VISA_Setup_Win_7_2_5.7z
-		#VISA installer opstarten en install VISA
-		C:\Labcontrol\notebooks\labcontrol\firmware\RhodeSchwartz\RS_VISA_Setup_Win_7_2_5.exe /S
-		#VISA installatiebestand deleten
+#controleer of 7z of 7-zip op de computer staan.
+$result = $appList | Select-String -Pattern '7-Zip' -SimpleMatch
+if ($result) {
+	Write-Host '7-Zip staat al op uw systeem';
+}
+else {
+	Write-Host '7-Zip staat niet op uw systeem. Probeer te installeren';
+	#downloaden van 7zip
+	Write-Host "Dowloaden en (stil) installeren van 7-zip."
+	Start-BitsTransfer -Source $sevenZip_dwl_url -Destination $dest
+	#...en installeren
+	cmd /c .\7z2501-x64.exe /S
+}
 
 
-		#copy van alle benodigde python scripts vanuit de clone + requirements.txt
-		#Keuze 1.eventueel python in labcontrol opstarten en requirements installeren, als dat dezelfde omgeving is als de notebook
-		#Keuze 2. opstarten van jupyternotebook in labcontrol + openen van de juiste pagina die alle requirements.txt installeert.
+Write-Host 'Downloading & installing WinPython.';
+# Download Winpython
+Start-BitsTransfer -Source $url -Destination $dest 
+# uitpakken van winpython
+c:\temp\WinPython64-3.13.8.0slimb1.exe  e -o "c:\temp" -y #dit werkt
+# voor uitpakken op de achtergrond, zonder gui
+#c:\temp\WinPython64-3.13.8.0slimb1.exe -y -gm2 -InstallPath="C:\\temp"
+
+#als Winpython is uitgepakt, de directory hernoemen naar labcontrol
+Rename-Item -Path "C:\WPy64-31241" -NewName "C:\Labcontrol" #dit werkt
+#Opstarten van Winpython command line + aanroepen van git clone labcontrol
+cd c:\Labcontrol\notebooks
+Start-Process PowerShell -ArgumentList "-file c:\Labcontrol\gitclone.ps1" #dit lijkt te werken.
+
+#VISA R&S (C:\Labcontrol\notebooks\labcontrol\firmware\RhodeSchwartz\RS_VISA_Setup_Win_7_2_5.7z uitpakken naar c:\temp
+cd C:\Labcontrol\notebooks\labcontrol\firmware\RhodeSchwartz
+C:\PROGRA~1\7-Zip\7z e .\RS_VISA_Setup_Win_7_2_5.7z
+#VISA installer opstarten en install VISA
+C:\Labcontrol\notebooks\labcontrol\firmware\RhodeSchwartz\RS_VISA_Setup_Win_7_2_5.exe /S
+#VISA installatiebestand deleten
+
+
+#copy van alle benodigde python scripts vanuit de clone + requirements.txt
+#Keuze 1.eventueel python in labcontrol opstarten en requirements installeren, als dat dezelfde omgeving is als de notebook
+#Keuze 2. opstarten van jupyternotebook in labcontrol + openen van de juiste pagina die alle requirements.txt installeert.
