@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("LabcontrolInstallApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+906c0024b22f1abf07976abe59681fe5b3fb9913")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b06bfa7f16e9f6cf86b840892bb77c43c74137d4")]
 [assembly: System.Reflection.AssemblyProductAttribute("LabcontrolInstallApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LabcontrolInstallApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -13,3 +13,4 @@ C:\github\labcontrol\src\installer\LabcontrolInstallApp\obj\Debug\net10.0\refint
 C:\github\labcontrol\src\installer\LabcontrolInstallApp\obj\Debug\net10.0\LabcontrolInstallApp.pdb
 C:\github\labcontrol\src\installer\LabcontrolInstallApp\obj\Debug\net10.0\LabcontrolInstallApp.genruntimeconfig.cache
 C:\github\labcontrol\src\installer\LabcontrolInstallApp\obj\Debug\net10.0\ref\LabcontrolInstallApp.dll
+C:\github\labcontrol\src\installer\LabcontrolInstallApp\bin\Debug\net10.0\LabcontrolInstaller.ps1
