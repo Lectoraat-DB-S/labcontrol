@@ -26,7 +26,7 @@ from devices.siglent.sds.SDS2000.Horizontal import SDSHorizontal
 from devices.siglent.sds.SDS2000.Trigger import SDSTrigger
 
 # For auto registration of BaseSupplies subclasses
-from devices.Korad.KoradSupply import Korad3305P, KoradChannel 
+#from devices.Korad.KoradSupply import Korad3305P, KoradChannel 
 from devices.siglent.spd.PowerSupply import SiglentPowerSupply, SPDChannel
 # For auto registration of BaseDMM subclasses
 from devices.siglent.sdm.DigitalMultiMeter import SiglentDMM
@@ -37,4 +37,4 @@ from devices.siglent.sdg.Channels import SDGChannel
 from devices.OWON.awgDGE1060 import OWONGenerator, OWONGenChannel
 
 # For auto registration of BaseDMM subclasses
-from devices.siglent.sdm import DigitalMultiMeter
+#from devices.siglent.sdm import DigitalMultiMeter

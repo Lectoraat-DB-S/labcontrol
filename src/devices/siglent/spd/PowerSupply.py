@@ -32,8 +32,7 @@ class SiglentPowerSupply(BaseSupply):
                     mydev.write_termination = '\n'
                     #TODO: idn nog decoderen en aantal kanalen daarop instellen!
                     return (cls, 2, mydev)
-                else:
-                    return (None, None, None)
+            return (None, None, None)    
                     
         else:
             try:
@@ -48,7 +47,7 @@ class SiglentPowerSupply(BaseSupply):
         return (None, None, None)
     
     def __init__(self, nrOfChan : int = None, dev : pyvisa.resources.MessageBasedResource = None):
-        super.__init__(nrOfChan, dev)
+        super().__init__(nrOfChan, dev)
         
         self.channels = list()
         for i in range(1, self.nrOfChan+1):

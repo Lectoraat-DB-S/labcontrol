@@ -17,7 +17,7 @@ class SPDChannel(BaseSupplyChannel):
         """
             Turns this SupplyChannel object on or off
         """
-        self.set_output(self, state)
+        self.set_output(state)
     
     def measV(self):
         """
@@ -37,12 +37,7 @@ class SPDChannel(BaseSupplyChannel):
         """
         self.set_voltage(val)
     
-    def setV(self):
-        """
-            Gets the voltage setpoint of this channel.
-        """
-        self.get_voltage(val)
-    
+   
     def setI(self, val):
         """
             Sets the desired current level to be supplied bythis channel.

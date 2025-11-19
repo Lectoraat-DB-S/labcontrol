@@ -18,6 +18,7 @@ import libusb_package
 
 #import measurements.weerstandsmetingDMM as measurement
 import measurements.transistorcurve as curfje
+import measurements.IRLEDCurve as ledcurve
 from devices.Korad.KoradSupply import Korad3305P
 
 #import tests.testSDG as sigTest
@@ -124,6 +125,9 @@ def dummyUse():
 #def testSiglent():
 #    sigTest.doTheTest()
 
+def maakIRLEDcurve():
+    ledcurve.createCurve()
+
 def performTransCurve():
     rm = pyvisa.ResourceManager()
     print(rm.list_resources())
@@ -147,8 +151,9 @@ if __name__ == "__main__":
     #bf.testlmfit()
     #a  = input()
     #bu.setEthernet()
+    maakIRLEDcurve()
     
-    doACSweep()
+    #doACSweep()
     #testUSBTMC()
     #testTekTm()
 

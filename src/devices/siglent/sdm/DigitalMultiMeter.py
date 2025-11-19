@@ -56,7 +56,7 @@ class SiglentDMM(BaseDMM):
                     if cls is SiglentDMM:
                         return (cls, mydev)
                     
-                return (None, None)        
+            return (None, None)        
         else:
             try:
                 ip_addr = socket.gethostbyname(host)

@@ -20,7 +20,7 @@ class BaseDMM(object):
             cannot be altered in a derived class. See: https://docs.python.org/3/reference/datamodel.html#invoking-descriptors,
               which states: he property() function is implemented as a data descriptor. Accordingly, instances cannot override the behavior of a property. 
     """
-    supplyList = list()
+    dmmList = list()
     
     def __init_subclass__(cls, **kwargs):
         """ 
@@ -29,14 +29,14 @@ class BaseDMM(object):
             For more info about this subject, see: https://peps.python.org/pep-0487/
         """
         super().__init_subclass__(**kwargs) 
-        cls.supplyList.append(cls)
+        cls.dmmList.append(cls)
 
     @classmethod
     def getDMMClass(cls, rm, urls, host):
         pass    
 
     @classmethod
-    def getDevice(cls, rm, urls, host):
+    def getDevice(cls,host=None):
         """Method for handling the creation of the correct DMM object, by implementing a factory process. 
         Firstly, this method calls getDMMClass() for getting the right DMM derived type. If succesfull, this 
         method, secondly, returns this (class)type together with the needed parameters, to enable
@@ -45,31 +45,15 @@ class BaseDMM(object):
         rm = pyvisa.ResourceManager()
         urls = rm.list_resources()
 
-        for supply in cls.supplyList:
-            supplytype, dev = supply.getDMMClass(rm, urls, host)
-            if supplytype != None:
-                cls = supplytype
+        for dmm in cls.dmmList:
+            dmmtype, dev = dmm.getDMMClass(rm, urls, host)
+            if dmmtype != None:
+                cls = dmmtype
                 return cls(dev)
             
         return None # if getDevice can't find an instrument, return None.
     
-    @classmethod
-    def getDevice(cls,host=None):
-        """Method for handling the creation of the correct Scope object, by implementing a factory process. 
-        Firstly, this method calls getScopeClass() for getting the right BaseScope derived type. If succesfull, this 
-        method, secondly, returns this (class)type together with the needed parameters, to enable
-        the Python runtime to create and initialise the object correctly.
-        DON'T TRY TO CALL THE CONSTRUCTOR OF THIS CLASS DIRECTLY"""
-        rm = pyvisa.ResourceManager()
-        urls = rm.list_resources()
-
-        for generator in cls.GeneratorList:
-            generatortype, dev = generator.getGeneratorClass(rm, urls, host)
-            if generatortype != None:
-                cls = generatortype
-                return cls(dev)
-            
-        return None # if getDevice can't find an instrument, return None.
+    
       
     def __init__(self, dev=None): #For now, init should get the nrOfChan for this scope as a param.
         """abstract init function. A subclass should be override this function, which wil intitialize object below"""
@@ -84,5 +68,29 @@ class BaseDMM(object):
         """Method for closing the visa instrument handle at deletion of this object."""
         if self.visaInstr != None:
             self.visaInstr.close()
+
+    def get_voltage(self, type=None):
+        pass
+
+    def get_current(self, type=None):
+        pass
+
+    def get_capacitance(self, type=None):
+        pass
+
+    def get_resistanceTW(self):
+        pass
+
+    def get_resistanceFW(self):
+        pass
+
+    def get_frequency(self):
+        pass
+
+    def get_peroid(self):
+        pass
+    
+    def get_diode(self):   
+        pass
     
 
