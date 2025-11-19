@@ -1,0 +1,15 @@
+C:\github\labcontrol\src\installer\LabcontrolInstallApp\bin\Debug\net10.0\LabcontrolInstallApp.exe
+C:\github\labcontrol\src\installer\LabcontrolInstallApp\bin\Debug\net10.0\LabcontrolInstallApp.deps.json
+C:\github\labcontrol\src\installer\LabcontrolInstallApp\bin\Debug\net10.0\LabcontrolInstallApp.runtimeconfig.json
+C:\github\labcontrol\src\installer\LabcontrolInstallApp\bin\Debug\net10.0\LabcontrolInstallApp.dll
+C:\github\labcontrol\src\installer\LabcontrolInstallApp\bin\Debug\net10.0\LabcontrolInstallApp.pdb
+C:\github\labcontrol\src\installer\LabcontrolInstallApp\obj\Debug\net10.0\LabcontrolInstallApp.GeneratedMSBuildEditorConfig.editorconfig
+C:\github\labcontrol\src\installer\LabcontrolInstallApp\obj\Debug\net10.0\LabcontrolInstallApp.AssemblyInfoInputs.cache
+C:\github\labcontrol\src\installer\LabcontrolInstallApp\obj\Debug\net10.0\LabcontrolInstallApp.AssemblyInfo.cs
+C:\github\labcontrol\src\installer\LabcontrolInstallApp\obj\Debug\net10.0\LabcontrolInstallApp.csproj.CoreCompileInputs.cache
+C:\github\labcontrol\src\installer\LabcontrolInstallApp\obj\Debug\net10.0\LabcontrolInstallApp.sourcelink.json
+C:\github\labcontrol\src\installer\LabcontrolInstallApp\obj\Debug\net10.0\LabcontrolInstallApp.dll
+C:\github\labcontrol\src\installer\LabcontrolInstallApp\obj\Debug\net10.0\refint\LabcontrolInstallApp.dll
+C:\github\labcontrol\src\installer\LabcontrolInstallApp\obj\Debug\net10.0\LabcontrolInstallApp.pdb
+C:\github\labcontrol\src\installer\LabcontrolInstallApp\obj\Debug\net10.0\LabcontrolInstallApp.genruntimeconfig.cache
+C:\github\labcontrol\src\installer\LabcontrolInstallApp\obj\Debug\net10.0\ref\LabcontrolInstallApp.dll
