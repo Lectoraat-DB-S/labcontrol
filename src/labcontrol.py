@@ -153,6 +153,7 @@ if __name__ == "__main__":
     #bu.setEthernet()
     maakIRLEDcurve()
     
+    #ledcurve.testDiodePlotCurve()
     #doACSweep()
     #testUSBTMC()
     #testTekTm()

@@ -96,6 +96,20 @@ Function progExists {
 	}
 }
 
+Function deleteDir {
+	Param([string]$dirName)
+	Write-Host 'Verwijderen van alle bestanden in: ' $dirName;
+	Remove-Item $dirName"\*.*"
+	Write-Host 'Verwijderen van map: ' $dirName;
+	Remove-Item $dirName
+}
+
+Function deleteFilesDir {
+	Param([string]$dirName)
+	Write-Host 'Verwijderen van alle bestanden in: ' $dirName;
+	Remove-Item $dirName"\*.*"
+}
+
 Function downloadProg {
 	Param( [string]$ProgName, [string]$SourceUrl, [string]$dest )
 	Write-Host 'Start Downloading ' $ProgName;
@@ -139,7 +153,7 @@ Write-Host "Controleren of c:\labcontrol al bestaat of niet"
 # if the target folder of Labcontrol already exists, delete it to install a fresh version.
 if ($WinPyTargetPathExists) {
 	Write-Host "C:\Labcontrol bestaat al. Probeer nu om te verwijderen"
-	Remove-Item $WinPyTargetPath
+	deleteDir $WinPyTargetPath
 	Write-Host "C:\Labcontrol verwijderd."
 
 }
@@ -150,11 +164,11 @@ Write-Host "Controle of C:\temp bestaat. Indien niet wordt deze aangemaakt."
 if ($TempExists) {
 	if (!$KeepTempContents) {
 		Write-Host "Doelmap c:\temp bestaat al! Probeer nu alle bestanden in c:\temp te verwijderen."
-		Remove-Item $dest
+		deleteFilesDir $dest
 		$GitInstallAvPathExists = 0
 		$7ZipInstallAvPathExists = 0
 		$WinPyInstallAvPathExists = 0
-		New-Item -Path $dest -Type Directory
+		#New-Item -Path $dest -Type Directory
 
 	}
 	elseif ($KeepTempContents -and $OffLineInstall) {

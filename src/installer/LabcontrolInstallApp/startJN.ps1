@@ -1,0 +1,1 @@
+﻿& 'C:\labcontrol\Jupyter Notebook.exe'
