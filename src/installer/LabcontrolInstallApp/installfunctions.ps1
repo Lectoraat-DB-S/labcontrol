@@ -58,7 +58,7 @@ Function deleteDir {
 	Param([string]$dirName)
 	dump2ScrnAndFile "Verwijderen van alle bestanden in: $($dirName)";
 	Remove-Item $dirName"\*.*"
-	dump2ScrnAndFile "Verwijderen van map:  $($dirName)";
+	dump2ScrnAndFile "yVerwijderen van map:  $($dirName)";
 	Remove-Item $dirName
 }
 

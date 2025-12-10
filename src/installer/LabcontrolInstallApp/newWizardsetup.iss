@@ -12,6 +12,7 @@
 #define MyAppAssocKey StringChange(MyAppAssocName, " ", "") + MyAppAssocExt
 
 [Setup]
+SetupLogging=yes
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{3A833312-6C6F-4869-B7A2-00A55CD2D81E}
@@ -61,6 +62,21 @@ Root: HKA; Subkey: "Software\Classes\{#MyAppAssocKey}\shell\open\command"; Value
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+
+[Code]
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  logfilepathname, logfilename, newfilepathname: string;
+begin
+  logfilepathname := ExpandConstant('{log}');
+  logfilename := ExtractFileName(logfilepathname);
+  newfilepathname := ExpandConstant('{app}\') + logfilename;
+
+  if CurStep = ssDone then
+  begin
+    FileCopy(logfilepathname, newfilepathname, false);
+  end;
+end; 
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
