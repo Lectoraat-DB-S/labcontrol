@@ -2,7 +2,7 @@
   "version": 3,
   "targets": {
     "net8.0": {
-      "Microsoft.DotNet.ILCompiler/10.0.0": {
+      "Microsoft.DotNet.ILCompiler/8.0.22": {
         "type": "package",
         "build": {
           "build/Microsoft.DotNet.ILCompiler.props": {}
@@ -17,15 +17,16 @@
     }
   },
   "libraries": {
-    "Microsoft.DotNet.ILCompiler/10.0.0": {
-      "sha512": "f9u8fMRROe2lS5MOOLutK6iSNTK9pC3kqd90FIn8Sk29fbZ0QDjZrBbwUkhouk/8dppC71SIEQaag0lGRTxvfA==",
+    "Microsoft.DotNet.ILCompiler/8.0.22": {
+      "sha512": "4SDEQzYp3d9yVu0iQRFMV4HJCTjDvCt2AclSxMGXZSva5VrdoatwDg5nQVSD42ZuzBY5Y+BzgaexNbwb0/3gHw==",
       "type": "package",
-      "path": "microsoft.dotnet.ilcompiler/10.0.0",
+      "path": "microsoft.dotnet.ilcompiler/8.0.22",
       "hasTools": true,
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "Icon.png",
+        "LICENSE.TXT",
         "THIRD-PARTY-NOTICES.TXT",
         "build/BuildFrameworkNativeObjects.proj",
         "build/Microsoft.DotNet.ILCompiler.SingleEntry.targets",
@@ -38,11 +39,12 @@
         "build/NativeAOT.natvis",
         "build/WindowsAPIs.txt",
         "build/findvcvarsall.bat",
-        "microsoft.dotnet.ilcompiler.10.0.0.nupkg.sha512",
+        "microsoft.dotnet.ilcompiler.8.0.22.nupkg.sha512",
         "microsoft.dotnet.ilcompiler.nuspec",
         "runtime.json",
         "tools/netstandard/ILCompiler.Build.Tasks.deps.json",
-        "tools/netstandard/ILCompiler.Build.Tasks.dll"
+        "tools/netstandard/ILCompiler.Build.Tasks.dll",
+        "tools/netstandard/ILCompiler.Build.Tasks.pdb"
       ]
     },
     "Microsoft.NET.ILLink.Tasks/8.0.22": {
@@ -99,7 +101,7 @@
   },
   "projectFileDependencyGroups": {
     "net8.0": [
-      "Microsoft.DotNet.ILCompiler >= 10.0.0",
+      "Microsoft.DotNet.ILCompiler >= 8.0.22",
       "Microsoft.NET.ILLink.Tasks >= 8.0.22"
     ]
   },
@@ -151,7 +153,7 @@
           "Microsoft.DotNet.ILCompiler": {
             "suppressParent": "All",
             "target": "Package",
-            "version": "[10.0.0, )",
+            "version": "[8.0.22, )",
             "autoReferenced": true
           },
           "Microsoft.NET.ILLink.Tasks": {
@@ -174,24 +176,8 @@
         "warn": true,
         "downloadDependencies": [
           {
-            "name": "Microsoft.AspNetCore.App.Ref",
-            "version": "[8.0.22, 8.0.22]"
-          },
-          {
-            "name": "Microsoft.NETCore.App.Host.win-x64",
-            "version": "[8.0.22, 8.0.22]"
-          },
-          {
-            "name": "Microsoft.NETCore.App.Ref",
-            "version": "[8.0.22, 8.0.22]"
-          },
-          {
-            "name": "Microsoft.WindowsDesktop.App.Ref",
-            "version": "[8.0.22, 8.0.22]"
-          },
-          {
             "name": "runtime.win-x64.Microsoft.DotNet.ILCompiler",
-            "version": "[10.0.0, 10.0.0]"
+            "version": "[8.0.22, 8.0.22]"
           }
         ],
         "frameworkReferences": {
@@ -199,7 +185,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.100/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
