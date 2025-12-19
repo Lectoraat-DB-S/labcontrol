@@ -105,6 +105,19 @@ Function progExists {
 		return 0 
 	}
 }
+
+Function downloadFile {
+	Param( [string]$SourceUrl, [string]$dest )
+	try { 
+		#Start-BitsTransfer -Source $SourceUrl -Destination $dest 
+		Invoke-WebRequest $SourceUrl -O $dest
+		return 1 #download gelukt
+	}
+	catch {
+		dump2ScrnAndFile $_
+		return 0 #download mislukt.
+	}
+}
 Function downloadProg {
 	Param( [string]$ProgName, [string]$SourceUrl, [string]$dest )
 	dump2ScrnAndFile "Start Downloading  $ProgName";
@@ -304,7 +317,17 @@ Function doInstall {
 	installRSVISA
 }
 
-doInstall
+$WinPythonDownloaded = downloadProg -ProgName "WinPython" -SourceUrl $WinPython_url -dest $dest
+if ($WinPythonDownloaded) {
+	installWinPyton
+}
+# TODO: downloaden install notebook en in temp map 
+$installNotebookDownloaded = downloadFile -SourceUrl "https://raw.githubusercontent.com/Lectoraat-DB-S/labcontrol/refs/heads/development/src/notebooks/install.ipynb" -dest  $dest
+
+#opstarten van autoexewbat voor runnen van jupyuter notebook met install.ipynb
+
+
+
 
 #$runIt = 1
 #$commando = readFromInput
