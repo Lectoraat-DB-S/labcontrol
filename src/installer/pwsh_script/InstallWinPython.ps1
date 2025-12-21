@@ -41,7 +41,9 @@ $OptiesStringNoOffline = "1: Eerst c:\temp verwijderen. Dan alleen benodigde ins
 Ongeldige keuze = exit Powershell installer."
 
 
+ 
 $WinPython_url = "https://github.com/winpython/winpython/releases/download/17.2.20251012/WinPython64-3.13.8.0slimb1.exe" 
+$WinPython_url = "https://github.com/winpython/winpython/releases/download/17.2.20251012/WinPython64-3.13.11.0dotb4.exe" 
 $dest = "c:\temp"
 $git_scm_url = "https://github.com/git-for-windows/git/releases/download/v2.51.0.windows.2/Git-2.51.0.2-64-bit.exe"
 $sevenZip_dwl_url = "https://www.7-zip.org/a/7z2501-x64.exe"
