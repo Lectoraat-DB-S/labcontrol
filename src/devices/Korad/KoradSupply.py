@@ -100,7 +100,7 @@ class Korad3305P(BaseSupply):
         config.read('.\\src\\labcontrol.ini')
         if "Korad3305P" in config.sections():
                 if 'VisaInterface' in config['Korad3305P']:
-                    Korad3305P.VISAInterface=literal_eval(config['Korad3305P']['VisaInterface'])
+                    Korad3305P.VISAInterface=literal_eval(config['Korad3305P']  ['VisaInterface'])
                 if 'ComPort' in config['Korad3305P']:
                     Korad3305P.targetCom=literal_eval(config['Korad3305P']['ComPort'])
                 if 'PrefSearchMethod' in config['Korad3305P']:
@@ -175,21 +175,22 @@ class Korad3305P(BaseSupply):
                 except pyvisa.errors.Error as pyerr:
                     print(f"VISA Error")
                     mydev = None #let's go for the next one.
+                    return (None, None, None)
                 except Exception as err:
                     print(f"Unexpected {err=}, {type(err)=}")
-                    raise
+                    return (None, None, None)
         
     
         
     @classmethod
-    def getDevice(cls, rm, urls, host):
+    def getSupplyClass(cls, rm, urls, host):
         """ Tries to get (instantiate) the device, based on the url"""
         #The KORAD3305P supply only supports serial communication.
         #11-4-25:
         #code for listing comports in Pyhton:
         #for port in comports():
         #    print(port)
-        cls.readConfig()
+        #cls.readConfig()
         retval = None
         if Korad3305P.prefMethod == "IDN" or Korad3305P.prefMethod == None:
             retval = cls.findDeviceOnIDN(rm, urls)

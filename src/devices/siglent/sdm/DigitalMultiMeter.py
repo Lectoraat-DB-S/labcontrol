@@ -29,7 +29,17 @@ class SDM3045X_CURR_RANGE(Enum):
 # memory of the SDM.
     
 class SiglentDMM(BaseDMM):
+    KNOWN_MODELS = [
+        "SDM3045X",
+        "SDM3055",
+        "SDM3065X",
+    ]
 
+    MANUFACTURERS = {
+        "SDM3045X": "Siglent",
+        "SDM3055": "Siglent",
+        "SDM3065X": "Siglent",
+    }
     @classmethod
     def getDMMClass(cls, rm, urls, host):
         """ Tries to get (instantiate) the device, based on the url. REMARK: this baseclass implementation is empty.
@@ -46,7 +56,7 @@ class SiglentDMM(BaseDMM):
                     if cls is SiglentDMM:
                         return (cls, mydev)
                     
-                return (None, None)        
+            return (None, None)        
         else:
             try:
                 ip_addr = socket.gethostbyname(host)
@@ -57,17 +67,7 @@ class SiglentDMM(BaseDMM):
                 return (None, None)
         return (None, None)
 
-    KNOWN_MODELS = [
-        "SDM3045X",
-        "SDM3055",
-        "SDM3065X",
-    ]
-
-    MANUFACTURERS = {
-        "SDM3045X": "Siglent",
-        "SDM3055": "Siglent",
-        "SDM3065X": "Siglent",
-    }
+    
     
     ###### VISA SYSTEM FUNCTIONS ########
 

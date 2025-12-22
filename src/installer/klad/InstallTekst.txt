@@ -1,0 +1,20 @@
+Welkom bij de Labcontrol Powershell installer.
+
+Deze installer doorloopt de volgende stappen:
+1. Aanmaken van c:\temp. Dit is een tijdelijke werkmap waarin bestanden van Internet kunnen worden gedownload en 
+    worden  uitgepakt.
+2. Controleren of de computer voorzien is van git. Als dit niet het geval is wordt git-scm gedownload & geïnstalleerd.
+3. Controle van de aanwezigheid van 7-Zip. Indien niet aanwezig, zal dit pakket, na download, geïnstalleerd worden.
+4. Downloaden en installeren van WinPython. Nadat WinPython zichzelf geïnstalleerd heeft, hernoemt deze installer de 
+    WinPython map naar c:\Labcontrol.
+5. Het 'clonen' van de GitHub Labcontrol repository.  
+6. Het copiëren van de besturingsscripts vanuit de repo naar de juiste submap binnen c:\Labcontrol 
+7. Het copiëren van de Rohde & Schwartz implementatie van VISA vanuit de repo
+8. Het opstarten van de WinPython omgeving zodat alle benodigde Python packages geïnstaleerd kunnen worden.
+
+Wat wilt u doen?
+1: Eerst c:\temp verwijderen. Dan alleen benodigde installers downloaden naar c:\temp, niets installeren.
+2: Alleen benodigde installers downloaden indien nodig. Er wordt niets geïnstalleerd.
+3: Offline installeren. Vereist het vooraf gedownload hebben van alle installers.
+4: Clean install. Eerst alles verwijderen, dan downloaden en installeren (vereist netwerkverbinding)
+Ongeldige keuze = exit Powershell installer.

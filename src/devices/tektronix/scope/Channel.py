@@ -12,7 +12,8 @@ class TekChannel(BaseChannel):
     IMMEDMEASTYPES =["CRMs","CURSORRms","DELay","FALL",
                         "FREQuency","MAXImum","MEAN","MINImum","NONe","NWIdth","PDUty","PERIod","PHAse", 
                         "PK2pk","PWIdth","RISe"]
-    
+    VALIDPROBEVALS = [1, 10, 20, 50, 100, 500, 1000]
+
     @classmethod
     def getChannelClass(cls, chan_no, dev):
         """ Tries to get the right device class, based on the url"""
@@ -20,19 +21,25 @@ class TekChannel(BaseChannel):
             return cls
         else:
             return None      
-    def __init__(self, chan_no: int, visaInstr:pyvisa.resources.MessageBasedResource):
+    def __init__(self, chan_no: int, visaInstr:pyvisa.resources.MessageBasedResource, perMeasDict:dict, 
+                 nHDivs = 10, nVDivs = 10 , visHDivs = 10, visVDivs = 8):
         super().__init__(chan_no, visaInstr)
         self.name = f"CH{chan_no}"
         self.log = TekLog()
+        self.perMeasDict:dict = perMeasDict
+        self.nrOfHoriDivs = nHDivs # maximum number of divs horizontally
+        self.nrOfVertDivs = nVDivs # maximum number of divs vertically 
+        self.visibleHoriDivs = visHDivs # number of visible divs on screen
+        self.visibleVertDivs = visVDivs # number of visible divs on screen
         #if scope != None:
         #    self._parentScope = scope
         self.WFP= TekWaveFormPreamble(visaInstr)
         self.WF = TekWaveForm()
-        self.nrOfDivs = 5          # TODO: should be set during initialisation of the scope.
-        self.setSource()
-        self.WFP.queryPreamble()
-        self.WF.setWaveFormID(self.WFP)
-        
+        if self.isVisible():
+            self.setSource()
+            self.WFP.queryPreamble()
+            self.WF.setPreamble(self.WFP)
+            
         
         #self.setVisible(state=True)
         self.encoding = None
@@ -40,7 +47,7 @@ class TekChannel(BaseChannel):
     def queryNrOfSamples(self):
         NR_PT =  int(self.visaInstr.query('WFMPRE:NR_PT?')) #Requesting the number of samples
         return NR_PT     
-         
+             
     def setVisible(self, state:bool):
         if state:
             self.visaInstr.write(f"SELECT:{self.name} ON")
@@ -50,10 +57,45 @@ class TekChannel(BaseChannel):
             self.isVisible = False
             
     def isVisible(self):
-        return self.isVisible
+        resp = self.query(f"SELECT:{self.name}?")
+        resp = resp.strip('\n')
+        if resp == "0" or resp == 0:
+            return False
+        else:
+            return True
+        
+
+    def setCoupling(self, coupling):
+        if coupling == "AC" or coupling == "DC" or coupling == "GND":
+            self.write(f"{self.name}:COUPLING AC")
+
+    def setProcMode(self, mode):
+        super().setProcMode(mode)
                 
     def getLastTrace(self):
         return self.WF
+    
+    def probe(self, factor):
+        #CH<x>:PRObe { 1 | 10 | 20 | 50 | 100 | 500 | 1000 }
+        if factor in TekChannel.VALIDPROBEVALS:
+            self.write(f"{self.name}:PRObe {factor}")
+        return
+    
+    """
+    def probe(self):
+        resp = self.query(f"{self.name}:PRObe?")
+        resplist = resp.split()
+        respsize = len(resplist)
+        match respsize:
+            case 0:
+                return "ERROR"
+            case 1:
+                return int(resplist[0])
+            case 2:
+                return int(resplist[1])
+            case _:
+                return "ERROR"
+        return"""
        
     def setVertScale(self, scale):
         """Sets the vertical sensitivity of this channel. Has same functionality as 'setVoltsDiv'"""
@@ -69,7 +111,8 @@ class TekChannel(BaseChannel):
         if scale in vertscalelist:
             self.visaInstr.write(f"{self.name}:SCALE {scale}") #Sets V/DIV CH1   
         else:   
-            self.log.addToLog("invalid VDIV input, ignoring.....") 
+            self.log.addToLog("invalid VDIV input.....") 
+            self.visaInstr.write(f"{self.name}:SCALE {scale}") #Sets V/DIV CH1 
     
     def setVdiv(self, value):
         """Sets the vertical sensitivity (i.e. Vdiv) of this channel. This is the default method for setting  
@@ -83,6 +126,15 @@ class TekChannel(BaseChannel):
         """
         return self.visaInstr.query(f"{self.name}:SCALE ?") 
     
+    def position(self):
+        """Gets the (vertical) position of this channel with respect to the center graticule. Unit of position is divisions (divs)."""
+        return self.visaInstr.query(f"{self.name}:POSition?") 
+    
+    def position(self, pos):
+        """"Sets the (vertical) position of this channel with respect to center. Parameter pos is the deviation from center in divisions (divs). 
+        A positive value means above center, negative means below center. """
+        self.visaInstr.write(f"{self.name}:POSition {pos}")
+
     def getYzero(self):
         """Gets the vertical offset of this channel. For this TDS implementation the parameter 
         'yzero' has been selected. Remark a TDS has also an 'yoff' parameter, which is an offset value in digitizer
@@ -116,7 +168,7 @@ class TekChannel(BaseChannel):
         # correct handling of event code 2244
         return int(self.visaInstr.query(f"wfmpre:{self.name}:nr_pt?")) #For a channel version of this command:see programming guide page 231
           
-    def capture(self):
+    def capture(self)->BaseWaveForm:
         """Capture: getting the waveform data from the oscilloscope. This is the Tektronix TDS2000 series 
         implementation. According to the information in the TDS programming manual on page 54, 86, this method 
         implements the following logic:
@@ -136,27 +188,34 @@ class TekChannel(BaseChannel):
         7. It will query the scope for the data.
         8. When data has been transferred, this method will set the relevant datamembers of this channel's waveform
             struct. """
-        wfp = self.WFP
-        trace = self.WF
+        
         #self.setVisible(True)
         self.setSource()
         #self.visaInstr.write(f"DATa:ENCdg RIBinary")
         #self.visaInstr.write(f"DATA:WIDTH 1")
-        #wfp.queryPreamble()
-        #trace.setWaveFormID(wfp)
+        
+        self.WFP.queryPreamble()
+        wfp = self.WFP
+        trace = self.WF
+        wfp = self.WFP
+        
+        trace.setPreamble(wfp)
         #self.log.addToLog("start querying scope")
+        #5-9-2025: when saving data in a file, comma's appears. Might be due transport format of Tektronix 
         bin_wave = self.visaInstr.query_binary_values('curve?\n', datatype='b', container=np.array)
         #bin_wave = bin_wave - trace.yoff
         self.log.addToLog("scope query ended")
         trace.rawYdata = bin_wave
         trace.rawXdata = np.linspace(0, wfp.nrOfSamples-1, num=int(wfp.nrOfSamples),endpoint=False)
-        total_time = wfp.sampleStepTime * wfp.nrOfSamples
+        total_time = wfp.xincr * wfp.nrOfSamples
         tstop = wfp.xzero + total_time
         scaled_time = np.linspace( wfp.xzero, tstop, num=int(wfp.nrOfSamples))
         # vertical (voltage)
         unscaled_wave = np.array(bin_wave, dtype='double') # data type conversion
-        # See programming manual, page 240, formulae below for calculatie y-values. 
-        scaled_wave = (unscaled_wave - trace.yoff) *  trace.ymult  + trace.yzero 
+        # See programming manual, page 240, formulae below for calculatie y-values.
+        temp = (unscaled_wave - trace.yoff) *  trace.ymult  + trace.yzero  
+        #scaled_wave = (unscaled_wave - trace.yoff) *  trace.ymult  + trace.yzero 
+        scaled_wave = np.array(temp)
         #put the data into internal 'struct'
         trace.scaledYdata = scaled_wave
         trace.scaledXdata = scaled_time
@@ -180,10 +239,14 @@ class TekChannel(BaseChannel):
         implementation use immed measurements to implement this functionality. TDS doesnot have a pk2pk method, therefore the
         min and max immed measurements will be used.
         """
-        max = self.getMax()
-        min = self.getMin()
-        return (max - min)
+        retval = None
+        retval = super().getPkPk()
+        if self.mode == "HW":
+            maxVal = self.getMax()
+            minVal = self.getMin()
+            retval = maxVal - minVal
 
+        return retval
     #### IMMED MEASUREMENT METHODS #####
     def getAvailableMeasurements(self):
         return TekChannel.IMMEDMEASTYPES
@@ -304,8 +367,8 @@ class TekChannel(BaseChannel):
     
     
     def getPhaseTo(self, input: 'TekChannel'): #input is een channeltype of een MATH type.
-        """Sets the Tektronix scope in doing a phase IMMED measurement. Only for
-        TBS1000B/EDU, TBS1000, TDS2000C, TDS1000C-EDU Series. The phase will be
+        """Sets this channel of this Tektronix scope in performing a phase IMMED measurement, which is a feature avalaible only 
+        on TBS1000B/EDU, TBS1000, TDS2000C, TDS1000C-EDU Series. The phase will be
         calculated according the fomulae: self.phase - input.phase.
         Remark on coding: the type of the input parameter has been written as 'TekChannel' and not
         TekChannel (without the qoutes). Reason is the inability of Python to use the type definition
@@ -313,13 +376,30 @@ class TekChannel(BaseChannel):
         been ended yet. Therefore the class has not been defined yet and can't by used as a parameter. 
         As described in PEP484, expressing an (temporary) unresolved name as a string literator is 
         the way to go, by the assumption it will be resolved later.
+        Precondition: 
+        1. the mode of this channel (self.mode) equals to 'HW', as this is an measurement done by hardware, 
+        i.e. a TDS2002C scope.
+        2. All supplied signals to the scope have same shape and frequency. If not, the behaviour of Tektronix scope is unknown, 
+        as it is not specified
+        TODO: the 'SW' version of this methodk, need an estimated of the frequency of the signals. This need could be circumventend
+        when a method to estimate frequency based on acquired waveform is available
         """
-        #TODO: check if scope is able to perform the measurement.
-        self.immedMeasType("PHAse")
-        myinput: TekChannel = input
-        self.visaInstr.write(f"MEASUREMENT:IMMED:SOURCE {self.name}")
-        self.visaInstr.write(f"MEASUREMENT:IMMED:SOURCE2 {myinput.name}")
-        return self.visaInstr.query("MEASUrement:IMMed:VALue?")
+        if self.mode == 'HW':
+            #TODO: check if scope is able to perform the measurement.
+            self.immedMeasType("PHAse")
+            myinput: TekChannel = input
+            self.visaInstr.write(f"MEASUREMENT:IMMED:SOURCE {self.name}")
+            self.visaInstr.write(f"MEASUREMENT:IMMED:SOURCE2 {myinput.name}")
+            return self.visaInstr.query("MEASUrement:IMMed:VALue?")
+        else:
+            return None
+        
+    def getPhaseTo(self, input:'BaseChannel', freqEstimate=1000):
+        """Performs a phase measurement with respect to the input. This method is an overridden variant of getPhase to and is
+        fully implementend in software. Therefore, this method should be used if a scope has no features on board for measurering phase,
+         or when the scope is to slow, which is the case with the TDS2002C."""
+        phEstimate = super().getPhaseTo(self, input, freqEstimate)
+        return phEstimate
 
     def getFrequency(self):
         """Gets the frequency [Hz] of this channel's waveform by doing an Immediate 
@@ -338,6 +418,69 @@ class TekChannel(BaseChannel):
         Measurement"""    
         immedResult = self.doImmedMeas("PDUty")        
         return float(immedResult)
+    
+    ######### Periodic measurements control #####
+    def clearMeas(self):
+        """Clears all previously setted periode measurements"""
+        self.perMeasDict.clear()
+
+    def addMeas(self, measType):
+        """Adds a periodic Measurement to the current set. Maximum of 5 measurements allowed.
+        returns True if measurement added of
+        False if measurement was not added (full)"""
+        index = len(self.perMeasDict)
+        currIndexStr = str(index+1)
+        if measType in TekChannel.IMMEDMEASTYPES and index < 6:
+            self.perMeasDict[currIndexStr]={self.name : measType}
+            print(f"MEASUrement:MEAS{currIndexStr}:TYPe {measType}")
+            print(f"MEASUrement:MEAS{currIndexStr}:VALue?")
+            self.visaInstr.write(f"MEASUrement:MEAS{currIndexStr}:SOUrce {self.name}\n")
+            self.visaInstr.write(f"MEASUrement:MEAS{currIndexStr}:TYPe {measType}\n")
+            print(self.visaInstr.query("*ESR?\n"))
+            print(self.visaInstr.query("ALLEv?\n"))
+            time.sleep(1)
+            self.visaInstr.write(f"MEASUrement:MEAS{currIndexStr}:VALue?\n")
+            time.sleep(1)
+            print(self.visaInstr.query("*ESR?\n"))
+            print(self.visaInstr.query("ALLEv?\n"))
+            return True
+        else:
+            return False
+
+    def getAvMeasVals(self):
+        """"Queries all values of previously set measurement. Values will be returned in a key,value dict"""
+        pass
+
+    def set2_80(self, val):
+        """Sets the vertical sensitivity of this channel to 80% of value val, in order to make 
+        better use of available bits.
+        This method sets this channel such val corresponds to 80% of the visible max value on screen.
+         assuming zero offset.  """
+        newVdiv = val/(0.5 * self.visibleVertDivs)
+        self.setVdiv(newVdiv)
+        # validate newVdiv 
+        # write value.
+
+    def set2FS(self, minVal, maxVal):
+        """Set the  'vertical gain'of this channel to maximize the signal on screen (min. 80% of full screen). Goal: better use of 
+        the 8 bits digitalisation (ADC).
+        Input: min en max value of the signal itself. Not the min/max position on screen.
+        Preconditions: 
+        1. waveform is centered vertically on screen, so 'position' is 0 divs.
+        2. The parameters 'minVal' and 'maxVal' were acquired during:
+            a. A non-clipping situation, i.e. the signal was fully displayed, vertically as horizontally. 
+            Preferably, this signal was acquired have been accHet signaal is volledig zichtbaar op scherm of anders het signaal zit binnen +/- 5 divs.
+        #   
+        #   3. AC of DC coupling? Vermoeden dat dit er niet toe doet voor deze functie.
+        # a. bereken gem. waarde = offset signaal. (Dus niet de momentele schermpositie, het gaat om het signaal zelf)
+        # b. 
+        # """
+        pass
+
+
+    
+
+    ##################################################################################################
     
 class TekWaveFormPreamble(BaseWaveFormPreample):
     """Class for holding the Tektronix TDS1000 scope series preamble. Extends BaseWaveFormPreamble.
@@ -361,37 +504,24 @@ class TekWaveFormPreamble(BaseWaveFormPreample):
         self.binFirstByteStr       : Location of first byte(? Checken!), see documentation
         self.nrOfSamples           : number of samples of acquired waveform
         self.vertMode              : Indicaties YT,XY, or FFT mode
-        self.sampleStepTime        : Sampleperiode (?, CHECKEN)
-        self.xincr                 : Time between to samples
+        self.xincr                 : Time between two samples
         self.xzero                 : Location of X=0 on screen horizontally
         self.xUnitStr              : Horizontal axis unit
         self.ymult                 : Vertical gain, or VDIV
         self.yzero                 : Is a value, expressed in YUNits, used to convert waveform record
                                      values to YUNitLocation of Y=0 on screen vertically
         self.yoff                  : Vertical offset in digitizer levels
-        self.yUnitStr              : Vertical axis unit"""
+        self.yUnitStr              : Vertical axis unit
+        self.couplingstr           : "AC", "DC" or "GND"
+        self.timeDiv               : Amount of time of one horizontal division on screen. Also called 'Timebase' 
+        self.acqModeStr            : The sampling system of an oscilloscope has greater range than the horizontal scale. Therefore a scope is capable to take multiple
+                                            samples for an acquisition interval. Typical Acquisition modes are 'sample mode', 'peak mode', or 'average(ing)' 
+        self.sourceChanStr         : A string indicating the channel of this waveformpreamble, e.g. 'C1' or 'CH1', depending on scope brand or type.
+        self.vdiv                  : the amount of vertical displacement per division of the screen.
+            
+        
+        """
         super().__init__(dev=dev)
-        ##### START OF TEKTRONIX TDS TYPICAL PARAMETERS DEFINITION ####### 
-        self.nrOfBytePerTransfer   = None
-        self.nrOfBitsPerTransfer   = None
-        self.encodingFormatStr     = None
-        self.binEncodingFormatStr  = None
-        self.binFirstByteStr       = None
-        self.nrOfSamples           = None
-        self.vertMode              = None #Y, XY, or FFT.
-        self.sampleStepTime        = None
-        self.xincr                 = None
-        self.xzero                 = None
-        self.xUnitStr              = None
-        self.ymult                 = None
-        self.yzero                 = None
-        self.yoff                  = None
-        self.yUnitStr              = None
-        self.couplingstr           = None
-        self.timeDiv               = None
-        self.acqModeStr            = None
-        self.sourceChanStr         = None
-        self.vdiv                  = None
         
         
     def decode(self, strToDecode):
@@ -404,7 +534,6 @@ class TekWaveFormPreamble(BaseWaveFormPreample):
         self.binFirstByteStr        = str(paramlist[4])
         self.nrOfSamples            = int(paramlist[5])
         self.vertMode               = str(paramlist[7])
-        self.sampleStepTime         = float(paramlist[8])
         self.xincr                  = float(paramlist[8])
         self.xzero                  = float(paramlist[10])
         self.xUnitStr               = str(paramlist[11])
@@ -452,35 +581,17 @@ class TekWaveForm(BaseWaveForm):
     def __init__(self):
         ####TEKTRONIX TDS SPECIFIC WAVEFORM PARAMS ########
         super().__init__()
-        self.rawYdata       = None #data without any conversion or scaling taken from scope
-        self.rawXdata       = None #just an integer array
-        self.scaledYdata    = None #data converted to correct scale e.g units
-        self.scaledXdata    = None #An integer array representing the fysical instants of the scaledYData.
-        #Horizontal data settings of scope
-        self.chanstr        = None
-        self.couplingstr    = None
-        self.timeDiv        = None # see TDS prog.guide table2-17: (horizontal)scale = (horizontal) secdev 
-        self.vDiv           = None # probably the same as Ymult.
-        self.xzero          = None # Horizontal Position value
-        self.xUnitStr       = None # unit of X-as/xdata
-        self.xincr          = None # multiplier for scaling time data, time between two sample points.
-        self.nrOfSamples    = None # the number of points of trace.
-        self.sampleStepTime = None # same as XINCR, Ts = time between to samples.
-        self.yzero          = None 
-        self.ymult          = None # vertical step scaling factor. Needed to translate binary value of sample to real stuff.
-        self.yoff           = None # vertical offset in V for calculating voltage
-        self.yUnitStr       = None
         
-    def setWaveFormID(self, wfp: TekWaveFormPreamble):
-        self.chanstr = wfp.sourceChanStr
-        self.couplingstr = wfp.couplingstr
-        self.timeDiv = wfp.timeDiv
-        self.vDiv = wfp.vdiv
+        
+    def setPreamble(self, wfp: TekWaveFormPreamble):
+        self.chanstr        = wfp.sourceChanStr
+        self.couplingstr    = wfp.couplingstr
+        self.timeDiv        = wfp.timeDiv
+        self.vDiv           = wfp.vdiv
         self.xzero          = wfp.xzero
         self.xUnitStr       = wfp.xUnitStr
         self.xincr          = wfp.xincr
         self.nrOfSamples    = wfp.nrOfSamples
-        self.sampleStepTime = wfp.sampleStepTime
         self.yzero          = wfp.yzero
         self.yoff           = wfp.yoff
         self.ymult          = wfp.ymult

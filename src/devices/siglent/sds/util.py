@@ -1,4 +1,3 @@
-from scipy.optimize import curve_fit
 import struct
 import numpy as np
 import pyvisa
@@ -11,26 +10,6 @@ MATH_FUNC_FFT = 4
 MATH_FUNC_INT = 5
 MATH_FUNC_DIF = 6
 MATH_FUNC_SQR = 7
-
-def sine_function(x, amp, omega, phase, offset):
-    return amp * np.sin(omega * x + phase) + offset
-
-def guessSine(t, y, intialGuess=None):
-
-    if intialGuess == None:
-        initial_guess = [1,2, 0, 0]
-
-    # Perform the curve fitting
-    params, covariance = curve_fit(sine_function, t, y, p0=intialGuess)
-
-    # Extract the fitted parameters
-    A_fit, B_fit, C_fit, D_fit = params
-
-    print(f"Fitted parameters: A={A_fit}, B={B_fit}, C={C_fit}, D={D_fit}")
-    # Generate y values using the fitted parameters
-    print(f"covariantie = {covariance}")
-    return params, covariance
-
 
 class SIGLENT_TIME_STAMP(object):
     def __init__(self):
@@ -63,25 +42,7 @@ class RECORDTYPE(Enum):
     centered_RIS        = 8
     peak_detect         = 9
 
-KNOWN_MODELS = [
-        "SDS1000CFL",   #non-SPO model Series
-        "SDS1000A",     #non-SPO model Series
-        "SDS1000CML+",  #non-SPO model Series
-        "SDS1000CNL+",  #non-SPO model Series
-        "SDS1000DL+",   #non-SPO model Series
-        "SDS1000E+",    #non-SPO model Series
-        "SDS1000F+",    #non-SPO model Series
-        "SDS2000",      #SPO model Series
-        "SDS2000X",     #SPO model Series
-        "SDS1000X",     #SPO model Series
-        "SDS1000X+",    #SPO model Series
-        "SDS1000X-E",   #SPO model Series
-        "SDS1000X-C",   #SPO model Series
-        #USED MODEL (TESTED) SHOWN BELOW
-        "SDS2504X Plus",
-        "SDS1202X",
-        "SDS1202X-E",
-    ]
+
 
 class SiglentIDN(object):
     def __init__(self, mybrand, mymodel, myserial, myfirmware) -> None:
@@ -91,7 +52,7 @@ class SiglentIDN(object):
         self.firmware = myfirmware
         
 
-def checkIDN(idnstr:str):
+def checkIDN(idnstr:str, models):
         """
         example
         Siglent Technologies,SDS1204X-E,SDS1EBAC0L0098,7.6.1.15
@@ -101,7 +62,7 @@ def checkIDN(idnstr:str):
             return None
         manufacturer  = "Siglent"
         if manufacturer in splitted[0]:
-            if splitted[1] in KNOWN_MODELS:
+            if splitted[1] in models:
                 if len(splitted[2])==14:
                     brand = splitted[0]
                     model = splitted[1]

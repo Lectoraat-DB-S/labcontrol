@@ -90,11 +90,6 @@ class BaseSupplyChannel(object):
             Sets this channel's output voltage setpoint. To be implemented by the subclass.
         """
     
-    def setV(self):
-        """
-            Gets this channel's output voltage setpoint. To be implemented by the subclass.
-        """
-
     def setI(self, val):
          """
             Sets this channel's output current setpoint. To be implemented by the subclass.
@@ -164,10 +159,10 @@ class BaseSupply(object):
         self.nrOfChan = nrOfChan
         self.channels = None
 
-    #def chan(self, chanNr:int)->BaseSupplyChannel:
-    #    """Method for getting the channel based on index 1, 2 etc. REMARK: this is an empty baseclass
-    #    implementation. Subclass implementations will have to provide this kind of functionality."""
-    #    pass
+    def chan(self, chanNr:int)->BaseSupplyChannel:
+        """Method for getting the channel based on index 1, 2 etc. REMARK: this is an empty baseclass
+        implementation. Subclass implementations will have to provide this kind of functionality."""
+        pass
 
     def idn(self):
         """Method for retrieving the indentification string of the GPIB instrument. REMARK: this is an empty baseclass

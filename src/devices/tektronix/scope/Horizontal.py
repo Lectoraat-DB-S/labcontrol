@@ -52,11 +52,21 @@ class TekHorizontal(BaseHorizontal):
         return TekHorizontal.TIMEBASE_HASHMAP
     
     def setTimeDiv(self, value):
-        self.visaInstr.write (f"HORIZONTAL:MAIN:SECDIV {value}")
+        #check if value equals a value in the TIMEBASE_HASHMAP
+       
+        for val in TekHorizontal.TIMEBASE_HASHMAP.values():
+            floatVal = float(val)
+            if floatVal > value:
+                self.visaInstr.write (f"HORIZONTAL:MAIN:SECDIV {val}")
+                break
+
 
     def queryHorizontalSecDiv(self):
         SEC_DIV = float(self.visaInstr.query('HORIZONTAL:MAIN:SECDIV?')) #Requesting the horizontal scale in SEC/DIV
         return SEC_DIV   
+    
+    def getHorizontalSettings(self):
+        return self.visaInstr.query("HORizontal?")
     
     #def setTimeDiv(self, time):
     #    self.visaInstr.write(f"HORizontal:MAIn:SCAle {time}")

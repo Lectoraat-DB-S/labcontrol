@@ -6,10 +6,10 @@ from unittest.mock import patch, MagicMock
 #from tests.testKorad import TestKoradSupply
 from tests.testTDS import TestTDSCase
 from tests.testTDS import suite
-
+import math
+import numpy as np
 #from tests.testSDS import TestSDSCase
-#from tests.testSDS import suite
-
+#from tests.testSDS import suite    
 
 if __name__ == "__main__":
     #rc = ResourceManager(visa_library="@mock")
@@ -19,16 +19,16 @@ if __name__ == "__main__":
     #performTransCurve()
     print("Start testing.")
     #unittest.main()
-    runner = unittest.TextTestRunner()
-    runner.run(suite())
-    print("Finished testing.")
+    #runner = unittest.TextTestRunner()
+    #runner.run(suite())
+    #print("Finished testing.")
 
-DeviceName = "HantekDSO6022BE"
-VendorID = "VID_04B5"
-ProductID = "PID_602A"
-DeviceClassGUID = "{36fc9e60-c465-11cf-8056-444553540000}"
+#DeviceName = "HantekDSO6022BE"
+#VendorID = "VID_04B5"
+#ProductID = "PID_602A"
+#DeviceClassGUID = "{36fc9e60-c465-11cf-8056-444553540000}"
 #Date MUST be in MM/DD/YYYY format
-Date = "08/12/2017"
+#Date = "08/12/2017"
 
 #def probeer1():
 

@@ -3,7 +3,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-from devices.siglent.sds import Scopes
+from src.devices.siglent.sds.SDS1000 import Scopes
 from devices.siglent.sdg import Generator
 #from devices.siglent.sdg.Commands import WaVeformTyPe
 #from devices.siglent.sdg.Commands import WaveformParam

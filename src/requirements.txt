@@ -1,3 +1,4 @@
+py7zr
 pyvisa
 numpy
 matplotlib
@@ -12,3 +13,4 @@ pyusb
 pyserial
 python-usbtmc
 pyqtgraph
+numdifftools
