@@ -78,7 +78,7 @@ class SiglentScope(BaseScope):
                     #    return (None, None)
                         
             if scopeConfig == None:
-                return (None, None)
+                return (None, None, None)
             myConfig: BaseDeviceConfig = None
             for myConfig in scopeConfig:
                 if BaseScope.isRightmodel(myConfig.defName, KNOWN_MODELS): #check if the ini section corresponds with the models of this class
@@ -91,7 +91,7 @@ class SiglentScope(BaseScope):
                         #No return here!
                     #No return here!
                 #No return here!
-            return (None, None)  # only return None here, after all options have been tried.              
+            return (None, None, None)  # only return None here, after all options have been tried.              
 
 
         #        if util.checkIDN(mydev):

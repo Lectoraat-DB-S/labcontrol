@@ -95,7 +95,7 @@ class SiglentScope(BaseScope):
                         #No return here!
                     #No return here!
                 #No return here!
-            return (None, None)  # only return None here, after all options have been tried.              
+            return (None, None, None)  # only return None here, after all options have been tried.              
 
 
         #        if util.checkIDN(mydev):

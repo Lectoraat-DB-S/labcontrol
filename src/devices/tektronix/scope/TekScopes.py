@@ -74,7 +74,7 @@ class TekScope(BaseScope):
             
                         
             if scopeConfig == None:
-                return (None, None)
+                return (None, None, None)
             for myConfig in scopeConfig:
                 mydev = cls.SocketConnect(rm=rm, scopeConfig=myConfig)
                 if mydev != None:
@@ -83,7 +83,7 @@ class TekScope(BaseScope):
                         mydev.write('*cls') # clear ESR
                         mydev.write("HEADER OFF\n") # No header => less data. TDS used during test was configured with no header. To be sure: turn it off.
                         return (cls, mydev, myConfig)
-            return (None, None)        
+            return (None, None, None)        
             
     def __init__(self, visaInstr:pyvisa.resources.MessageBasedResource = None, myconfig: BaseScopeConfig = None):
     #def __init__(self, visaResc: pyvisa.resources.MessageBasedResource):

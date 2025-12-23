@@ -54,6 +54,9 @@ def createCurve():
     supply:BaseSupply   = BaseSupply.getDevice()
     dmm:BaseDMM         = BaseDMM.getDevice()
     scope:BaseScope     = BaseScope.getDevice()
+    if (supply == None or dmm == None or scope == None):
+        print("Een van de benodigde apparaten is niet aanwezig. Exit. Doei.")
+        return -1
     Vd= list()
     Id = list()
 
