@@ -1,0 +1,67 @@
+\documentclass[tikz,border=15mm]{standalone}
+\usepackage[siunitx, RPvoltages,american]{circuitikz}
+
+\standaloneenv{circuitikz}
+\ctikzsetstyle{romano}
+\ctikzset{bipoles/open/voltage/distance from node=0.8mm}
+\ctikzset{voltage/american font=\tiny}
+
+\begin{document}
+
+\begin{circuitikz}
+\ctikzset{bipoles/oscope/waveform=sin}
+\usetikzlibrary{math} %needed tikz library
+\tikzmath{\rx = 0.05; \ry =0.15; } 
+
+	\node[vsourcesinshape, rotate=-90, anchor=east] (V1)at (0,2){};
+	\node [bnc,anchor=zero](bncGen1) at (2,1.5){};
+	\node [bnc, anchor=zero, rotate=-90](bncGen2) at (1,1.5){};
+	\draw  [ thick, line width=0.3pt , rounded corners = 2.4](-1,3.5) rectangle (2.5,1);
+	\draw (1.5,4) node[left] {$Functiegenerator$};
+	
+	\ctikzset{bipoles/oscope/width=1.6}\ctikzset{bipoles/oscope/height=1.2}
+	\node [oscopeshape, fill=green!10](O) at (6,2.129){};
+	\node [bnc,  xscale=-1, anchor=zero](bnc1) at (O.in 1){};
+	\node [bnc, anchor=zero, rotate=-90](bnc2) at (O.in 2){};
+	
+	 \draw  (2.3,1.5)coordinate(coaxL)  ellipse (\rx cm and \ry cm);
+    \draw  (5.2,1.5) coordinate(coaxR) ellipse (\rx cm and \ry cm);
+    \draw (2.3,1.65)coordinate(TL)to[short](5.2,1.65)coordinate(TR);
+    \draw (2.3,1.35)coordinate(BL)to[short](5.2,1.35)coordinate(BR);
+    \draw (2.1,1.5)coordinate(W1L)to[short](2.33,1.5)coordinate(W1R);	
+    \draw (5.2,1.5)coordinate(W2L)to[short](5.5,1.5)coordinate(W2R);	
+    
+    %connect shield of coax
+    \draw (bncGen1.shield)to[short]++(0,-0.25)coordinate(Q);
+    \draw (Q)to[short](coaxL|-Q)to[short,-*](coaxL|-BL);    
+    \draw (coaxR|-BL)to[short, *-](coaxR|-Q)to[short](Q-|bnc1.shield)to[short](bnc1.shield);
+    %\draw (bnc1.left)to[short](bnc2);
+
+	%indicate both devices are grounded to earth.
+	\draw (O|-bnc1.shield) -- ++(0,-0.3)coordinate(myEarth)node[ground]{};    
+	\draw (bnc1.shield)to[short,-*](bnc1.shield-|myEarth)to[short]++(0.385,0);
+   
+   \path (bncGen2.shield|-bncGen1.shield)++(0.195,0)coordinate(E);
+   \draw (E)--++(0.45,0)coordinate(P) -- (P|-myEarth)node[ground]{};    
+   \draw (bncGen1.shield)to[short,-*](P|-bncGen1.shield);    
+
+% draw laptop
+\path  (-1,-3.5)coordinate(box1);
+\path  (2.5,-1)coordinate(box2);
+\draw  [ thick, line width=0.3pt , rounded corners = 2.4](box1) rectangle (box2);
+\draw [very thick](0,1)coordinate(USBGen)--++(0,-1)--++(4,0)coordinate(Q)--++(0,-1.5)coordinate(toUSB1)--(box2|-toUSB1)coordinate(USB1);
+\draw [very thick](O.east)++(0,-0.5)--++(1,0)--++(0,-4)coordinate(D)--(D-|box2)coordinate(USB2);
+\draw (V1|-USB2)++(0,0.2)node[right]{LAPTOP};
+
+% add some labels
+\draw (O.east) node[right] {$Oscilloscoop$};
+\draw (bncGen1)++(-0.1,.35) node[] {$CH1$};
+\draw(USBGen)node[below left]{USB};
+\draw(O.east)++(0,-0.5)node[below right]{USB};
+\draw(coaxL)++(0.5,0.1)node[above right]{BNC};
+\draw(bnc1.shield)++(0,-0.2)node[below]{CH1};
+\draw(USB1)node[above right]{USB1};
+\draw(USB2)node[above right]{USB2};
+
+\end{circuitikz}
+\end{document}

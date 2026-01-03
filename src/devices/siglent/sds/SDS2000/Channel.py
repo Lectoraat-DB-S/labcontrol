@@ -54,6 +54,7 @@ class SDS2kChannel(BaseChannel):
             tState = "OFF"
                 
         self.write(SCPI["CHANNEL"]["switch"](self.chanNr, tState))
+    
     def isVisible(self):
         pass
 

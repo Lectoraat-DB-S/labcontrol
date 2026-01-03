@@ -2,6 +2,7 @@ import pyvisa as visa
 import numpy as np
 
 from devices.BaseScope import BaseHorizontal
+from commands_full import SCPI
 
 class SDSHorizontal(BaseHorizontal):
     """Subclass of BaseHorizontal. Implements horizontal functionalities of the Tektronix TDS2002x oscilloscope. Horizontal functions are
@@ -55,7 +56,8 @@ class SDSHorizontal(BaseHorizontal):
             print(hulp2[hulp2>value])
             print(hulp2[hulp2>value])
             
-        self.visaInstr.write(f"Time_DIV {val2Set}")
+        self.visaInstr.write(SCPI["TIMEBASE"]["scale"](val2Set))
+        
         
     def setTimeDiv(self, value):
         self.setIimeBase(value)

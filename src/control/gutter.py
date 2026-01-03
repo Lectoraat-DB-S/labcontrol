@@ -3,7 +3,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-from src.devices.siglent.sds.SDS1000 import Scopes
+from src.devices.siglent.sds.SDS1000 import SDS1k
 from devices.siglent.sdg import Generator
 #from devices.siglent.sdg.Commands import WaVeformTyPe
 #from devices.siglent.sdg.Commands import WaveformParam
@@ -12,7 +12,7 @@ from devices.siglent.sdg import Generator
 #minimal width is approx 1ms, max width is approx 2ms
 #testing reveals horizontal position of servo is at 1.59 ms
 def aquireSamplesFromDistSensor():
-    scoop = Scopes.SiglentScope("192.168.0.32")
+    scoop = SDS1k.SiglentScope("192.168.0.32")
     trace = scoop.CH1.capture()
     return trace
 
@@ -21,7 +21,7 @@ def controlBall():
     startpos = 1.60e-3
     leftmost =1.13e-3
     rightmost = 2.06e-3
-    scoop = Scopes.SiglentScope("192.168.0.32")
+    scoop = SDS1k.SiglentScope("192.168.0.32")
     #scoop = Scopes.SiglentScope()
     #gen = Generator.SiglentGenerator("192.168.0.100")
     gen = Generator.SiglentGenerator()

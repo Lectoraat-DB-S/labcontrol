@@ -17,7 +17,8 @@ from devices.siglent.sds.SDS1000.Horizontal import SDSHorizontal
 from devices.siglent.sds.SDS1000.Trigger import SDSTrigger
 from devices.BaseConfig import BaseScopeConfig, BaseDeviceConfig
 from devices.siglent.sds.SDS1000.Display import SDSDisplay
-from devices.siglent.sds.SDS1000.Acquisition import SDSAcquisition 
+from devices.siglent.sds.SDS1000.Acquisition import SDSAcquisition
+from devices.siglent.sds.Scopes import SiglentScope 
 
 KNOWN_MODELS = [
         "SDS1000CFL",   #non-SPO model Series
@@ -43,7 +44,7 @@ class SiglentWaveformWidth(Enum):
     BYTE = "BYTE"
     WORD = "WORD"
 
-class SiglentScope(BaseScope):
+class SiglentScope1k(SiglentScope):
 
     @classmethod
     def SocketConnect(cls, rm:pyvisa.ResourceManager = None, scopeConfig: BaseScopeConfig = None,
@@ -54,56 +55,7 @@ class SiglentScope(BaseScope):
             mydev.chunk_size = 20480000 # set to bigsize to prevent time if nrofsamples is large.
         return mydev    
     
-    @classmethod
-    def getScopeClass(cls, rm: pyvisa.ResourceManager, urls, host, scopeConfig: BaseScopeConfig = None):
-        """
-            Tries to get (instantiate) this device, based on matched url or idn response
-            This method will ONLY be called by the BaseScope class, to instantiate the proper object during
-            creation by the __new__ method of BaseScope.     
-0        """  
-        TCPIP_OPEN_MSG_LONG ="Welcome to the SCPI Instrument 'Siglent SDS1202X-E'"
-        TCPIP_OPEN_MSG_SHORT ="SDS"
-
-
-        if cls is SiglentScope:
-            # first try find the scope on USB,
-            pattern = "SDS"
-            for url in urls:
-                if pattern in url:
-                    mydev:pyvisa.resources.MessageBasedResource = rm.open_resource(url)
-                    mydev.timeout = 10000  # ms
-                    mydev.read_termination = '\n'
-                    mydev.write_termination = '\n'
-                    idnRespStr=str(mydev.query("*IDN?"))
-                    myidn = util.checkIDN(idnstr=idnRespStr, models=KNOWN_MODELS)
-                    if myidn != None:
-                        return (cls, mydev)
-                    #else:
-                    #    return (None, None)
-                        
-            if scopeConfig == None:
-                return (None, None)
-            
-            for myConfig in scopeConfig:
-                if BaseScope.isRightmodel(myConfig.defName, KNOWN_MODELS): #check if the ini section corresponds with the models of this class
-                    mydev = cls.SocketConnect(rm=rm, scopeConfig=myConfig)
-                    if mydev != None:
-                        idnRespStr=str(mydev.query("*IDN?"))
-                        myidn = util.checkIDN(idnstr=idnRespStr, models=KNOWN_MODELS)
-                        if myidn != None:
-                            return (cls, mydev)
-                        #No return here!
-                    #No return here!
-                #No return here!
-            return (None, None, None)  # only return None here, after all options have been tried.              
-
-
-        #        if util.checkIDN(mydev):
-        #            cls.__init__(cls, mydev)
-        #            return (cls, mydev)
-        #        else:
-        #           return (None, None)
-            
+    ### removed getScopeClass ####        
 
     def __init__(self, visaResc: pyvisa.resources.MessageBasedResource = None, myconfig: BaseScopeConfig = None ):
         """ 
@@ -117,29 +69,7 @@ class SiglentScope(BaseScope):
         self.display = SDSDisplay(visaResc)
         self.acquisition = SDSAcquisition(visaResc)
     
-   
-    def __exit__(self, *args):
-        self.visaInstr.close()
 
-    
-    def query(self, cmd: str):
-        return self.visaInstr.query(cmd)
-    
-    def write(self, cmd: str):
-        self.visaInstr.write(cmd)
-
-
-    @property
-    def idn(self):
-        """
-            The idn command query identifies the instrument type and software version. The
-            response consists of four different fields providing information on the
-            manufacturer, the scope model, the serial number and the firmware revision.
-
-            return: Siglent Technologies,<model>,<serial_number>,<firmware>
-        """
-        return self.query("*IDN?")
-    
     def inr(self):
         """
             The INR? query reads and clears the contents of the INternal state change Register (INR). 
@@ -316,7 +246,7 @@ class SiglentScope(BaseScope):
 
         self.set_single_trigger()
         self.set_trigger_run()
-        self.query("*OPC?")
+        return self.query("*OPC?")
 
     def default_setup(self):
         pass

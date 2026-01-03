@@ -46,8 +46,6 @@ class ConfigReader(object):
         else:
             return None
 
-    
-
 class BaseDeviceConfig(object):
     
     configClassList = []
@@ -85,16 +83,16 @@ class BaseDeviceConfig(object):
                     
         return None # if getDevice can't find an instrument, return None.
 
-
     @classmethod
     def getConfigClass(cls, devName, baseType, derivedType):
         """getConfigClass: factory method for config objects. 
         Remark: this baseclass implementation is empty, must be implemented by the subclass. """
-        pass
+        pas
+        s
 
     def __init__(self, devName, baseType, derivedType): #TODO: use param!
         self._name = devName #section name
-        self._config = ConfigReader()
+        self._configParser = ConfigReader()
         self._visaInterfaces = None#["USB INSTR","TCPIP INSTR","TCPIP SOCKET"]#TODO: find all possible VISA interface options on internet.
         self._currVisaIF = None
         self._currSearchMethod = "IDN"
@@ -105,37 +103,32 @@ class BaseDeviceConfig(object):
         self.fill()
 
     def fill(self):
-        self._ipAddress = self._config.getProperty(self._name, ConfigReader.IP_ADRESS_CONFIG_STR)
-        
-        self._visaInterfaces =self._config.getProperty(self._name, ConfigReader.AV_VISA_INTERFACES_CONFIG_STR)
-        self._currVisaIF = self._config.getProperty(self._name, ConfigReader.CURR_VISA_INTERFACE_CONFIG_STR)
-        self._currSearchMethod = self._config.getProperty(self._name, ConfigReader.CURR_SEARCH_METHOD_CONFIG_STR)
-        self._vncPort = self._config.getProperty(self._name, ConfigReader.VNC_PORTNR_CONFIG_STR)
+        self._ipAddress = self._configParser.getProperty(self._name, ConfigReader.IP_ADRESS_CONFIG_STR)
+        self._visaInterfaces =self._configParser.getProperty(self._name, ConfigReader.AV_VISA_INTERFACES_CONFIG_STR)
+        self._currVisaIF = self._configParser.getProperty(self._name, ConfigReader.CURR_VISA_INTERFACE_CONFIG_STR)
+        self._currSearchMethod = self._configParser.getProperty(self._name, ConfigReader.CURR_SEARCH_METHOD_CONFIG_STR)
+        self._vncPort = self._configParser.getProperty(self._name, ConfigReader.VNC_PORTNR_CONFIG_STR)
 
     @property
     def baseType(self):
         return self._baseType
     
-
     @property
     def VNCPort(self):
         return self._vncPort
-    
 
     @property
     def IPAddress(self):
         return self._ipAddress
     
     @property
-    def defName(self):
+    def devName(self):
         return self._name
-    
     
     @property
     def visaInterfaces(self, name):
         return  self._visaInterfaces
 
-    
     @property
     def currVisaIF(self, name):
         return self._currVisaIF
@@ -157,10 +150,10 @@ class BaseScopeConfig(BaseDeviceConfig):
 
     def __init__(self, devName, baseType, derivedType):
         super().__init__(devName, baseType, derivedType)
-        self._horizontalGrid = self._config.getProperty(self._name, ConfigReader.BASESCOPE_HORIZONTAL_CONFIG_STR)
-        self._visibleHorizontalGrid = self._config.getProperty(self._name, ConfigReader.BASESCOPE_VIS_HORIZONTAL_CONFIG_STR)
-        self._verticalGrid = self._config.getProperty(self._name ,ConfigReader.BASESCOPE_VERTICAL_CONFIG_STR)
-        self._visibleVerticalGrid = self._config.getProperty(self._name, ConfigReader.BASESCOPE_VIS_VERTICAL_CONFIG_STR)
+        self._horizontalGrid = self._configParser.getProperty(self._name, ConfigReader.BASESCOPE_HORIZONTAL_CONFIG_STR)
+        self._visibleHorizontalGrid = self._configParser.getProperty(self._name, ConfigReader.BASESCOPE_VIS_HORIZONTAL_CONFIG_STR)
+        self._verticalGrid = self._configParser.getProperty(self._name ,ConfigReader.BASESCOPE_VERTICAL_CONFIG_STR)
+        self._visibleVerticalGrid = self._configParser.getProperty(self._name, ConfigReader.BASESCOPE_VIS_VERTICAL_CONFIG_STR)
         
     @property
     def visibleHorizontalGrid(self):

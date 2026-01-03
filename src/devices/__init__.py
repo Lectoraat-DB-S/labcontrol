@@ -13,7 +13,7 @@ from devices.tektronix.scope.display import TekDisplay
 
 
 # section: Siglent scope
-from devices.siglent.sds.SDS1000.Scopes import SiglentScope # For auto registration
+from src.devices.siglent.sds.SDS1000.SDS1k import SiglentScope # For auto registration
 from devices.siglent.sds.SDS1000.Channel import SDSChannel, SDSWaveForm, SDSWaveFormPreamble
 from devices.siglent.sds.SDS1000.Vertical import SDSVertical
 from devices.siglent.sds.SDS1000.Horizontal import SDSHorizontal

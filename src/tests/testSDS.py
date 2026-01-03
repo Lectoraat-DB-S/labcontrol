@@ -2,7 +2,7 @@ from devices.BaseScope import BaseScope, BaseChannel, BaseVertical
 from devices.BaseScope import pyvisa
 import unittest
 from unittest.mock import call, patch, MagicMock
-from src.devices.siglent.sds.SDS1000.Scopes import SiglentScope
+from src.devices.siglent.sds.SDS1000.SDS1k import SiglentScope
 import src.tests.sdsUtils as sdsUtils
 import numpy as np
 import matplotlib.pyplot as plt

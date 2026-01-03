@@ -6,7 +6,7 @@ import devices.siglent.sdm.DigitalMultiMeter as multimeter
 
 #from devices.tektronix.scope.TekScopes import TekScope
 #from devices.siglent.sdg.Generator import SiglentGenerator
-from src.devices.siglent.sds.SDS1000.Scopes import SiglentScope
+from src.devices.siglent.sds.SDS1000.SDS1k import SiglentScope
 
 #from siglent.sdg.Generator import SiglentGenerator
 

@@ -26,7 +26,7 @@ from devices.Korad.KoradSupply import Korad3305P
 #import control.gutter as gootje
 from devices.BaseScope import BaseChannel, BaseScope, BaseHorizontal, BaseVertical, BaseWaveForm, BaseWaveFormPreample
 from devices.BaseGenerator import BaseGenerator
-from devices.siglent.sds.SDS1000.Scopes import  SiglentScope
+from src.devices.siglent.sds.SDS1000.SDS1k import  SiglentScope
 from devices.tektronix.scope.TekScopes import TekScope, TekHorizontal, TekTrigger
 
 import matplotlib.pyplot as plt

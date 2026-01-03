@@ -7,17 +7,17 @@ import pyvisa
 import logging
 import time
 #from devices.BaseScope import BaseScope
-from devices.siglent.sds.SDS1000.Channel import SDSChannel
+from devices.siglent.sds.SDS2000.Channel import SDS2kChannel
 from devices.siglent.sds.util import INR_HASHMAP
 import devices.siglent.sds.util as util
 from devices.siglent.sds.util import SiglentIDN 
 from devices.BaseScope import BaseScope
 from devices.siglent.sds.SDS2000.Vertical import SDS2kVertical
-from devices.siglent.sds.SDS1000.Horizontal import SDSHorizontal
-from devices.siglent.sds.SDS1000.Trigger import SDSTrigger
+from devices.siglent.sds.SDS2000.Horizontal import SDSHorizontal
+from devices.siglent.sds.SDS2000.Trigger import SDSTrigger
 from devices.BaseConfig import BaseScopeConfig, BaseDeviceConfig
-from devices.siglent.sds.SDS1000.Display import SDSDisplay
-from devices.siglent.sds.SDS1000.Acquisition import SDSAcquisition 
+from devices.siglent.sds.SDS2000.Display import SDSDisplay
+from devices.siglent.sds.SDS2000.Acquisition import SDSAcquisition 
 
 
 KNOWN_MODELS = [
@@ -50,56 +50,7 @@ class SiglentScope(BaseScope):
             mydev.chunk_size = 20480000 # set to bigsize to prevent time if nrofsamples is large.
         return mydev
 
-    @classmethod
-    def getScopeClass(cls, rm: pyvisa.ResourceManager, urls, host, scopeConfig: BaseScopeConfig = None):
-        """
-            Tries to get (instantiate) this device, based on matched url or idn response
-            This method will ONLY be called by the BaseScope class, to instantiate the proper object during
-            creation by the __new__ method of BaseScope.     
-        """  
-        TCPIP_OPEN_MSG_LONG ="Welcome to the SCPI Instrument 'Siglent SDS1202X-E'"
-        TCPIP_OPEN_MSG_SHORT ="SDS"
-
-
-        if cls is SiglentScope:
-            # first try find the scope on USB,
-            pattern = "SDS"
-            for url in urls:
-                if pattern in url:
-                    mydev:pyvisa.resources.MessageBasedResource = rm.open_resource(url)
-                    mydev.timeout = 10000  # ms
-                    mydev.read_termination = '\n'
-                    mydev.write_termination = '\n'
-                    idnRespStr=str(mydev.query("*IDN?"))
-                    myidn = util.checkIDN(idnstr=idnRespStr)
-                    if myidn != None:
-                        return (cls, mydev)
-                    #else:
-                    #    return (None, None)
-                        
-            if scopeConfig == None:
-                return (None, None, None)
-            myConfig: BaseDeviceConfig = None
-            for myConfig in scopeConfig:
-                if BaseScope.isRightmodel(myConfig.defName, KNOWN_MODELS): #check if the ini section corresponds with the models of this class
-                    mydev = cls.SocketConnect(rm=rm, scopeConfig=myConfig)
-                    if mydev != None:
-                        idnRespStr=str(mydev.query("*IDN?"))
-                        myidn = util.checkIDN(idnstr=idnRespStr, models=KNOWN_MODELS)
-                        if myidn != None:
-                            return (cls, mydev)
-                        #No return here!
-                    #No return here!
-                #No return here!
-            return (None, None, None)  # only return None here, after all options have been tried.              
-
-
-        #        if util.checkIDN(mydev):
-        #            cls.__init__(cls, mydev)
-        #            return (cls, mydev)
-        #        else:
-        #           return (None, None)
-            
+    ###### Removed getScopeclass, moved functionality to SiglentScope class #########################
 
     def __init__(self, visaResc: pyvisa.resources.MessageBasedResource = None, myconfig: BaseScopeConfig = None ):
         """ 
@@ -222,32 +173,6 @@ class SiglentScope(BaseScope):
         mdepth = min(self.memory_depth_values, key=lambda x: abs(x - mdepth))
         self.write(":ACQuire:MDEPth {}".format(mdepth))
 
-# moved to SDSChannel, but should be method of the scope
-    #def get_trigger_status(self):
-    #    """The command query returns the current state of the trigger.
-    #
-    #    :return: str
-    #                Returns either "Arm", "Ready", "Auto", "Trig'd", "Stop", "Roll"
-    #    """
-    #    return self.query(":TRIGger:STATus?")
-
-    #def get_waveform_preamble(self):
-    #    """The query returns the parameters of the source using by the command
-    #    :WAVeform:SOURce.
-    #   """
-    #    params = self.query_raw(":WAVeform:PREamble?")
-    #    params = params[11:]
-    #    total_points = struct.unpack('i', params[116:120])[0]
-    #    probe = struct.unpack('f', params[328:332])[0]
-    #    vdiv = struct.unpack('f', params[156:160])[0] * probe
-    #    voffset = struct.unpack('f', params[160:164])[0] * probe
-    #    code_per_div = struct.unpack('f', params[164:168])[0] * probe
-    #    timebase = struct.unpack('h', params[324:326])[0]
-    #    delay = struct.unpack('d', params[180:188])[0]
-    #    interval = struct.unpack('f', params[176:180])[0]
-
-    #    return (total_points, vdiv, voffset, code_per_div, timebase, delay, interval, delay)
-
     def autosetup(self):
         """ This command attempts to automatically adjust the trigger, vertical, and
         horizontal controls of the oscilloscope to deliver a usable display of the
@@ -312,7 +237,7 @@ class SiglentScope(BaseScope):
 
         self.set_single_trigger()
         self.set_trigger_run()
-        self.query("*OPC?")
+        return self.query("*OPC?")
 
     def default_setup(self):
         pass

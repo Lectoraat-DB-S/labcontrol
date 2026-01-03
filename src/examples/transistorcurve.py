@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from devices.siglent.spd.PowerSupply import SiglentPowerSupply
 from devices.siglent.sdm.DigitalMultiMeter import SiglentDMM
-from src.devices.siglent.sds.SDS1000.Scopes import SiglentScope
+from src.devices.siglent.sds.SDS1000.SDS1k import SiglentScope
 import pandas as pd
 
 def makeCurveWithOnlySupply():
