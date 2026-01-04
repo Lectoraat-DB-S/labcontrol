@@ -1,13 +1,14 @@
-from ast import literal_eval
-import pyvisa
-from devices.BaseSupply import BaseSupply,BaseSupplyChannel
-import socket
-import serial
-import time
-from serial.tools.list_ports import comports
 import configparser
 import os
+import socket
+import time
+from ast import literal_eval
 
+import pyvisa
+import serial
+from serial.tools.list_ports import comports
+
+from devices.BaseSupply import BaseSupply, BaseSupplyChannel
 
 
 class KoradChannel(BaseSupplyChannel):
@@ -15,8 +16,8 @@ class KoradChannel(BaseSupplyChannel):
         super().__init__(chan_no, dev=dev)
         self.name = f"{chan_no}"
         self.visaInstr:pyvisa.resources.MessageBasedResource = dev
-        
-    
+
+
     def voltage(self, value):
         """Sets the output voltage of this channel"""
         self.visaInstr.write(f"VSET{self.name}:{value}")
@@ -24,21 +25,21 @@ class KoradChannel(BaseSupplyChannel):
     def voltage(self):
         """Gets the current output voltage setting of this channel"""
         return self.visaInstr.query(f"VSET{self.name}?")
-    
+
     def getVoltage(self):
-        """Measures actual output voltage delivered by this channel"""  
+        """Measures actual output voltage delivered by this channel"""
         return self.visaInstr.query(f"VOUT{self.name}?")
-    
+
     def current(self, value):
         self.visaInstr.write(f"ISET{self.name}:{value}")
-        
+
     def current(self):
         return self.visaInstr.query(f"ISET{self.name}?")
 
     def getCurrent(self):
-        """Measures actual output current delivered by this channel"""  
+        """Measures actual output current delivered by this channel"""
         return self.visaInstr.query(f"IOUT{self.name}?")
-    
+
     def enable(self, flag: bool):
         if flag:
             self.visaInstr.write(f"OUTCH{self.name} :1")
@@ -50,19 +51,19 @@ class KoradChannel(BaseSupplyChannel):
 
     def OCP(self):
         return self.visaInstr.query(f"OCPSET{self.name}?")
-    
+
     def OVP(self, value):
         self.visaInstr.write(f"OVPSET{self.name}: {value}")
 
     def OVP(self):
         return self.visaInstr.query(f"OVPSET{self.name}?")
-    
+
     def vRamp(self, start, stop, vstep, tstep):
         self.visaInstr.write(f"VASTEP{self.name}:{start},{stop},{vstep},{tstep}")
 
     def vStop(self):
         self.visaInstr.write(f"VASTOP{self.name}")
-    
+
     def iRamp(self, start, stop, istep, tstep):
         self.visaInstr.write(f"IASTEP{self.name}:{start},{stop},{istep},{tstep}")
 
@@ -73,25 +74,25 @@ class KoradChannel(BaseSupplyChannel):
         self.visaInstr.write(f"VSTEP{self.name}:{value}")
 
     def vUp(self):
-        self.visaInstr.write(f"VUP{self.name}")    
+        self.visaInstr.write(f"VUP{self.name}")
 
     def vDown(self):
-        self.visaInstr.write(f"VDOWN{self.name}")    
-    
+        self.visaInstr.write(f"VDOWN{self.name}")
+
     def iStep(self, value):
         self.visaInstr.write(f"ISTEP{self.name}:{value}")
 
     def iUp(self):
-        self.visaInstr.write(f"IUP{self.name}")    
+        self.visaInstr.write(f"IUP{self.name}")
 
     def iDown(self):
-        self.visaInstr.write(f"IDOWN{self.name}")    
+        self.visaInstr.write(f"IDOWN{self.name}")
 
 class Korad3305P(BaseSupply):
     VISAInterface = "ASRL"
     targetCom = "COM10"
     prefMethod = None
-    
+
     @classmethod
     def readConfig(cls):
         config = configparser.ConfigParser()
@@ -122,17 +123,21 @@ class Korad3305P(BaseSupply):
                     else:
                         break # stop searching.
                 except pyvisa.errors.Error as pyerr:
-                    print(f"VISA Error")
+                    print(f"VISA Error on {url}")
                     mydev = None #let's go for the next one.
+                except serial.SerialException as ser_err:
+                    # Serial port configuration errors are common when scanning ports
+                    # Just skip this port and continue
+                    mydev = None
                 except Exception as err:
                     print(f"Unexpected {err=}, {type(err)=}")
-                    raise
+                    mydev = None  # Continue scanning instead of raising
 
         #if search has been ended, two option: found a possible Korad device or found None.
-        # When found an option: check the idn and if ok: find 
+        # When found an option: check the idn and if ok: find
         if  mydev == None:
-            return None 
-        else: 
+            return None
+        else:
             try: # the query call might fail therefore a try/exept clause.
                 mydev.timeout = 2000  # ms
                 mydev.read_termination = '\n'
@@ -171,17 +176,31 @@ class Korad3305P(BaseSupply):
                         return (None, None, None)
                     else:
                         mydev.close()
-                        mydev = None    
+                        mydev = None
                 except pyvisa.errors.Error as pyerr:
-                    print(f"VISA Error")
-                    mydev = None #let's go for the next one.
-                    return (None, None, None)
+                    print(f"VISA Error querying device on {url}")
+                    if mydev:
+                        mydev.close()
+                    mydev = None
+                    # Continue scanning other ports instead of returning
+                except serial.SerialException as ser_err:
+                    # Serial port errors are common when scanning - skip this port
+                    if mydev:
+                        mydev.close()
+                    mydev = None
+                    # Continue scanning other ports
                 except Exception as err:
-                    print(f"Unexpected {err=}, {type(err)=}")
-                    return (None, None, None)
-        
-    
-        
+                    print(f"Unexpected error on {url}: {err=}, {type(err)=}")
+                    if mydev:
+                        mydev.close()
+                    mydev = None
+                    # Continue scanning other ports
+
+        # If we get here, no device was found
+        return (None, None, None)
+
+
+
     @classmethod
     def getSupplyClass(cls, rm, urls, host):
         """ Tries to get (instantiate) the device, based on the url"""
@@ -198,7 +217,7 @@ class Korad3305P(BaseSupply):
             retval = Korad3305P.findVISADeviceOnComPortNr(rm, urls)
 
         return retval
-        
+
     def __init__(self, dev= None, host=None, nrOfChan=2):
         self.visaInstr : pyvisa.Resource = dev
         self.host = host
@@ -209,18 +228,18 @@ class Korad3305P(BaseSupply):
 
     def chan(self, chanNr:int)-> KoradChannel:
         """Gets a channel, based on its index: 1, 2 etc."""
-        try: 
+        try:
             for  i, val in enumerate(self.channels):
                 if (chanNr) in val.keys():
                     return val[chanNr]
         except ValueError:
             print("Requested channel not available")
-            return None     
-    
+            return None
+
 
     def idn(self):
         return self.visaInstr.query("*IDN?")
-    
+
     def OCP(self, flag: bool):
         if flag == True:
             self.visaInstr.write(f"OCP1")
@@ -244,8 +263,8 @@ class Korad3305P(BaseSupply):
             self.visaInstr.write(f"TRACK{modeVal}")
 
     def status(self):
-        return int(self.visaInstr.query("STATUS?")) 
-    
+        return int(self.visaInstr.query("STATUS?"))
+
     def strStatus(self):
         resp = ""
         val = self.status()
@@ -256,7 +275,7 @@ class Korad3305P(BaseSupply):
         bit5 = val & 0x20
         bit6 = val & 0x40
         bit7 = val & 0x80
-        
+
         if bit0: resp+="CH1: Constant Voltage Control\n"
         elif ~bit0: resp+="CH1: Constant Current Control\n"
         else: resp+="Error Status bit 0\n"
@@ -270,7 +289,7 @@ class Korad3305P(BaseSupply):
             case 1: resp+="Series Channels\n"
             case 2: resp+="Parallel Channels\n"
             case _: resp+="Error status bit 2 and 3\n"
-        
+
         if bit4: resp+="OVP: ON\n"
         elif ~bit4: resp+="OVP: OFF\n"
         else: resp+="Error Status bit 4\n"
@@ -278,7 +297,7 @@ class Korad3305P(BaseSupply):
         if bit5: resp+="OCP: ON\n"
         elif ~bit5: resp+="OCP: OFF\n"
         else: resp+="Error Status bi5 4\n"
-        
+
         if bit6: resp+="CH1 OUT: ON\n"
         elif ~bit6: resp+="CH1 OUT: OFF\n"
         else: resp+="Error Status bit 6\n"

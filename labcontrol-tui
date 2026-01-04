@@ -1,0 +1,10 @@
+#!/bin/bash
+# LabControl TUI Launcher
+
+# Resolve symlinks to get real script location
+REAL_SCRIPT="$(readlink -f "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(dirname "$REAL_SCRIPT")"
+VENV_PYTHON="$SCRIPT_DIR/labcontrol/bin/python3"
+SRC_DIR="$SCRIPT_DIR/src"
+
+exec "$VENV_PYTHON" "$SRC_DIR/launch_tui.py" "$@"

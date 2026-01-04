@@ -1,55 +1,62 @@
-import libusb_package
-import usb.core
-import usb.backend.libusb1
+import configparser
+import logging
+import threading
 import time
+import unittest
+from multiprocessing import Process
 
+#from src.tests.MockResMan import MockerRM
+from unittest.mock import MagicMock, call, patch
 
-
+import libusb_package
+import matplotlib.pyplot as plt
+import numpy as np
+import pyvisa
+import serial
+import usb.backend.libusb1
+import usb.core
+import usbtmc
+from pyvisa import ResourceManager
+from pyvisa import ResourceManager as rm
 from tm_devices import DeviceManager
 from tm_devices.drivers import MSO4B
 from tm_devices.helpers import PYVISA_PY_BACKEND, SYSTEM_DEFAULT_VISA_BACKEND
-import logging
-import serial
-import configparser
-import pyvisa
-import threading
-from multiprocessing import Process
-import libusb_package
+
+import devices.BaseLabDeviceUtils as bu
+import measurements.IRLEDCurve as ledcurve
 
 #import measurements.weerstandsmetingDMM as measurement
 import measurements.transistorcurve as curfje
-import measurements.IRLEDCurve as ledcurve
-from devices.Korad.KoradSupply import Korad3305P
+from devices.BaseGenerator import BaseGenerator
 
 #import tests.testSDG as sigTest
 #import tests.testSDS as scopeTest
 #import control.gutter as gootje
-from devices.BaseScope import BaseChannel, BaseScope, BaseHorizontal, BaseVertical, BaseWaveForm, BaseWaveFormPreample
-from devices.BaseGenerator import BaseGenerator
-from devices.siglent.sds.SDS1000.Scopes import  SiglentScope
-from devices.tektronix.scope.TekScopes import TekScope, TekHorizontal, TekTrigger
-
-import matplotlib.pyplot as plt
-import numpy as np
-import unittest
-
-#from src.tests.MockResMan import MockerRM
-from unittest.mock import call, patch, MagicMock
-from pyvisa import ResourceManager
-from pyvisa import ResourceManager as rm
-#from devices.Hantek import ServerGui
-
-from tests import checkTDS
+from devices.BaseScope import (
+    BaseChannel,
+    BaseHorizontal,
+    BaseScope,
+    BaseVertical,
+    BaseWaveForm,
+    BaseWaveFormPreample,
+)
+from devices.Hantek.HantekBaseScope import (
+    HantekScope,  # Import to register Hantek scope
+)
+from devices.Korad.KoradSupply import Korad3305P
+from devices.siglent.sds.SDS1000.Scopes import SiglentScope
+from devices.tektronix.scope.TekScopes import TekHorizontal, TekScope, TekTrigger
 from measurements.frequencyResponse import doACSweep
-import devices.BaseLabDeviceUtils as bu
 
-import usbtmc
+#from devices.Hantek import ServerGui
+from tests import checkTDS
+
 
 def testEthConfig():
     bu.setEthernet()
 
 def testUSBTMC():
-    
+
     for dev in libusb_package.find(find_all=True):
         print(dev)
 
@@ -57,7 +64,7 @@ def testUSBTMC():
     #dev = usb.core.find(idVendor=0x0699, idProduct=0x03A1, backend=backend)
     #libusb1_backend = usb.backend.libusb1.get_backend(find_library=libusb_package.find_library)
     #print(list(usb.core.find(find_all=True, backend=libusb1_backend)))
-    #VID_0699&PID_03A1\C012743 
+    #VID_0699&PID_03A1\C012743
     #parent: VID_0BDA&PID_5411
     #instr =  usbtmc.Instrument("USB::0x0699::0x03A1::INSTR")
     instr =  usbtmc.Instrument(idVendor=0x0699, idProduct=0x03A1)
@@ -92,11 +99,11 @@ def testTekVisa():
     scopeChan1.capture()
     end = time.time()
     print(f"1 maal een capture kost: {end-start}")
-    
+
 
 def testHantek():
     ServerGui.createApp()
-    
+
 
 
 def readConfig():
@@ -132,7 +139,7 @@ def performTransCurve():
     rm = pyvisa.ResourceManager()
     print(rm.list_resources())
     curfje.createTransCurve()
-    
+
 
 def testKorad():
     #ser = serial.Serial('COM10', 9600, timeout=0, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=8)
@@ -152,7 +159,7 @@ if __name__ == "__main__":
     #a  = input()
     #bu.setEthernet()
     maakIRLEDcurve()
-    
+
     #ledcurve.testDiodePlotCurve()
     #doACSweep()
     #testUSBTMC()
@@ -160,7 +167,7 @@ if __name__ == "__main__":
 
     #gen = BaseGenerator.getDevice()
     #checkTDS.checkMathFunctions()
-    #print(rm.list_resources_info())  
+    #print(rm.list_resources_info())
     #testHantek()
     #testTekVisa()
     #dummyUse()
@@ -168,5 +175,3 @@ if __name__ == "__main__":
     #performTransCurve()
     #logger = logging.getLogger(__name__)
     #logger.setLevel(logging.DEBUG)
-
-    

@@ -1,4 +1,5 @@
 import pyvisa
+import sys
 from devices.BaseGenerator import BaseGenerator, BaseGenChannel
 from devices.BaseConfig import BaseGeneratorConfig
 import usb.core
@@ -122,26 +123,30 @@ class OWONGenerator(BaseGenerator):
         """
         Tries to get (instantiate) this device, based on matched url or idn response
         This method will ONLY be called by the BaseScope class, to instantiate the proper object during
-        creation by the __new__ method of BaseGenerator.     
-        """    
+        creation by the __new__ method of BaseGenerator.
+        """
         if cls is OWONGenerator:
             if host == None:
-                #for url in myurls:
-                    #if urlPattern in url:
-                        #mydev = myrm.open_resource(url)
-                        #mydev.timeout = 10000  # ms
-                        #mydev.read_termination = '\n'
-                        #mydev.write_termination = '\n'
-                        ##desc = mydev.query("*IDN?")
-                        #if desc.find("OWON,DGE1060") > -1: #Tektronix device found via IDN.
-                return (cls, 1, None)
-                #return (None, 0, None)                          
-        else:
-            return (None, 0, None)
+                # Check if OWON DGE1060 is actually connected via USB
+                try:
+                    if sys.platform == "win32":
+                        backend = usb.backend.libusb1.get_backend(find_library=lambda x: r"C:\Users\p78511225\.pyenv\pyenv-win\versions\3.13.3\Scripts\libusb-1.0.dll")
+                    else:
+                        backend = usb.backend.libusb1.get_backend()
+                    dev = usb.core.find(idVendor=0x5345, idProduct=0x1235, backend=backend)
+                    if dev is not None:
+                        return (cls, 1, None)
+                except Exception:
+                    pass
+                return (None, 0, None)
+        return (None, 0, None)
 
     def __init__(self, nrOfChan=0, visaInstr=None, myConfig: BaseGeneratorConfig = None):
         super().__init__(nrOfChan=nrOfChan, instr=visaInstr)
-        backend = usb.backend.libusb1.get_backend(find_library=lambda x: "C:\\Users\\p78511225\\.pyenv\pyenv-win\\versions\\3.13.3\\Scripts\\libusb-1.0.dll")
+        if sys.platform == "win32":
+            backend = usb.backend.libusb1.get_backend(find_library=lambda x: r"C:\Users\p78511225\.pyenv\pyenv-win\versions\3.13.3\Scripts\libusb-1.0.dll")
+        else:
+            backend = usb.backend.libusb1.get_backend()  # Linux/macOS: use system libusb
         dev = usb.core.find(idVendor=0x5345, idProduct=0x1235, backend=backend)
         self.nrOfChan = nrOfChan
 

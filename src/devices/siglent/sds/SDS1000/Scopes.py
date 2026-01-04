@@ -1,23 +1,23 @@
-import time
-import numpy as np
-from enum import Enum
-import socket
-
-import pyvisa
 import logging
+import socket
 import time
+from enum import Enum
+
+import numpy as np
+import pyvisa
+
+import devices.siglent.sds.util as util
+from devices.BaseConfig import BaseDeviceConfig, BaseScopeConfig
+from devices.BaseScope import BaseScope
+from devices.siglent.sds.SDS1000.Acquisition import SDSAcquisition
+
 #from devices.BaseScope import BaseScope
 from devices.siglent.sds.SDS1000.Channel import SDSChannel
-from devices.siglent.sds.util import INR_HASHMAP
-import devices.siglent.sds.util as util
-from devices.siglent.sds.util import SiglentIDN 
-from devices.BaseScope import BaseScope
-from devices.siglent.sds.SDS1000.Vertical import SDSVertical
+from devices.siglent.sds.SDS1000.Display import SDSDisplay
 from devices.siglent.sds.SDS1000.Horizontal import SDSHorizontal
 from devices.siglent.sds.SDS1000.Trigger import SDSTrigger
-from devices.BaseConfig import BaseScopeConfig, BaseDeviceConfig
-from devices.siglent.sds.SDS1000.Display import SDSDisplay
-from devices.siglent.sds.SDS1000.Acquisition import SDSAcquisition 
+from devices.siglent.sds.SDS1000.Vertical import SDSVertical
+from devices.siglent.sds.util import INR_HASHMAP, SiglentIDN
 
 KNOWN_MODELS = [
         "SDS1000CFL",   #non-SPO model Series
@@ -52,15 +52,15 @@ class SiglentScope(BaseScope):
         mydev = super().SocketConnect(rm,myConfig)
         if mydev != None:
             mydev.chunk_size = 20480000 # set to bigsize to prevent time if nrofsamples is large.
-        return mydev    
-    
+        return mydev
+
     @classmethod
     def getScopeClass(cls, rm: pyvisa.ResourceManager, urls, host, scopeConfig: BaseScopeConfig = None):
         """
             Tries to get (instantiate) this device, based on matched url or idn response
             This method will ONLY be called by the BaseScope class, to instantiate the proper object during
-            creation by the __new__ method of BaseScope.     
-0        """  
+            creation by the __new__ method of BaseScope.
+0        """
         TCPIP_OPEN_MSG_LONG ="Welcome to the SCPI Instrument 'Siglent SDS1202X-E'"
         TCPIP_OPEN_MSG_SHORT ="SDS"
 
@@ -77,13 +77,13 @@ class SiglentScope(BaseScope):
                     idnRespStr=str(mydev.query("*IDN?"))
                     myidn = util.checkIDN(idnstr=idnRespStr, models=KNOWN_MODELS)
                     if myidn != None:
-                        return (cls, mydev)
+                        return (cls, mydev, scopeConfig)
                     #else:
-                    #    return (None, None)
-                        
+                    #    return (None, None, None)
+
             if scopeConfig == None:
-                return (None, None)
-            
+                return (None, None, None)
+
             for myConfig in scopeConfig:
                 if BaseScope.isRightmodel(myConfig.defName, KNOWN_MODELS): #check if the ini section corresponds with the models of this class
                     mydev = cls.SocketConnect(rm=rm, scopeConfig=myConfig)
@@ -91,11 +91,11 @@ class SiglentScope(BaseScope):
                         idnRespStr=str(mydev.query("*IDN?"))
                         myidn = util.checkIDN(idnstr=idnRespStr, models=KNOWN_MODELS)
                         if myidn != None:
-                            return (cls, mydev)
+                            return (cls, mydev, myConfig)
                         #No return here!
                     #No return here!
                 #No return here!
-            return (None, None)  # only return None here, after all options have been tried.              
+            return (None, None, None)  # only return None here, after all options have been tried.
 
 
         #        if util.checkIDN(mydev):
@@ -103,12 +103,12 @@ class SiglentScope(BaseScope):
         #            return (cls, mydev)
         #        else:
         #           return (None, None)
-            
+
 
     def __init__(self, visaResc: pyvisa.resources.MessageBasedResource = None, myconfig: BaseScopeConfig = None ):
-        """ 
+        """
             init: initialise a newly  created SiglentScope object. Because the pyvisa resource handle will be saved
-            during the initing of BaseScope, this method calls super().__init__() 
+            during the initing of BaseScope, this method calls super().__init__()
         """
         super().__init__(visaResc, myconfig)
         self.horizontal = SDSHorizontal(visaResc)
@@ -116,15 +116,15 @@ class SiglentScope(BaseScope):
         self.trigger = SDSTrigger(self.vertical,visaResc)
         self.display = SDSDisplay(visaResc)
         self.acquisition = SDSAcquisition(visaResc)
-    
-   
+
+
     def __exit__(self, *args):
         self.visaInstr.close()
 
-    
+
     def query(self, cmd: str):
         return self.visaInstr.query(cmd)
-    
+
     def write(self, cmd: str):
         self.visaInstr.write(cmd)
 
@@ -139,32 +139,32 @@ class SiglentScope(BaseScope):
             return: Siglent Technologies,<model>,<serial_number>,<firmware>
         """
         return self.query("*IDN?")
-    
+
     def inr(self):
         """
-            The INR? query reads and clears the contents of the INternal state change Register (INR). 
-            The INR register (see table programming manual) records the completion of various internal operations 
+            The INR? query reads and clears the contents of the INternal state change Register (INR).
+            The INR register (see table programming manual) records the completion of various internal operations
             and state transitions.
         """
         inrResp = self.query("*INR?")
-        return INR_HASHMAP[inrResp]        
-    
+        return INR_HASHMAP[inrResp]
+
     def rst(self):
         """
             The RST command initiates a device reset. The RST sets recalls the default setup.
         """
         self.write("*RST")
-    
+
     def sav(self, panelNr):
         """
-            The SAV command stores the current state of the instrument in internal memory. The SAV command stores 
+            The SAV command stores the current state of the instrument in internal memory. The SAV command stores
             the complete front-panel setup of the instrument at the time the command is issued."""
         self.write(f"*SAV{panelNr}")
 
     def rcl(self, panelNr):
         """
-            The RCL command sets the state of the instrument, using one of the ten non-volatile panel setups, by 
-            recalling the complete front-panel setup of the instrument. Panel setup 0 corresponds to the default panel 
+            The RCL command sets the state of the instrument, using one of the ten non-volatile panel setups, by
+            recalling the complete front-panel setup of the instrument. Panel setup 0 corresponds to the default panel
             setup.
         """
         self.write(f"*RCL{panelNr}")
@@ -177,20 +177,20 @@ class SiglentScope(BaseScope):
             self.write(f"LOCK ON")
         else:
             self.write(f"LOCK OFF")
-    
+
     def isLocked(self):
         retstr = self.query(f"LOCK?")
         if (retstr=="LOCK ON"):
             return True
         else:
             return False
-        
+
     def menu(self, enable):
         if (enable):
             self.write(f"MENU ON")
         else:
             self.write(f"MENU OFF")
-    
+
     def define(self, funct, param):
         match funct:
             case util.MATH_FUNC_ADD:
@@ -211,7 +211,7 @@ class SiglentScope(BaseScope):
                 self.write(f"DEFine EQN,'SQRT({param})'")
 
 
-    
+
     @property
     def memory_depth(self) -> int:
         """The query returns the maximum memory depth.
@@ -262,7 +262,7 @@ class SiglentScope(BaseScope):
         """
         self.write(":AUToset")
 
-   
+
     def save_setup(self, file_location: str):
         """This command saves the current settings to internal or external memory
         locations.
@@ -320,7 +320,3 @@ class SiglentScope(BaseScope):
 
     def default_setup(self):
         pass
-
-
-
-            
