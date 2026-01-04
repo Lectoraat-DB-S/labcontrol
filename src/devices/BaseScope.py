@@ -8,6 +8,7 @@ import pandas as pd
 import pyvisa
 
 from devices.BaseConfig import BaseScopeConfig, LabcontrolConfig
+from devices.visa_cache import get_visa_resources
 
 # Reduce pyvisa-py HiSLIP discovery timeout to prevent hanging on network discovery
 # This must be set before importing or using pyvisa-py TCPIP resources
@@ -66,15 +67,25 @@ class BaseScope(object):
         method, secondly, returns this (class)type together with the needed parameters, to enable
         the Python runtime to create and initialise the object correctly.
         DON'T TRY TO CALL THE CONSTRUCTOR OF THIS CLASS DIRECTLY"""
-        rm = pyvisa.ResourceManager()
-        urls = rm.list_resources()
         myconfig = LabcontrolConfig().find(cls)
 
+        # First try non-VISA scopes (like Hantek USB) - this is fast
         for scope in cls.scopeList:
+            if hasattr(scope, 'REQUIRES_VISA') and not scope.REQUIRES_VISA:
+                scopetype, dev, theConfig = scope.getScopeClass(None, [], host, myconfig)
+                if scopetype is not None:
+                    return scopetype(dev, theConfig)
+
+        # Then do VISA scan for other scopes (uses shared cache)
+        rm, urls = get_visa_resources()
+
+        for scope in cls.scopeList:
+            # Skip non-VISA scopes (already tried above)
+            if hasattr(scope, 'REQUIRES_VISA') and not scope.REQUIRES_VISA:
+                continue
             scopetype, dev, theConfig = scope.getScopeClass(rm, urls, host, myconfig)
-            if scopetype != None:
-                cls = scopetype
-                return cls(dev, theConfig)
+            if scopetype is not None:
+                return scopetype(dev, theConfig)
 
         return None # if getDevice can't find an instrument, return None.
 

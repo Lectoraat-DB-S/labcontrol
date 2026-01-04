@@ -1,6 +1,8 @@
 import socket
 import pyvisa
 
+from devices.visa_cache import get_visa_resources
+
 #Korad heeft volgende interface
 #iset(value), iset(), iout()
 #vset(value), vset(), vout()
@@ -137,13 +139,12 @@ class BaseSupply(object):
     
     @classmethod
     def getDevice(cls,host=None):
-        """Method for handling the creation of the correct Supply object, by implementing a factory process. 
-        Firstly, this method calls getSupplyClass() for getting the right BaseSupply derived type. If succesfull, 
-        this method, secondly, returns this (class)type together with the needed parameters, to enable Python's 
+        """Method for handling the creation of the correct Supply object, by implementing a factory process.
+        Firstly, this method calls getSupplyClass() for getting the right BaseSupply derived type. If succesfull,
+        this method, secondly, returns this (class)type together with the needed parameters, to enable Python's
         runtime to create and initialise the object correctly.
         DON'T TRY TO CALL THE CONSTRUCTOR OF THIS CLASS DIRECTLY"""
-        rm = pyvisa.ResourceManager()
-        urls = rm.list_resources()
+        rm, urls = get_visa_resources()
 
         for supply in cls.supplyList:
             supplyType, nrOfChan, dev = supply.getSupplyClass(rm, urls, host)

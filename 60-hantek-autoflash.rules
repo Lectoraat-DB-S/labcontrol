@@ -1,0 +1,39 @@
+# Hantek DSO-6022 udev rules with automatic firmware flashing
+#
+# Prerequisites:
+#   sudo pacman -S cycfx2prog
+#   sudo mkdir -p /usr/share/hantek6022
+#   sudo cp /home/tom/labcontrol/labcontrol/src/devices/Hantek6022API/PyHT6022/Firmware/HEX/*.hex /usr/share/hantek6022/
+#
+# Install:
+#   sudo cp 60-hantek-autoflash.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload-rules
+#
+# Test: unplug and replug the Hantek scope
+
+# Hantek DSO-6022BE before firmware upload - auto flash
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="04b4", ATTR{idProduct}=="6022", \
+  TAG+="uaccess", TAG+="udev-acl", MODE="0666", \
+  RUN+="/usr/bin/cycfx2prog -id=04b4.6022 prg:/usr/share/hantek6022/dso6022be-firmware.hex run"
+
+# Hantek DSO-6022BL before firmware upload - auto flash
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="04b4", ATTR{idProduct}=="602a", \
+  TAG+="uaccess", TAG+="udev-acl", MODE="0666", \
+  RUN+="/usr/bin/cycfx2prog -id=04b4.602a prg:/usr/share/hantek6022/dso6022bl-firmware.hex run"
+
+# Hantek DSO-6021 before firmware upload - auto flash
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="04b4", ATTR{idProduct}=="6021", \
+  TAG+="uaccess", TAG+="udev-acl", MODE="0666", \
+  RUN+="/usr/bin/cycfx2prog -id=04b4.6021 prg:/usr/share/hantek6022/dso6021-firmware.hex run"
+
+# Hantek DSO-6022BE after firmware upload - just permissions
+ACTION=="add|change", SUBSYSTEM=="usb", ATTR{idVendor}=="04b5", ATTR{idProduct}=="6022", \
+  TAG+="uaccess", TAG+="udev-acl", MODE="0666"
+
+# Hantek DSO-6022BL after firmware upload - just permissions
+ACTION=="add|change", SUBSYSTEM=="usb", ATTR{idVendor}=="04b5", ATTR{idProduct}=="602a", \
+  TAG+="uaccess", TAG+="udev-acl", MODE="0666"
+
+# Hantek DSO-6021 after firmware upload - just permissions
+ACTION=="add|change", SUBSYSTEM=="usb", ATTR{idVendor}=="04b5", ATTR{idProduct}=="6021", \
+  TAG+="uaccess", TAG+="udev-acl", MODE="0666"

@@ -6,7 +6,6 @@ with the BaseScope/BaseChannel interface used throughout labcontrol.
 Supported models: DSO-6022BE, DSO-6022BL, DSO-6021
 """
 
-import time
 from threading import Event
 
 import numpy as np
@@ -297,6 +296,9 @@ class HantekTrigger(BaseTriggerUnit):
 class HantekScope(BaseScope):
     """Hantek 6022 series scope integrated into BaseScope framework"""
 
+    # This scope uses direct USB, not VISA - enables fast detection
+    REQUIRES_VISA = False
+
     # Class variable to store singleton Oscilloscope instance
     _oscilloscope_instance = None
     _instance_vid = None
@@ -307,56 +309,59 @@ class HantekScope(BaseScope):
         """
         Detect and initialize Hantek scope via USB (not VISA)
         Uses singleton pattern to reuse the same Oscilloscope object
+
+        Note: Firmware is expected to be loaded via udev rules (cycfx2prog).
+        Only devices with firmware (VID 04b5) are detected.
         """
         if cls is not HantekScope:
             return (None, None, None)
 
         try:
-            # Try to find Hantek scope via USB
             context = usb1.USBContext()
 
-            # Look for Hantek devices (with or without firmware)
-            # Check firmware-loaded devices first (most common case)
-            for vid in [Oscilloscope.FIRMWARE_PRESENT_VENDOR_ID, Oscilloscope.NO_FIRMWARE_VENDOR_ID]:
-                for pid in [Oscilloscope.PRODUCT_ID_BL, Oscilloscope.PRODUCT_ID_BE, Oscilloscope.PRODUCT_ID_21]:
-                    try:
-                        device = context.getByVendorIDAndProductID(vid, pid)
-                        if device is not None:
-                            # Found a Hantek scope!
-                            # Verify device is actually accessible before proceeding
-                            try:
-                                # Quick accessibility check - try to get device descriptor
-                                # This will fail fast if device is not accessible
-                                handle = device.open()
-                                handle.close()
-                            except usb1.USBError as check_err:
-                                # Device exists but is not accessible - skip it
-                                print(f"Hantek device found but not accessible: {check_err}")
-                                continue
+            # Only look for devices with firmware loaded (VID 04b5)
+            # Firmware flashing is handled by udev rules
+            vid = Oscilloscope.FIRMWARE_PRESENT_VENDOR_ID
+            for pid in [Oscilloscope.PRODUCT_ID_BL, Oscilloscope.PRODUCT_ID_BE, Oscilloscope.PRODUCT_ID_21]:
+                try:
+                    device = context.getByVendorIDAndProductID(vid, pid)
+                    if device is not None:
+                        # Verify device is accessible
+                        try:
+                            handle = device.open()
+                            handle.close()
+                        except usb1.USBError as check_err:
+                            print(f"Hantek device found but not accessible: {check_err}")
+                            continue
 
-                            # Reuse existing instance if it matches VID/PID
-                            if (cls._oscilloscope_instance is not None and
-                                cls._instance_vid == vid and
-                                cls._instance_pid == pid):
-                                # Return existing instance
-                                return (cls, cls._oscilloscope_instance, scopeConfig)
-                            else:
-                                # Create new instance and store it
-                                scope_obj = Oscilloscope(VID=vid, PID=pid)
-                                cls._oscilloscope_instance = scope_obj
-                                cls._instance_vid = vid
-                                cls._instance_pid = pid
-                                return (cls, scope_obj, scopeConfig)
-                    except Exception as inner_e:
-                        # Continue trying other VID/PID combinations
-                        print(f"Error checking device VID={vid:04x} PID={pid:04x}: {inner_e}")
-                        continue
+                        # Reuse existing instance if it matches VID/PID
+                        if (cls._oscilloscope_instance is not None and
+                            cls._instance_vid == vid and
+                            cls._instance_pid == pid):
+                            return (cls, cls._oscilloscope_instance, scopeConfig)
+                        else:
+                            scope_obj = Oscilloscope(VID=vid, PID=pid)
+                            cls._oscilloscope_instance = scope_obj
+                            cls._instance_vid = vid
+                            cls._instance_pid = pid
+                            return (cls, scope_obj, scopeConfig)
+                except Exception as inner_e:
+                    print(f"Error checking device VID={vid:04x} PID={pid:04x}: {inner_e}")
+                    continue
 
-            # No Hantek scope found
+            # Check if device exists without firmware (udev not working)
+            for pid in [Oscilloscope.PRODUCT_ID_BL, Oscilloscope.PRODUCT_ID_BE, Oscilloscope.PRODUCT_ID_21]:
+                device = context.getByVendorIDAndProductID(Oscilloscope.NO_FIRMWARE_VENDOR_ID, pid)
+                if device is not None:
+                    print("WARNING: Hantek scope found without firmware (VID 04b4).")
+                    print("Firmware should be loaded automatically via udev.")
+                    print("Run: ~/labcontrol/labcontrol/install-hantek-udev.sh")
+                    print("Then unplug and replug the scope.")
+                    return (None, None, None)
+
             return (None, None, None)
 
         except Exception as e:
-            # Silently fail - this is expected if no Hantek scope is connected
             print(f"Hantek scope detection failed: {e}")
             return (None, None, None)
 
@@ -392,44 +397,6 @@ class HantekScope(BaseScope):
             if "BUSY" in error_msg or "busy" in error_msg:
                 raise RuntimeError("Device is busy. Unplug the Hantek scope, wait 3 seconds, and plug it back in.")
             raise RuntimeError(f"Unexpected error: {error_msg}")
-
-        # Flash firmware if needed
-        # This is now safe because device discovery runs in a separate thread
-        if not scope_obj.is_device_firmware_present:
-            print("Hantek scope needs firmware - flashing now...")
-            try:
-                scope_obj.flash_firmware()
-                print("Firmware flash successful!")
-            except Exception as e:
-                # If flash_firmware fails, check if device re-enumerated anyway
-                time.sleep(2)
-                # Try to reconnect - device may have re-enumerated with new VID
-                try:
-                    scope_obj.close_handle()
-                except:
-                    pass
-
-                # Create new context and look for device with firmware
-                import usb1
-                context = usb1.USBContext()
-                for pid in [Oscilloscope.PRODUCT_ID_BL, Oscilloscope.PRODUCT_ID_BE, Oscilloscope.PRODUCT_ID_21]:
-                    device = context.getByVendorIDAndProductID(Oscilloscope.FIRMWARE_PRESENT_VENDOR_ID, pid)
-                    if device:
-                        # Found device with firmware - update scope_obj
-                        scope_obj.VID = Oscilloscope.FIRMWARE_PRESENT_VENDOR_ID
-                        scope_obj.PID = pid
-                        scope_obj.is_device_firmware_present = True
-                        if not scope_obj.setup():
-                            raise RuntimeError("Failed to setup device after firmware flash")
-                        if not scope_obj.open_handle():
-                            raise RuntimeError("Failed to open device after firmware flash")
-                        print("Device reconnected with firmware!")
-                        break
-                else:
-                    raise RuntimeError(
-                        f"Firmware flash failed: {e}\n\n"
-                        "Please run: python src/flash_hantek_firmware.py"
-                    )
 
         # Set device info
         self.brand = "Hantek"

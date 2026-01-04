@@ -3,6 +3,7 @@ import pyvisa
 import math
 import numpy as np
 from devices.BaseConfig import LabcontrolConfig, BaseGeneratorConfig
+from devices.visa_cache import get_visa_resources
 
 class BaseGenChannel(object):
     """BaseGenChannel: base class for channel implementation of a function generator.
@@ -110,13 +111,12 @@ class BaseGenerator(object):
     
     @classmethod
     def getDevice(cls,host=None):
-        """Method for handling the creation of the correct Generator object, by implementing a factory process. 
-        Firstly, this method calls getGeneratorClass() for getting the right Generator derived type. If succesfull, this 
+        """Method for handling the creation of the correct Generator object, by implementing a factory process.
+        Firstly, this method calls getGeneratorClass() for getting the right Generator derived type. If succesfull, this
         method, secondly, returns this (class)type together with the needed parameters, to enable
         the Python runtime to create and initialise the object correctly.
         DON'T TRY TO CALL THE CONSTRUCTOR OF THIS CLASS DIRECTLY"""
-        rm = pyvisa.ResourceManager()
-        urls = rm.list_resources()
+        rm, urls = get_visa_resources()
         myconfig = LabcontrolConfig().find(cls)
 
         for generator in cls.GeneratorList:

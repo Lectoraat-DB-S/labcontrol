@@ -1,6 +1,9 @@
 import socket
 import pyvisa
 
+from devices.visa_cache import get_visa_resources
+
+
 class BaseDMM(object):
     """
         BaseDMM: base class for Digital Multi Meters (DMM).
@@ -37,13 +40,12 @@ class BaseDMM(object):
 
     @classmethod
     def getDevice(cls,host=None):
-        """Method for handling the creation of the correct DMM object, by implementing a factory process. 
-        Firstly, this method calls getDMMClass() for getting the right DMM derived type. If succesfull, this 
+        """Method for handling the creation of the correct DMM object, by implementing a factory process.
+        Firstly, this method calls getDMMClass() for getting the right DMM derived type. If succesfull, this
         method, secondly, returns this (class)type together with the needed parameters, to enable
         the Python runtime to create and initialise the object correctly.
         DON'T TRY TO CALL THE CONSTRUCTOR OF THIS CLASS DIRECTLY"""
-        rm = pyvisa.ResourceManager()
-        urls = rm.list_resources()
+        rm, urls = get_visa_resources()
 
         for dmm in cls.dmmList:
             dmmtype, dev = dmm.getDMMClass(rm, urls, host)
