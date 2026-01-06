@@ -2,7 +2,8 @@ import pyvisa as visa
 import numpy as np
 
 from devices.BaseScope import BaseHorizontal
-from commands_full import SCPI
+from devices.siglent.sds.SDS2000.commands_full import SCPI
+#commands_full import SCPI
 
 class SDSHorizontal(BaseHorizontal):
     """Subclass of BaseHorizontal. Implements horizontal functionalities of the Tektronix TDS2002x oscilloscope. Horizontal functions are

@@ -71,7 +71,7 @@ def decodeIDN(idnstr:str):
                 return siglentIdn
         return None
 
-def getModel(cls, devStr:str):
+def getModel(devStr:str):
         """
         Parameters: 
             devStr: de sectienaam uit de ini-file

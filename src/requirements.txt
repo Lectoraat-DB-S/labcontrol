@@ -2,6 +2,7 @@ py7zr
 pyvisa
 numpy
 matplotlib
+prefixed
 sphinx
 sphinx-rtd-theme
 pandas

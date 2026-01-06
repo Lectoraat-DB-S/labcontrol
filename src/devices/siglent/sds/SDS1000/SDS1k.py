@@ -7,6 +7,7 @@ import pyvisa
 import logging
 import time
 #from devices.BaseScope import BaseScope
+from devices.siglent.sds.Scopes import SiglentScope 
 from devices.siglent.sds.SDS1000.Channel import SDSChannel
 from devices.siglent.sds.util import INR_HASHMAP
 import devices.siglent.sds.util as util
@@ -45,6 +46,19 @@ class SiglentWaveformWidth(Enum):
     WORD = "WORD"
 
 class SiglentScope1k(SiglentScope):
+
+    @classmethod
+    def getSiglentScopeClass(cls, mydev:pyvisa.resources.MessageBasedResource, urls, host, theIDN: SiglentIDN, scopeConfigs: list = None):
+        """Method for getting the right type of Siglent scope type based on the idn respons, so it can be created by the runtime.
+        This Siglentscope implementation does nothing. The inheriting subclass should implement the needed logic"""
+        if cls is SiglentScope1k:
+            if theIDN == None:
+                return (None, None, None)
+            
+            if theIDN.model in KNOWN_MODELS:
+                return (cls, mydev, None)
+            else:
+                return (None, None, None)
 
     @classmethod
     def SocketConnect(cls, rm:pyvisa.ResourceManager = None, scopeConfig: BaseScopeConfig = None,

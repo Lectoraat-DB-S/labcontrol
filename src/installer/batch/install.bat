@@ -11,10 +11,9 @@ ECHO VOER ALLE CODEBLOKKEN VAN DIT NOTEBOOK VAN BOVEN NAAR BENEDEN, IN VOLGORDE,
 ECHO !!!!!!!!!!!!!!!!!!!!!VEEL PLEZIER MET LABCONTROL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
 ::mkdir C:\WPy64-313110
 :: download installer winpython
-mkdir c:\temp
-start /wait Powershell.exe -ExecutionPolicy ByPass Start-BitsTransfer https://github.com/winpython/winpython/releases/download/17.2.20251214/WinPython64-3.13.11.0slimb4.exe c:\temp
+mkdir c:\labtemp
+start /wait Powershell.exe -ExecutionPolicy ByPass Start-BitsTransfer https://github.com/winpython/winpython/releases/download/17.2.20251214/WinPython64-3.13.11.0slimb4.exe c:\labtemp
 ::extract it
-start /wait C:\temp\WinPython64-3.13.11.0slimb4.exe -y -oc:\
+start /wait C:\labtemp\WinPython64-3.13.11.0slimb4.exe -y -oc:\
 ::start /wait C:\temp\WinPython64-3.13.11.0slimb4.exe -y -oc:\ | ECHO > nul
-::xcopy C:\WPy64-313110\*.* c:\labcontrol /S /E
-start /wait Powershell.exe Start-BitsTransfer https://raw.githubusercontent.com/Lectoraat-DB-S/labcontrol/refs/heads/development/src/notebooks/install.ipynb C:\WPy64-313110\notebooks
+start /wait Powershell.exe Start-BitsTransfer https://raw.githubusercontent.com/Lectoraat-DB-S/labcontrol/refs/heads/main/src/notebooks/install.ipynb C:\WPy64-313110\notebooks

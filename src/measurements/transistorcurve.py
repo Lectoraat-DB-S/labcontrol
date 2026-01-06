@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from devices.siglent.spd.PowerSupply import SiglentPowerSupply
 from devices.siglent.sdm.DigitalMultiMeter import SiglentDMM
-from src.devices.siglent.sds.SDS1000.SDS1k import SiglentScope
+from devices.siglent.sds.SDS1000.SDS1k import SiglentScope
 from devices.BaseScope import BaseScope
 from devices.BaseSupply import BaseSupply, BaseSupplyChannel
 import pandas as pd

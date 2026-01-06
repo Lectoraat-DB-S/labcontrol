@@ -26,7 +26,7 @@ from devices.Korad.KoradSupply import Korad3305P
 #import control.gutter as gootje
 from devices.BaseScope import BaseChannel, BaseScope, BaseHorizontal, BaseVertical, BaseWaveForm, BaseWaveFormPreample
 from devices.BaseGenerator import BaseGenerator
-from src.devices.siglent.sds.SDS1000.SDS1k import  SiglentScope
+from devices.siglent.sds.SDS1000.SDS1k import  SiglentScope
 from devices.tektronix.scope.TekScopes import TekScope, TekHorizontal, TekTrigger
 
 import matplotlib.pyplot as plt
@@ -113,7 +113,7 @@ def initLog():
 def dummyUse():
     scope = BaseScope.getDevice()
     #gen: BaseGenerator = BaseGenerator.getDevice()
-    scope.horizontal.setTimeDiv(0.5e-3) #1ms/div
+    scope.horizontal.setTimeDiv(0.00123) #1ms/div
     chan1 = scope.vertical.chan(1)
     chan1.capture()
     #trig = scope.trigger
@@ -151,7 +151,8 @@ if __name__ == "__main__":
     #bf.testlmfit()
     #a  = input()
     #bu.setEthernet()
-    maakIRLEDcurve()
+    #maakIRLEDcurve()
+    dummyUse()
     
     #ledcurve.testDiodePlotCurve()
     #doACSweep()
