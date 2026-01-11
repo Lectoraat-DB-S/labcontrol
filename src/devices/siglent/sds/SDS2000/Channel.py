@@ -38,7 +38,9 @@ class SDS2kChannel(BaseChannel):
         self.name = f"CHANnel{chan_no}"
         self.visaInstr: pyvisa.resources.MessageBasedResource = visaInstr
         self.WFP= SDSWaveFormPreamble(visaInstr)
-        self.WF = SDSWaveForm()
+        self.WF = SDS2kWaveForm()
+        self.WF.setInstr(visaInstr)
+        self.WF.setChanId(self.name)
 
     def query(self, cmd: str):
         return self.visaInstr.query(cmd)
@@ -99,7 +101,7 @@ class SDS2kChannel(BaseChannel):
         """Gets the horizontal offset of this channel on display. For this SDS implementation, the trigger delay parameter 
         has been selected.
         """
-        return self.query(SCPI["TIMEBASE"]["position??"]())
+        return self.query(SCPI["TIMEBASE"]["position?"]())
 
     
     def getWaveformPreamble(self):
@@ -367,7 +369,7 @@ class SDSWaveFormPreamble(BaseWaveFormPreample):
         self.horUncertainty =  struct.unpack( 'f', params[292:296])[0]
         # 
         #time_stamp         double precision floating point number,
-        #                   for the number of seconds and some bytes
+        #         0          for the number of seconds and some bytes
         #                   for minutes, hours, days, months and year.
         #                   double  seconds     (0 to 59)
         #                   byte    minutes     (0 to 59)
@@ -402,18 +404,27 @@ class SDSWaveFormPreamble(BaseWaveFormPreample):
 
     
     
-class SDSWaveForm(BaseWaveForm):
+class SDS2kWaveForm(BaseWaveForm):
+
+    def setInstr(self, visaInstr:pyvisa.resources.MessageBasedResource):
+        self.visaInstr = visaInstr
+
+    def setChanId(self, theChanId):
+        self.myChanId = theChanId
+
 
     @classmethod
     def getWaveFormClass(cls):
         """ Tries to get (instantiate) the device, based on the url"""
-        if cls is SDSWaveForm:
+        if cls is SDS2kWaveForm:
             return cls
         else:
             return None      
         
     def __init__(self):
         super().__init__()
+        self.visaInstr: pyvisa.resources.MessageBasedResource = None  #Added 11-1-2026, to beter reflect SDS2k waveform commands. 
+        self.myChanId = None
         ####BELOW HAS TO BE CONVERTED TO SIGLENT. THIS IS TEKTRONIX TDS SPECIFIC WAVEFORM PARAMS ########
         self.rawYdata       = None #data without any conversion or scaling taken from scope
         self.rawXdata       = None #just an integer array
@@ -424,8 +435,7 @@ class SDSWaveForm(BaseWaveForm):
         self.full_code = 256 # TODO: set this value during initialisation of the scope.
         self.center_code = 127 # TODO: set this value during initialisation of the scope.
         self.max_code = self.full_code/2
-        self.hori_grid_size = 14 # TODO: See programming manual, pag 142/143 gridsize = 14.
-        
+        self.hori_grid_size = 14 # TODO: See programming manual, pag 142/143 gridsize = 14.        
         
     def rawYToVolts(self, vdiv, voffset):
         """Method to convert the raw bytevalue returned from the scope to its fysical equivalent.
@@ -456,7 +466,7 @@ class SDSWaveForm(BaseWaveForm):
             trdl : Trigger delay, or horizontal offset.
             timebase : tdiv, or time per division (horizontally)
             grid: the number of division of the fysical scope screen, for SDS this is 14 divisions.
-        This method sets the scaleXdata member of this SDSWaveForm object and also returns array with time values. 
+        This method sets the scaleXdata member of this SDS2kWaveForm object and also returns array with time values. 
         """
 
         FirstSampleTime = horOffset -tdiv*(self.hori_grid_size/2)
@@ -466,4 +476,89 @@ class SDSWaveForm(BaseWaveForm):
         
         return timeArr
 
+    ############################ SIGLENT SDS2K SPECIFIC WAVEFORM COMMANDS ##########################################
+    """According to the Siglent Programming guide for SDS2000 series (document EN11D) a SDS2k scope
+    has the following WaveForm commands 
+    :WAVeform:DATA          query only (implemented)
+    :WAVeform:INTerval      command/query (both implemented)
+    :WAVeform:MAXPoint      query only (implemented)
+    :WAVeform:POINt         command/query (both implemented)
+    :WAVeform:PREamble      query only (implemented)
+    :WAVeform:SEQuence      command/query (both implemented)
+    :WAVeform:SOURce        command/query (both implemented)
+    :WAVeform:STARt         command/query (both implemented)
+    :WAVeform:WIDTh         command/query (both implemented)
+    For now, all these commands will be located in this class and used where needed.
+    """    
+    def getWVFData(self):
+        """Method for transferring waveform data from oscilloscope. This method transfers the data of the source
+        set by WAVeform:SOURce. """
+        #TODO: check of deze functie goed omgaat met WORD breedte (dus 2 i.p.v. 1 byte)
+        self.rawYdata = self.visaInstr.query_binary_values(f"{SCPI["WAVEFORM"]["data?"]()}", datatype='B', is_big_endian=False, container=np.ndarray)
 
+    def setSource(self, newSrc):
+        #TODO: checken geldigheid newSrc, moet C, F of D zijn.
+        self.visaInstr.write(SCPI["WAVEFORM"]["source"](newSrc))
+    
+    def getSource(self):
+        return self.visaInstr.query(SCPI["WAVEFORM"]["source?"]())
+
+    def setStart(self, index):
+        #TODO: checken of index een int is.
+        self.visaInstr.write(SCPI["WAVEFORM"]["start"](index))
+    
+    def getStart(self):
+        return self.visaInstr.query(SCPI["WAVEFORM"]["start?"]())
+
+    def setInterval(self, intVal):
+        #TODO: checken of intval een int is.
+        self.visaInstr.write(SCPI["WAVEFORM"]["interval"](intVal))
+
+    def getInterval(self):
+        return self.visaInstr.query(SCPI["WAVEFORM"]["interval?"]())  
+
+
+    def setNrOfPts(self, nrOfPts):
+        #TODO: checken of nrOfPts een int is.
+        self.visaInstr.write(SCPI["WAVEFORM"]["points"](nrOfPts))
+
+    def getNrOfPts(self):
+        return self.visaInstr.query(SCPI["WAVEFORM"]["points?"]())  
+
+    def getMaxNrOfPts(self):
+        return self.visaInstr.query(SCPI["WAVEFORM"]["maxpoints?"]())
+    
+    def getPreamble(self):
+        #TODO: fix the decode of preamble
+        return self.visaInstr.query(SCPI["WAVEFORM"]["preamble?"]())
+    
+    def getDataWidth(self):
+        """Method for querying the number of bytes during transfer.
+        Return: the number of bytes used per sample. Valid values are 1 or 2. 0 means error.
+        """
+        resp = self.visaInstr.query(SCPI["WAVEFORM"]["width?"]())
+        if resp == "BYTE":
+            return 1
+        elif resp == "WORD":
+            return 2
+        else:
+            return 0
+    
+    def setDataWidth(self, val):
+        if val == 1:
+            self.visaInstr.write(SCPI["WAVEFORM"]["width"]("BYTE"))
+        elif val == 2:
+            self.visaInstr.write(SCPI["WAVEFORM"]["width"]("WORD"))
+        else:
+            self.visaInstr.write(SCPI["WAVEFORM"]["width"]("BYTE"))
+
+    def setSequence(self, val1 = 0, val2 = 0):
+        #TODO: dit commando goed uitzoeken. Is een beetje lastig.
+        self.visaInstr.write(SCPI["WAVEFORM"]["sequence"](val1)(val2))
+
+    def getSequence(self):
+        return self.visaInstr.query(SCPI["WAVEFORM"]["sequence?"]())
+
+
+
+        

@@ -1,13 +1,15 @@
 from devices.BaseScope import BaseAcquisition
+from devices.siglent.sds.SDS2000.commands_full import SCPI 
 import pyvisa
 
-class SDSAcquisition(BaseAcquisition):
-    """"Subclass of BaseDisplay for Siglent SDS 1000 and 2000 series. This class implements the baseclass."""
+class SDS2kAcquisition(BaseAcquisition):
+    """"Subclass of BaseDisplay for Siglent SDS 2000 series. This class implements the base Acquisiton class.
+    The subsequent commands are taken from Siglent Programming Programming Guide PEN11D """
 
     @classmethod
     def getAcquisitionClass(cls):
         """ Tries to get (instantiate) the device"""
-        if cls is SDSAcquisition:
+        if cls is SDS2kAcquisition:
             return (cls)
         else:
             return None   
@@ -121,3 +123,157 @@ class SDSAcquisition(BaseAcquisition):
         else:
             self.visaInstr.write("ACQuire:STOPAfter RUNSTop")
         
+
+    #********** SDS2k specific functions. These functions needs, sowehow, ****************************
+    #********** remapping on the Acquisition baseclass interface. This is ****************************
+    #********** To Be Defined ************************************************************************
+
+    """This is the complete set of SDS2k acquire commands:
+     :ACQuire:AMODe
+     :ACQuire:CSWeep
+     :ACQuire:INTerpolation
+     :ACQuire:MMANagement
+     :ACQuire:MODE
+     :ACQuire:MDEPth
+     :ACQuire:NUMAcq
+     :ACQuire:POINts
+     :ACQuire:SEQuence
+     :ACQuire:SEQuence:COUNt
+     :ACQuire:SRATe
+     :ACQuire:TYPE 
+    
+    Opmerking: misschien maar als properties gaan wegwerken?
+    """
+    def  setAcqRateMode(self, newRateMode):
+        myMode = "FAST"
+        if newRateMode == "FAST" or newRateMode == 1:
+            myMode = "FAST"
+        else:
+            myMode = "SLOW" 
+            
+        self.visaInstr.write(SCPI["ACQUIRE"]["amode"](myMode))
+
+    def clearSweeps(self):
+        self.visaInstr.write(SCPI["ACQUIRE"]["csweep"])
+
+    def setAcqInterpolation(self, state: bool):
+        
+        if state == False:
+            myMode = "OFF"
+        else:
+            myMode = "ON"
+
+        self.visaInstr.write(SCPI["ACQUIRE"]["interpolation"](myMode))
+
+    def setAcqMemMode(self, newMode):
+        if newMode == "AUTO" or newMode == 0:
+            myMode = "AUTO"
+        elif newMode == "AUTOFSRate" or newMode == 1:
+            myMode = "FSRate"
+        elif newMode == "FMDepth" or newMode == 2:
+            myMode = "FMDepth"
+        else:
+            myMode = "AUTO"
+        self.visaInstr.write(SCPI["ACQUIRE"]["mmanagement"](myMode))
+
+    def setAcqMode(self, newMode):
+        if newMode == "YT" or newMode == 0:
+            myMode = "YT"
+        elif newMode == "XY" or newMode == 1:
+            myMode = "XY"
+        elif newMode == "ROLL" or newMode == 2:
+            myMode = "ROLL"
+        else:
+            myMode = "YT"
+        myDepth = 10e3
+
+    def setAcqMemDepth(self, newDepth):
+        
+        match(newDepth):
+            case 10e3:
+                myDepth = 10e3
+            case 100e3:
+                myDepth = 100e3
+            case 1e6:
+                myDepth = 1e6
+            case 10e6:
+                myDepth = 10e6
+            case 100e6:
+                myDepth = 100e6
+            case "10k":
+                myDepth = 10e3
+            case "100k":
+                myDepth = 100e3
+            case "1e6":
+                myDepth = 1e6
+            case "10e6":
+                myDepth = 10e6
+            case "100e6":
+                myDepth = 100e6
+            case _:
+                myDepth = 10e3
+        self.visaInstr.write(SCPI["ACQUIRE"]["mdepth"](myDepth))
+ 
+    def getNumOfAcq(self):
+        return self.query(SCPI["TIMEBASE"]["numacq?"]())
+
+    def getNumOfAcqPoints(self):
+        return self.query(SCPI["TIMEBASE"]["points?"]())
+
+    def setAcqRes(self, newRes):
+        if newRes == 8 or newRes == "8" or newRes == "eight":
+            myRes = 8
+        elif newRes == 10 or newRes == "10" or newRes == "ten":
+            myRes = 10
+        else:
+            myRes = 10
+        self.visaInstr.write(SCPI["ACQUIRE"]["resolution"](myRes))
+
+    def setAcqSeqMode(self, state: bool):
+        if state:
+            mySeqMode = "ON"
+        else:
+            mySeqMode = "OFF"
+
+        self.visaInstr.write(SCPI["ACQUIRE"]["sequence"](mySeqMode))
+
+    def setAcqSeqCount(self, newCount):
+        self.visaInstr.write(SCPI["ACQUIRE"]["sequence_count"](newCount))
+
+    def setAcqRate(self, newRate):
+        self.visaInstr.write(SCPI["ACQUIRE"]["srate"](newRate))
+
+    def setAcqType(self, newType, val = 0):
+        validAvgNum = [4,16,32,64,128,256,512]# {4|16|32|64|128|256|512|
+        validNrOfBits = [0.5,1.0,1.5,2.0,2.5]#<bits>:=0.5|1.0|1.5|2.0|2.5|
+        functionType = 1
+        myType = "NORMal"
+        if newType == "NORMAL" or newType == "normal" or newType == 0:
+            functionType = 1
+            self.visaInstr.write(SCPI["ACQUIRE"]["type_1"](val)) = "NORMal"
+        elif newType == "PEAK" or newType == "peak" or newType == 1:
+            myType = "PEAK"
+            functionType = 1
+        elif newType == "AVERAGE" or newType == "average" or newType == 2:
+            myType = "AVERage"
+            functionType = 2
+            if val in validAvgNum:
+                myVal = val
+            else:
+                myVal = 4
+        elif newType == "ERES" or newType == "eres" or newType == 3:
+            myType = "ERES"
+            if val in validNrOfBits:
+                myVal = 0.5
+            functionType = 2
+        else:
+            functionType = 1
+            myType = "NORMal"
+        if functionType == 1:
+            self.visaInstr.write(SCPI["ACQUIRE"]["type_1"](myType))
+        else:
+            self.visaInstr.write(SCPI["ACQUIRE"]["type_2"](myType)(myVal))
+
+
+
+

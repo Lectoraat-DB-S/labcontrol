@@ -4,7 +4,7 @@ from ast import literal_eval
 
 class ConfigReader(object):
 
-    MY_CONFIG_PATH = '.\\src\\labcontrol.ini'
+    MY_CONFIG_PATH = '.\\devices\\labdevices.ini'
     BASE_TYPE_CONFIG_STR = 'BaseClassName'
     DERIVED_TYPE_CONFIG_STR = 'DerivedClassName'
     AV_VISA_INTERFACES_CONFIG_STR = 'VisaInterfaces'

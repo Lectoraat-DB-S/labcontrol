@@ -79,7 +79,8 @@ ACQUIRE = {
     "sequence_count?":  lambda:            ":ACQuire:SEQuence:COUNt?",
     "srate":            lambda v:         f":ACQuire:SRATe {v}",
     "srate?":           lambda:            ":ACQuire:SRATe?",
-    "type":             lambda v:         f":ACQuire:TYPE {v}",
+    "type_1":             lambda v:         f":ACQuire:TYPE {v}",
+    "type_2":             lambda v1, v2:         f":ACQuire:TYPE {v1},{v2}",
     "type?":            lambda:            ":ACQuire:TYPE?",
     "points_to":        lambda v:         f":ACQuire:POINts {v}",  # some models accept set points
 }
@@ -118,6 +119,7 @@ WAVEFORM = {
     "source":           lambda src:        f":WAVeform:SOURce {src}",
     "source?":          lambda:            ":WAVeform:SOURce?",
     "preamble?":        lambda:            ":WAVeform:PREamble?",
+    "points":           lambda v:          f":WAVeform:POINt {v}", #deze was chatGPT vergeten.....
     "points?":          lambda:            ":WAVeform:POINt?",
     "start":            lambda v:          f":WAVeform:STARt {v}",
     "start?":           lambda:            ":WAVeform:STARt?",

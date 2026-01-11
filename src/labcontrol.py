@@ -26,8 +26,8 @@ from devices.Korad.KoradSupply import Korad3305P
 #import control.gutter as gootje
 from devices.BaseScope import BaseChannel, BaseScope, BaseHorizontal, BaseVertical, BaseWaveForm, BaseWaveFormPreample
 from devices.BaseGenerator import BaseGenerator
-from devices.siglent.sds.SDS1000.SDS1k import  SiglentScope
-from devices.tektronix.scope.TekScopes import TekScope, TekHorizontal, TekTrigger
+#from devices.siglent.sds.SDS1000.SDS1k import  SiglentScope
+#from devices.tektronix.scope.TekScopes import TekScope, TekHorizontal, TekTrigger
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -115,7 +115,7 @@ def dummyUse():
     #gen: BaseGenerator = BaseGenerator.getDevice()
     scope.horizontal.setTimeDiv(0.00123) #1ms/div
     chan1 = scope.vertical.chan(1)
-    chan1.capture()
+    #chan1.capture()
     #trig = scope.trigger
     #trig.setSource(2)
     #chan1 = gen.chan(1)

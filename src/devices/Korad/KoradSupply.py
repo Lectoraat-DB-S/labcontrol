@@ -96,6 +96,7 @@ class Korad3305P(BaseSupply):
     def readConfig(cls):
         config = configparser.ConfigParser()
         print(os.getcwd())
+        #TODO: onderstaand path algemeen maken dit is niet ok zo.
         config.read(CONFIGPARSERPATH = '.\\src\\labcontrol.ini')
         config.read('.\\src\\labcontrol.ini')
         if "Korad3305P" in config.sections():

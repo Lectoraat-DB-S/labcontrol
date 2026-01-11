@@ -1,7 +1,7 @@
 {
   "version": 3,
   "targets": {
-    "net8.0": {
+    "net8.0-windows8.0": {
       "Microsoft.DotNet.ILCompiler/8.0.22": {
         "type": "package",
         "build": {
@@ -100,7 +100,7 @@
     }
   },
   "projectFileDependencyGroups": {
-    "net8.0": [
+    "net8.0-windows8.0": [
       "Microsoft.DotNet.ILCompiler >= 8.0.22",
       "Microsoft.NET.ILLink.Tasks >= 8.0.22"
     ]
@@ -122,15 +122,15 @@
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
-        "net8.0"
+        "net8.0-windows8.0"
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
-        "net8.0": {
-          "targetAlias": "net8.0",
+        "net8.0-windows8.0": {
+          "targetAlias": "net8.0-windows8.0",
           "projectReferences": {}
         }
       },
@@ -147,8 +147,8 @@
       "SdkAnalysisLevel": "10.0.100"
     },
     "frameworks": {
-      "net8.0": {
-        "targetAlias": "net8.0",
+      "net8.0-windows8.0": {
+        "targetAlias": "net8.0-windows8.0",
         "dependencies": {
           "Microsoft.DotNet.ILCompiler": {
             "suppressParent": "All",
