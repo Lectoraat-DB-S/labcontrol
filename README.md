@@ -62,6 +62,16 @@ python launch_tui.py
 
 Press **d** to discover, **c** to capture, **h** for help.
 
+### Desktop/Start Menu Shortcuts (Optional)
+
+```bash
+# Linux - creates desktop entries and commands
+./install.sh
+
+# Windows - creates Start Menu shortcuts
+install-windows.bat
+```
+
 ## 🎨 Two Powerful Interfaces
 
 ### 🖥️ PyQt5 GUI - Graphical Interface
