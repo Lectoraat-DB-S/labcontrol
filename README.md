@@ -28,13 +28,7 @@ source venv/bin/activate  # Linux/Mac
 # venv\Scripts\activate   # Windows
 
 # Install dependencies
-pip install -r requirements.txt
-
-# For GUI support
-pip install PyQt5 pyqtgraph
-
-# For TUI support
-pip install textual rich
+pip install -r src/requirements.txt
 ```
 
 ### Launch GUI

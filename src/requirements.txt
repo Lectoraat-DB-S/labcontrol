@@ -1,5 +1,6 @@
 py7zr
 pyvisa
+pyvisa-py
 numpy
 matplotlib
 sphinx
@@ -10,7 +11,16 @@ scipy
 zeroconf
 psutil
 pyusb
+libusb1
 pyserial
 python-usbtmc
 pyqtgraph
 numdifftools
+hantek6022
+
+# GUI dependencies
+PyQt5
+
+# TUI dependencies
+textual
+rich
