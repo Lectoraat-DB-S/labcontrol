@@ -29,6 +29,9 @@ source venv/bin/activate  # Linux/Mac
 
 # Install dependencies
 pip install -r src/requirements.txt
+
+# Install Hantek6022 driver (from submodule)
+pip install -e src/devices/Hantek6022API
 ```
 
 ### Launch GUI

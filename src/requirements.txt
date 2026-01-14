@@ -16,7 +16,6 @@ pyserial
 python-usbtmc
 pyqtgraph
 numdifftools
-hantek6022
 
 # GUI dependencies
 PyQt5
