@@ -22,6 +22,15 @@ LabControl is a unified Python framework for controlling oscilloscopes, power su
 git clone -b development --recurse-submodules https://github.com/Lectoraat-DB-S/labcontrol.git
 cd labcontrol
 
+# Quick setup (recommended)
+./setup.sh          # Linux/Mac
+# setup.bat         # Windows
+```
+
+<details>
+<summary>Manual installation</summary>
+
+```bash
 # Create virtual environment
 python3 -m venv venv
 source venv/bin/activate  # Linux/Mac
@@ -33,6 +42,7 @@ pip install -r src/requirements.txt
 # Install Hantek6022 driver (from submodule)
 pip install -e src/devices/Hantek6022API
 ```
+</details>
 
 ### Launch GUI
 
