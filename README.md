@@ -19,13 +19,13 @@ LabControl is a unified Python framework for controlling oscilloscopes, power su
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/labcontrol.git
+git clone -b development --recurse-submodules https://github.com/Lectoraat-DB-S/labcontrol.git
 cd labcontrol
 
 # Create virtual environment
-python3 -m venv labcontrol
-source labcontrol/bin/activate  # Linux/Mac
-# labcontrol\Scripts\activate   # Windows
+python3 -m venv venv
+source venv/bin/activate  # Linux/Mac
+# venv\Scripts\activate   # Windows
 
 # Install dependencies
 pip install -r requirements.txt
