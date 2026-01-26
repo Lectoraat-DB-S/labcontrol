@@ -62,7 +62,7 @@ class SiglentScope(BaseScope):
             Tries to get (instantiate) this device, based on matched url or idn response
             This method will ONLY be called by the BaseScope class, to instantiate the proper object during
             creation by the __new__ method of BaseScope.     
-0        """  
+        """  
         TCPIP_OPEN_MSG_LONG ="Welcome to the SCPI Instrument 'Siglent SDS1202X-E'"
         TCPIP_OPEN_MSG_SHORT ="SDS"
 
@@ -82,14 +82,13 @@ class SiglentScope(BaseScope):
                         return (None, None, None)
                     
                     for scope in cls.sigScopeList:
-                        scopetype, dev, theConfig = scope.getSiglentScopeClass(mydev, urls, host, myidn, None)
+                        scopetype, dev = scope.getSiglentScopeClass(mydev, urls, host, myidn, None)
                         if scopetype != None:
                             cls = scopetype
-                            return (cls,dev, theConfig)
+                            return (cls,dev, None)
             
                     return  (None, None, None) # if getSiglentScopeClass can't find the proper instrument: return Nones.
                         
-            #TODO: check below on creation of right siglentscope opject when using config.ini            
             if scopeConfigs == None: #If USB connection fails and there is no config section: just quit trying.....
                 return (None, None, None)
             
@@ -97,47 +96,26 @@ class SiglentScope(BaseScope):
                 # check whether the sectionname of the config contains "SIGLENT"
                 myconfig : BaseScopeConfig = aconfig
                 if "Siglent" in myconfig.devName: 
-                    modelNr, supplementalStr = util.getModel(myconfig.devName)
-                    modelstr = str(modelNr)
                     mydev = cls.SocketConnect(rm=rm, scopeConfig=myconfig)
-                    if mydev == None:
-                        return (None, None, None)
-                    
-                    idnRespStr=str(mydev.query("*IDN?"))
-                    myidn = util.decodeIDN(idnstr=idnRespStr)
-                    if myidn == None:
-                        return (None, None, None)
-                    
-                    idnRespStr=str(mydev.query("*IDN?"))
-                    myidn = util.decodeIDN(idnstr=idnRespStr)
-
-                    for scope in cls.sigScopeList:
-                        scopetype, dev, theConfig = scope.getSiglentScopeClass(mydev, urls, host, myidn, None)
-                        if scopetype != None:
-                            cls = scopetype
-                            return (cls,dev, theConfig)
-            
-                    return  (None, None, None) # if getSiglentScopeClass can't find the proper instrument: return Nones.
-                    
-                    if modelstr in SDS1k.KNOWN_MODELS or modelstr in SDS2k.KNOWN_MODELS:
-                        mydev = cls.SocketConnect(rm=rm, scopeConfig=myconfig)
-                        if mydev != None:
-                            idnRespStr=str(mydev.query("*IDN?"))
-                            myidn = util.decodeIDN(idnstr=idnRespStr)
-                            if myidn == None:
-                                return (None, None, None)
-                                
-                            if myidn.model in SDS1k.KNOWN_MODELS: #TODO: take range of modelnr into account.
-                                return (SDS1k.SiglentScope1k, mydev, None)
-                            elif myidn.model in SDS2k.KNOWN_MODELS:
-                                return (SDS1k.SiglentScope1k, mydev, None)
-                            else: # found a siglent but an unknown on, so return all None
-                                return (None, None, None)
-
+                    if mydev != None:
+    
+                        idnRespStr=str(mydev.query("*IDN?"))
+                        myidn = util.decodeIDN(idnstr=idnRespStr)
+                        if myidn != None:
+                            
+                            for scope in cls.sigScopeList:
+                                scopetype, dev = scope.getSiglentScopeClass(mydev, urls, host, myidn, None)
+                                if scopetype != None:
+                                    cls = scopetype
+                                    return (cls,dev, myconfig)
+                                #No return here!
+                            #No return here!
                         #No return here!
                     #No return here!
                 #No return here!
-            return (None, None, None)  # only return None here, after all options have been tried.     
+            return (None, None, None)  # only return None here, after all options have been tried.    
+        else:
+            (None, None, None)
             
     def __init__(self, visaResc: pyvisa.resources.MessageBasedResource = None, myconfig: BaseScopeConfig = None ):
         """ 

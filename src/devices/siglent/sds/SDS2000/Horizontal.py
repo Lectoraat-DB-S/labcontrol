@@ -5,9 +5,19 @@ from devices.BaseScope import BaseHorizontal
 from devices.siglent.sds.SDS2000.commands_full import SCPI
 #commands_full import SCPI
 
-class SDSHorizontal(BaseHorizontal):
-    """Subclass of BaseHorizontal. Implements horizontal functionalities of the Tektronix TDS2002x oscilloscope. Horizontal functions are
-    querying en setting the timebase, horizontal axis position and zoom factor."""
+class SDS2kHorizontal(BaseHorizontal):
+    """Subclass of BaseHorizontal. Implements horizontal functionalities of the Siglent SDS2000X-E series oscilloscope.
+    Horizontal functions are querying en setting the timebase, horizontal axis position and zoom factor.
+    Avaialble Timebase functions according to Programming Guide EN11D:
+     :TIMebase:DELay
+     TIMebase REFerence
+     TIMebase:REFerence:POSition
+     :TIMebase:SCALe
+     :TIMebase:WINDow
+     :TIMebase:WINDow:DELay
+     :TIMebase:WINDow:SCALe
+    
+    """
     #Timebases have to be converted to siglent, current values are tektronix.
     TIMEBASE_HASHMAP = {
                     "0":"5e-9","1": "10e-9", "2":"25e-9","3":"50E-9",
@@ -29,7 +39,7 @@ class SDSHorizontal(BaseHorizontal):
             This method will ONLY be called by the BaseScope class or other Scope related Baseclasses, 
             to instantiate the proper object during creation by the __new__ method according to PEP487.     
         """    
-        if cls is SDSHorizontal:
+        if cls is SDS2kHorizontal:
             return cls
         else:
             return None   
@@ -42,23 +52,81 @@ class SDSHorizontal(BaseHorizontal):
         self.POS = 0                   # Horizontal position in screen (of the waveforms)
         self.ZOOM = 0                  # Horizontal magnifying. 
     
+    def setRoll(self, flag:bool):
+        """Not implemented yet."""
+        pass       
+
+
     def setIimeBase(self, value):
-        """Set the time per devision for this oscilloscoop. This scope isn't as flexible as a Tektronix TDS.
-        The TDS has a coarse and a fine mode on setting tdiv. Siglent only accepts the predefined values of the range.
-        It seems the scope ignores a value if it is above a predefined value.
+        """Set the time per devision for this oscilloscoop. The sds1k scope isn't as flexible as a Tektronix TDS. This scope
+        seems/appears to have the same flexibility as the Tektronix TDS. But is not yet tested. Therefore, is method used the
+        old sds1k way of doing. TODO: check out whether or not sds2k has coarse/fine timebase control.
         """
         
         strValue = str(value)
-        if strValue in SDSHorizontal.TIMEBASE_HASHMAP:
+        if strValue in SDS2kHorizontal.TIMEBASE_HASHMAP:
             val2Set = value
         else: # no corresponding setting available for value. Find nearest option.
-            hulp = SDSHorizontal.TIMEBASE_HASHMAP
+            hulp = SDS2kHorizontal.TIMEBASE_HASHMAP
             hulp2 = np.array(hulp.values())
             print(hulp2[hulp2>value])
             print(hulp2[hulp2>value])
             
         self.visaInstr.write(SCPI["TIMEBASE"]["scale"](val2Set))
-        
+
+    def getTimeBase(self):
+        return self.visaInstr.query(SCPI["TIMEBASE"]["scale?"]())
         
     def setTimeDiv(self, value):
         self.setIimeBase(value)
+
+    def setDelay(self, val):
+        """Sets the main timebase delay. This delay is the time between the trigger event and the 
+        delay reference point on the screen. The range of the value is 5000div timebase, 5div timebase]."""
+        #TODO: check if value of val falls within range.
+        self.visaInstr.write(SCPI["TIMEBASE"]["delay"](val))
+
+    def getDelay(self):
+        """Method for getting the current set delay of the timebase."""
+        return self.visaInstr.query(SCPI["TIMEBASE"]["delay?"]())
+
+    def setRefPos(self, value:int):
+        """Method for setting the reference, or zero point, in case of a timebasedelay."""
+        if value > 0 and value <101:
+            self.visaInstr.write(SCPI["TIMEBASE"]["reference"](value))
+
+    def getRefPos(self):
+        """Method for getting the reference, or zero point, in case of a timebasedelay."""
+        return self.visaInstr.query(SCPI["TIMEBASE"]["reference?"]())
+        
+
+    def setWindowZoom(self, state:bool):
+        """Method for setting the state of the timebase zoom funcion. """
+        newState = "ON"
+        if state or state == "ON" or state == "1":
+            newState = "ON"
+        else:
+            newState = "OFF"            
+        self.visaInstr.write(SCPI["TIMEBASE"]["window"](newState))
+
+    def getWindowZoom(self, state:bool):
+        """Gets the current state of the zoomed timebase window: on or off."""
+        return self.visaInstr.query(SCPI["TIMEBASE"]["window?"]())
+
+    def setWindowDelay(self, val):
+        """Sets the horizontal position in the zoomed view of the main sweep."""
+        #TODO: check the validity of val.
+        self.visaInstr.write(SCPI["TIMEBASE"]["windelay"](val))
+        
+    def getWindowDelay(self):
+        """Gets the amount of delay set in the Timebase delay window."""
+        return self.visaInstr.query(SCPI["TIMEBASE"]["windelay?"]())
+
+
+    def setWindowScale(self, val):
+        """Method for setting the zoomed window horizontal scale (sec/div)"""
+        self.visaInstr.write(SCPI["TIMEBASE"]["winscale"](val))
+    
+    def getWindowScale(self, val):
+        """Gets the amount of time/division set for the zoomed timebase."""
+        return self.visaInstr.query(SCPI["TIMEBASE"]["winscale?"]())

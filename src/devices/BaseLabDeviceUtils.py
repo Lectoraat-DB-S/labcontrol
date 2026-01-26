@@ -26,7 +26,7 @@ def run_cmd(cmd):
         print(result.stderr.strip())
 
 def load_config():
-    CONFIG_FILE_PATH = os.getcwd()+"\\src\\devices\\"+CONFIG_FILE
+    CONFIG_FILE_PATH = os.getcwd()+"\\devices\\"+CONFIG_FILE
     with open(CONFIG_FILE_PATH, "r") as f:
         return json.load(f)
 

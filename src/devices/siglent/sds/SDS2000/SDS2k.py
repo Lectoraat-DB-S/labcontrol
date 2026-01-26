@@ -13,23 +13,13 @@ import devices.siglent.sds.util as util
 from devices.siglent.sds.util import SiglentIDN 
 from devices.BaseScope import BaseScope
 from devices.siglent.sds.SDS2000.Vertical import SDS2kVertical
-from devices.siglent.sds.SDS2000.Horizontal import SDSHorizontal
+from devices.siglent.sds.SDS2000.Horizontal import SDS2kHorizontal
 from devices.siglent.sds.SDS2000.Trigger import SDSTrigger
 from devices.BaseConfig import BaseScopeConfig, BaseDeviceConfig
 from devices.siglent.sds.SDS2000.Display import SDSDisplay
-from devices.siglent.sds.SDS2000.Acquisition import SDSAcquisition 
+from devices.siglent.sds.SDS2000.Acquisition import SDS2kAcquisition 
 
 
-KNOWN_MODELS = [
-        "SDS5000X",         #0.9.0 and later
-        "SDS2000X Plus",    #1.3.5R3 and later
-        "SDS6000 Pro",      #1.1.7.0 and later
-        "SDS6000A+",        #1.1.7.0 and later
-        "SHS800X",          #1.1.9 and later
-        "SHS1000X",         #1.1.9 and later
-        "SDS2000X HD",    #1.2.0.2 and later
-        "SDS6000L",     #1.0.1.0
-    ]
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -41,18 +31,43 @@ class SiglentWaveformWidth(Enum):
 
 class SiglentScope2k(SiglentScope):
 
+    KNOWN_MODELS = [
+        "SDS5000X",         #0.9.0 and later
+        "SDS2000X Plus",    #1.3.5R3 and later
+        "SDS6000 Pro",      #1.1.7.0 and later
+        "SDS6000A+",        #1.1.7.0 and later
+        "SHS800X",          #1.1.9 and later
+        "SHS1000X",         #1.1.9 and later
+        "SDS2000X HD",    #1.2.0.2 and later
+        "SDS6000L",     #1.0.1.0
+    ]
+
+    @classmethod
+    def getScopeClass(cls, rm: pyvisa.ResourceManager, urls, host, scopeConfigs: list = None):
+        """
+        This method is added for comptability with the Basescope class. As this class gets somehow registered     
+        by Basescope's __init_subclass__ method, this method will be called by the Basescope class, resulting  
+        in a crash of the object factory process.
+        """  
+        return (None, None, None)
+
     @classmethod
     def getSiglentScopeClass(cls, mydev:pyvisa.resources.MessageBasedResource, urls, host, theIDN: SiglentIDN, scopeConfigs: list = None):
-        """Method for getting the right type of Siglent scope type based on the idn respons, so it can be created by the runtime.
-        This Siglentscope implementation does nothing. The inheriting subclass should implement the needed logic"""
+        """Method for return the right SiglentScope (sub)type based on the idn respons, so it can be instantiated
+        by the factory process in the SiglentScope class. This implementation only returns the proper type of class 
+        when cls is of right type and if the IDN of the connected device fits the models covered by this class. 
+        """
         if cls is SiglentScope2k:
+
             if theIDN == None:
-                return (None, None, None)
-            
-            if theIDN.model in KNOWN_MODELS:
-                return (cls, mydev, None)
+                return (None, None)
+            for amodel in SiglentScope2k.KNOWN_MODELS:
+                if theIDN.isModelInRange(amodel):
+                    return (cls, mydev)
             else:
-                return (None, None, None)
+                return (None, None)
+        else:
+            return (None, None)
 
 
     @classmethod
@@ -72,11 +87,11 @@ class SiglentScope2k(SiglentScope):
             during the initing of BaseScope, this method calls super().__init__() 
         """
         super().__init__(visaResc, myconfig)
-        self.horizontal = SDSHorizontal(visaResc)
+        self.horizontal = SDS2kHorizontal(visaResc)
         self.vertical = SDS2kVertical(2, visaResc)
         self.trigger = SDSTrigger(self.vertical,visaResc)
         self.display = SDSDisplay(visaResc)
-        self.acquisition = SDSAcquisition(visaResc)
+        self.acquisition = SDS2kAcquisition(visaResc)
     
    
     def __exit__(self, *args):

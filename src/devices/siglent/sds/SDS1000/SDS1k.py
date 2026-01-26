@@ -21,7 +21,19 @@ from devices.siglent.sds.SDS1000.Display import SDSDisplay
 from devices.siglent.sds.SDS1000.Acquisition import SDSAcquisition
 from devices.siglent.sds.Scopes import SiglentScope 
 
-KNOWN_MODELS = [
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+
+class SiglentWaveformWidth(Enum):
+    BYTE = "BYTE"
+    WORD = "WORD"
+
+class SiglentScope1k(SiglentScope):
+
+    KNOWN_MODELS = [
         "SDS1000CFL",   #non-SPO model Series
         "SDS1000A",     #non-SPO model Series
         "SDS1000CML+",  #non-SPO model Series
@@ -37,28 +49,31 @@ KNOWN_MODELS = [
         "SDS1202X-E",
     ]
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-
-class SiglentWaveformWidth(Enum):
-    BYTE = "BYTE"
-    WORD = "WORD"
-
-class SiglentScope1k(SiglentScope):
-
+    @classmethod
+    def getScopeClass(cls, rm: pyvisa.ResourceManager, urls, host, scopeConfigs: list = None):
+        """
+        This method is added for comptability with the Basescope class. As this class gets somehow registered     
+        by Basescope's __init_subclass__ method, this method will be called by the Basescope class, resulting  
+        in a crash of the object factory process.
+        """  
+        return (None, None, None)
     @classmethod
     def getSiglentScopeClass(cls, mydev:pyvisa.resources.MessageBasedResource, urls, host, theIDN: SiglentIDN, scopeConfigs: list = None):
-        """Method for getting the right type of Siglent scope type based on the idn respons, so it can be created by the runtime.
-        This Siglentscope implementation does nothing. The inheriting subclass should implement the needed logic"""
+        """Method for return the right SiglentScope (sub)type based on the idn respons, so it can be instantiated
+        by the factory process in the SiglentScope class. This implementation only returns the proper type of class 
+        when cls is of right type and if the IDN of the connected device fits the models covered by this class. 
+        """
         if cls is SiglentScope1k:
             if theIDN == None:
-                return (None, None, None)
+                return (None, None)
             
-            if theIDN.model in KNOWN_MODELS:
-                return (cls, mydev, None)
-            else:
-                return (None, None, None)
+            for amodel in SiglentScope1k.KNOWN_MODELS:
+                if theIDN.isModelInRange(amodel):
+                    return (cls, mydev)
+                #NO RETURN, trying next model of the 1k series.
+            return(None, None)
+        else:
+            return (None, None)
 
     @classmethod
     def SocketConnect(cls, rm:pyvisa.ResourceManager = None, scopeConfig: BaseScopeConfig = None,
@@ -170,31 +185,6 @@ class SiglentScope1k(SiglentScope):
         mdepth = min(self.memory_depth_values, key=lambda x: abs(x - mdepth))
         self.write(":ACQuire:MDEPth {}".format(mdepth))
 
-# moved to SDSChannel, but should be method of the scope
-    #def get_trigger_status(self):
-    #    """The command query returns the current state of the trigger.
-    #
-    #    :return: str
-    #                Returns either "Arm", "Ready", "Auto", "Trig'd", "Stop", "Roll"
-    #    """
-    #    return self.query(":TRIGger:STATus?")
-
-    #def get_waveform_preamble(self):
-    #    """The query returns the parameters of the source using by the command
-    #    :WAVeform:SOURce.
-    #   """
-    #    params = self.query_raw(":WAVeform:PREamble?")
-    #    params = params[11:]
-    #    total_points = struct.unpack('i', params[116:120])[0]
-    #    probe = struct.unpack('f', params[328:332])[0]
-    #    vdiv = struct.unpack('f', params[156:160])[0] * probe
-    #    voffset = struct.unpack('f', params[160:164])[0] * probe
-    #    code_per_div = struct.unpack('f', params[164:168])[0] * probe
-    #    timebase = struct.unpack('h', params[324:326])[0]
-    #    delay = struct.unpack('d', params[180:188])[0]
-    #    interval = struct.unpack('f', params[176:180])[0]
-
-    #    return (total_points, vdiv, voffset, code_per_div, timebase, delay, interval, delay)
 
     def autosetup(self):
         """ This command attempts to automatically adjust the trigger, vertical, and

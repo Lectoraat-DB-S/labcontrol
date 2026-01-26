@@ -24,7 +24,7 @@ class TekScopeEncodings(Enum):
 class TekScope(BaseScope):
     
     @classmethod
-    def getScopeClass(cls, rm, urls, host, scopeConfig: BaseScopeConfig = None):
+    def getScopeClass(cls, rm, urls, nrOfChan=None, host=None, scopeConfig: BaseScopeConfig = None):
         """
             This method will:
             1. Traverses all url's provided by parameter urls
@@ -85,7 +85,7 @@ class TekScope(BaseScope):
                         return (cls, mydev, myConfig)
             return (None, None, None)        
             
-    def __init__(self, visaInstr:pyvisa.resources.MessageBasedResource = None, myconfig: BaseScopeConfig = None):
+    def __init__(self, visaInstr:pyvisa.resources.MessageBasedResource = None, myconfig: BaseScopeConfig = None, nrOfChan: int = None):
     #def __init__(self, visaResc: pyvisa.resources.MessageBasedResource):
         """ 
             Constructor for Tektronix TDS oscilloscoop. This class is a subclass of BaseScope. BaseScope implements
@@ -110,6 +110,7 @@ class TekScope(BaseScope):
         self.acquisition = TekAcquisition(visaInstr)
         self.display = TekDisplay(visaInstr)
         self.vertical.setProcMode(self.mode) #calling the baseclass method for setting the selected mode.
+        self.nrOfChan = 2 # This class ignores parameter nrOfChan.
 
 
     def setProcMode(self, mode):

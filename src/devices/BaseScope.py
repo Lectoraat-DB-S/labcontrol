@@ -5,8 +5,11 @@ import pandas as pd
 import configparser
 import os
 import socket
+import logging
 
 from devices.BaseConfig import LabcontrolConfig, BaseScopeConfig
+
+logger = logging.getLogger(__name__)
 
 class BaseScope(object):
     """BaseScope: base class for oscilloscope implementation.
@@ -51,7 +54,7 @@ class BaseScope(object):
             if scopetype != None:
                 cls = scopetype
                 return cls(dev, theConfig)
-            
+        logger.warning("Geen oscilloscoop gevonden!")    
         return None # if getDevice can't find an instrument, return None.
 
     @classmethod
@@ -83,13 +86,6 @@ class BaseScope(object):
             return mydev
         #No return needed here. Every path within function returns None or resource.
 
-    @classmethod
-    def getModel(cls, devStr:str):
-        """
-        Function to extract/decode the modelno or model id from an indentification string. Is device specific, therefore 
-        this implementation is empty."""
-        return None
-    
     
     def __init__(self, visaInstr:pyvisa.resources.MessageBasedResource=None, scopeConfig: BaseScopeConfig = None):
         """This method takes care of the intialisation of a BaseScope object. This implementation leaves most
@@ -532,7 +528,7 @@ class BaseHorizontal(object):
         inherting subclass, as this BaseHorizontal implementation is empty."""
         pass       
     
-    def getTimeDivs(self):
+    def getTimeDiv(self):
         """Method for getting available timebase setting. This method should be overridden by the 
         inherting subclass, as this BaseHorizontal implementation is empty."""    
         pass
@@ -542,6 +538,51 @@ class BaseHorizontal(object):
         inherting subclass, as this BaseHorizontal implementation is empty."""    
         pass
 
+    def setDelay(self, val):
+        """Sets the main timebase delay. This delay is the time between the trigger event and the 
+        delay reference point on the screen. The range of the value is 5000div timebase, 5div timebase]. 
+        This method should be overridden by the inherting subclass, as this BaseHorizontal implementation is empty."""
+        pass
+
+    def getDelay(self):
+        """Method for getting the current set delay of the timebase. This method should be overridden by the 
+        inherting subclass, as this BaseHorizontal implementation is empty."""
+        pass
+
+    def setRefPos(self, value:int):
+        """Method for setting the reference, or zero point, in case of a timebasedelay. This method should be overridden by the 
+        inherting subclass, as this BaseHorizontal implementation is empty."""
+        pass
+
+    def getRefPos(self):
+        """Method for getting the reference, or zero point, in case of a timebasedelay. This method should be overridden by the 
+        inherting subclass, as this BaseHorizontal implementation is empty."""
+        pass        
+
+    def setWindowZoom(self, state:bool):
+        """Method for setting the state of the timebase zoom funcion. This method should be overridden by the 
+        inherting subclass, as this BaseHorizontal implementation is empty. """
+        pass
+
+    def getWindowZoom(self, state:bool):
+        """Gets the current state of the zoomed timebase window: on or off."""
+        pass
+
+    def setWindowDelay(self, val):
+        """Sets the horizontal position in the zoomed view of the main sweep."""
+        pass
+
+    def getWindowDelay(self):
+        """Gets the amount of delay set in the Timebase delay window."""
+        pass
+
+    def setWindowScale(self, val):
+        """Method for setting the zoomed window horizontal scale (sec/div)"""
+        pass
+
+    def getWindowScale(self, val):
+        """Gets the amount of time/division set for the zoomed timebase."""
+        pass
             
 ###################################### BASECWAVEFORMPREAMBLE ###################################################
 class BaseWaveFormPreample(object):

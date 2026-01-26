@@ -414,6 +414,13 @@ class SDSWaveFormPreamble(BaseWaveFormPreample):
     
 class SDSWaveForm(BaseWaveForm):
 
+    def setInstr(self, visaInstr:pyvisa.resources.MessageBasedResource):
+        self.visaInstr = visaInstr
+
+    def setChanId(self, theChanId):
+        self.myChanId = theChanId
+
+
     @classmethod
     def getWaveFormClass(cls):
         """ Tries to get (instantiate) the device, based on the url"""
@@ -424,7 +431,19 @@ class SDSWaveForm(BaseWaveForm):
         
     def __init__(self):
         super().__init__()
+        self.visaInstr: pyvisa.resources.MessageBasedResource = None  #Added 26-1-2026, subsequent added this to SDS2kWaveform. 
+        self.myChanId = None
         ####BELOW HAS TO BE CONVERTED TO SIGLENT. THIS IS TEKTRONIX TDS SPECIFIC WAVEFORM PARAMS ########
+        self.rawYdata       = None #data without any conversion or scaling taken from scope
+        self.rawXdata       = None #just an integer array
+        self.scaledYdata    = None #data converted to correct scale e.g untis
+        self.scaledXdata    = None #An integer array representing the fysical instants of the scaledYData.
+        
+        self.nrOfDivs = 5 # TODO: set this value during initialisation of the scope.
+        self.full_code = 256 # TODO: set this value during initialisation of the scope.
+        self.center_code = 127 # TODO: set this value during initialisation of the scope.
+        self.max_code = self.full_code/2
+        self.hori_grid_size = 14 # TODO: See programming manual, pag 142/143 gridsize = 14.        
         
         
     def rawYToVolts(self, vdiv, voffset):

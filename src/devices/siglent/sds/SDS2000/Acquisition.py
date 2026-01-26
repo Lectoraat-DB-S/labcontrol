@@ -250,7 +250,7 @@ class SDS2kAcquisition(BaseAcquisition):
         myType = "NORMal"
         if newType == "NORMAL" or newType == "normal" or newType == 0:
             functionType = 1
-            self.visaInstr.write(SCPI["ACQUIRE"]["type_1"](val)) = "NORMal"
+            self.visaInstr.write(SCPI["ACQUIRE"]["type_1"](val)) 
         elif newType == "PEAK" or newType == "peak" or newType == 1:
             myType = "PEAK"
             functionType = 1

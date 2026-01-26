@@ -16,6 +16,7 @@ class ConfigReader(object):
     BASESCOPE_VIS_HORIZONTAL_CONFIG_STR ='VisibleHorizontalGrid'
     BASESCOPE_VERTICAL_CONFIG_STR ='VerticalGrid'
     BASESCOPE_VIS_VERTICAL_CONFIG_STR ='VisibleVerticalGrid'
+    BASESCOPE_NROFCHAN_CONFIG_STR = 'nrOfChan'
     
     #Old stuff
     DEV_TYPE_SCOPE      = "Oscilloscope"
@@ -47,6 +48,9 @@ class ConfigReader(object):
             return None
 
 class BaseDeviceConfig(object):
+    VISA_INTERFACE_TCPIP_IF_STR = "USB INSTR"
+    VISA_INTERFACE_SOCKET_IF_STR = "TCPIP INSTR"
+    VISA_INTERFACE_USB_IF_STR = "TCPIP SOCKET"
     
     configClassList = []
     
@@ -87,8 +91,7 @@ class BaseDeviceConfig(object):
     def getConfigClass(cls, devName, baseType, derivedType):
         """getConfigClass: factory method for config objects. 
         Remark: this baseclass implementation is empty, must be implemented by the subclass. """
-        pas
-        s
+        pass
 
     def __init__(self, devName, baseType, derivedType): #TODO: use param!
         self._name = devName #section name
@@ -154,6 +157,7 @@ class BaseScopeConfig(BaseDeviceConfig):
         self._visibleHorizontalGrid = self._configParser.getProperty(self._name, ConfigReader.BASESCOPE_VIS_HORIZONTAL_CONFIG_STR)
         self._verticalGrid = self._configParser.getProperty(self._name ,ConfigReader.BASESCOPE_VERTICAL_CONFIG_STR)
         self._visibleVerticalGrid = self._configParser.getProperty(self._name, ConfigReader.BASESCOPE_VIS_VERTICAL_CONFIG_STR)
+        self._nrOfChan = self._configParser.getProperty(self._name, ConfigReader.BASESCOPE_NROFCHAN_CONFIG_STR)
         
     @property
     def visibleHorizontalGrid(self):
@@ -184,6 +188,31 @@ class BaseGeneratorConfig(BaseDeviceConfig):
     def __init__(self, devName, baseType, derivedType):
         super().__init__(devName, baseType, derivedType)
 
+class BaseDMMConfig(BaseDeviceConfig):
+    @classmethod
+    def getConfigClass(cls, devName, baseType, derivedType):
+        """ Tries to get (instantiate) the config object"""
+        if baseType == "BaseDMM":
+            return (cls, devName)
+        else:
+            return (None, None)
+
+class BaseSupplyConfig(BaseDeviceConfig):
+    @classmethod
+    def getConfigClass(cls, devName, baseType, derivedType):
+        """ Tries to get (instantiate) the config object"""
+        if baseType == "BaseSupply":
+            return (cls, devName)
+        else:
+            return (None, None)
+
+
+
+
+    def __init__(self, devName, baseType, derivedType):
+        super().__init__(devName, baseType, derivedType)
+        
+    
 
 class LabcontrolConfig(object):
     """Class for managing the labcontrol.ini contents.

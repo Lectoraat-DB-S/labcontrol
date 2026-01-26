@@ -1,11 +1,30 @@
 import socket
 import pyvisa
+import logging
+
+from devices.BaseConfig import LabcontrolConfig, BaseSupplyConfig
+
+logger = logging.getLogger(__name__)
 
 #Korad heeft volgende interface
 #iset(value), iset(), iout()
 #vset(value), vset(), vout()
 #OCP => aan/uit, ocp set, ocp read. idem voor V
 #Alternatief OCP is klasse. OCP.on/OCP.off OCP.set
+
+def SocketConnect(remote_ip, port):
+    try:
+        #create an AF_INET, STREAM socket (TCP)
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    except socket.error:
+        print ('Failed to create socket.')
+        sys.exit();
+    try:
+        #Connect to remote server
+        s.connect((remote_ip , port))
+    except socket.error:
+        print ('failed to connect to ip ' + remote_ip)
+    return s
 
 class BaseSupplyChannel(object):
     """BaseSupplyChannel: a base abstraction of a controllable channel of a power supply. Problably, an inheriting subclass
@@ -15,7 +34,7 @@ class BaseSupplyChannel(object):
 
     @classmethod
     def getSupplyChannelClass(cls,  chan_no, dev):
-        """getGenChannelClass: factory method for generator channel objects. 
+        """getGenChannelClass: factory method for supply channel objects. 
         Remark: this baseclass implementation is empty, must be implemented by the subclass. """
         pass 
 
@@ -129,7 +148,7 @@ class BaseSupply(object):
         cls.supplyList.append(cls)
          
     @classmethod
-    def getSupplyClass(cls, rm, urls, host=None):
+    def getSupplyClass(cls, rm, urls, host=None,  supplyConfigs: list = None):
         """Method for getting the right type of supply, so it can be created by the runtime.
         This method only returns BaseSupply's baseclass type (e.g. it returns the BaseSupply type). The inheriting
         subclass should implement the needed logic to return the neede derived subtype."""
@@ -144,15 +163,49 @@ class BaseSupply(object):
         DON'T TRY TO CALL THE CONSTRUCTOR OF THIS CLASS DIRECTLY"""
         rm = pyvisa.ResourceManager()
         urls = rm.list_resources()
+        myconfigs = LabcontrolConfig().find(cls) # myconfig is a list of config 
 
         for supply in cls.supplyList:
-            supplyType, nrOfChan, dev = supply.getSupplyClass(rm, urls, host)
-            if supplyType != None:
-                cls = supplyType
-                return cls(nrOfChan, dev)
-    
-        return None # if getDevice can't find an instrument, return None.    
+            supplytype, dev, theConfig = supply.getSupplyClass(rm, urls, host, myconfigs)
+            if supplytype != None:
+                cls = supplytype
+                return cls(dev, theConfig)
+        logger.warning("Geen supply gevonden!")    
+        return None # if getDevice can't find an instrument, return None.
+
+    @classmethod
+    def SocketConnect(cls, rm:pyvisa.ResourceManager = None, supplyConfig: BaseSupplyConfig = None,
+                timeOut = 10000, readTerm = '\n', writeTerm = '\n')->pyvisa.resources.MessageBasedResource:
+        myConfig: BaseSupplyConfig = supplyConfig
+        if rm == None:
+            return None
         
+        if supplyConfig == None:
+            return None
+        else:
+            host = myConfig.IPAddress #property
+            mydev: pyvisa.resources.MessageBasedResource = None
+            if host == None:
+                return None
+            try:
+                #logger.info(f"Trying to resolve host {host}")
+                ip_addr = socket.gethostbyname(host)
+                #Onderstaande uitgecommentarieerde code, werkt niet voor een spd3303X-E via TCP/IP
+                #TODO: Uitvissen waarom dat zo is. Is het toevallig een bug in de huidige firmware van het apparaat?
+                #mydev = rm.open_resource("TCPIP::"+str(ip_addr)+"::INSTR")
+                #Onderstaande code werkte daarentegen WEL!
+                mydev = rm.open_resource("TCPIP::"+str(ip_addr)+"::5025::SOCKET") 
+                mydev.timeout = timeOut  # ms
+                mydev.read_termination = readTerm
+                mydev.write_termination = writeTerm
+                return mydev
+            except (socket.gaierror, pyvisa.VisaIOError) as error:
+                #logger.error(f"Couldn't resolve host {host}")
+                return None
+            
+            
+            
+                
     def __init__(self, nrOfChan : int = None, visaInstr : pyvisa.resources.MessageBasedResource = None): 
         """abstract init function. A subclass should be override this function, which wil intitialize object below"""
         self.visaInstr : pyvisa.resources.MessageBasedResource = visaInstr

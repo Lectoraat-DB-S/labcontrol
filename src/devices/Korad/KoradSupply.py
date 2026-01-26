@@ -1,6 +1,7 @@
 from ast import literal_eval
 import pyvisa
 from devices.BaseSupply import BaseSupply,BaseSupplyChannel
+from devices.BaseConfig import BaseSupplyConfig
 import socket
 import serial
 import time
@@ -184,7 +185,7 @@ class Korad3305P(BaseSupply):
     
         
     @classmethod
-    def getSupplyClass(cls, rm, urls, host):
+    def getSupplyClass(cls, rm, urls, host,supplyConfigs: list = None):
         """ Tries to get (instantiate) the device, based on the url"""
         #The KORAD3305P supply only supports serial communication.
         #11-4-25:

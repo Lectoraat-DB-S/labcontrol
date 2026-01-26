@@ -1,5 +1,10 @@
 import socket
 import pyvisa
+from devices.BaseConfig import LabcontrolConfig, BaseDMMConfig
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class BaseDMM(object):
     """
@@ -32,7 +37,10 @@ class BaseDMM(object):
         cls.dmmList.append(cls)
 
     @classmethod
-    def getDMMClass(cls, rm, urls, host):
+    def getDMMClass(cls, rm, urls, host=None, dmmConfigs: list = None):
+        """Method for getting the right class type of dmm, so it can be created by the runtime.
+        This BaseDMM implementation does nothing. The inheriting
+        subclass should implement the needed logic and take care of return the right type or None"""
         pass    
 
     @classmethod
@@ -44,16 +52,42 @@ class BaseDMM(object):
         DON'T TRY TO CALL THE CONSTRUCTOR OF THIS CLASS DIRECTLY"""
         rm = pyvisa.ResourceManager()
         urls = rm.list_resources()
+        myconfigs = LabcontrolConfig().find(cls) # myconfig is a list of config
 
         for dmm in cls.dmmList:
-            dmmtype, dev = dmm.getDMMClass(rm, urls, host)
+            dmmtype, dev = dmm.getDMMClass(rm, urls, host, myconfigs)
             if dmmtype != None:
                 cls = dmmtype
                 return cls(dev)
             
         return None # if getDevice can't find an instrument, return None.
     
-    
+    @classmethod
+    def SocketConnect(cls, rm:pyvisa.ResourceManager = None, dmmConfig: BaseDMMConfig= None,
+                timeOut = 10000, readTerm = '\n', writeTerm = '\n')->pyvisa.resources.MessageBasedResource:
+        myConfig: BaseDMMConfig = dmmConfig
+        if rm == None:
+            return None
+        
+        if dmmConfig == None:
+            return None
+        else:
+            host = myConfig.IPAddress #property
+            mydev: pyvisa.resources.MessageBasedResource = None
+            if host == None:
+                return None
+            try:
+                #logger.info(f"Trying to resolve host {host}")
+                ip_addr = socket.gethostbyname(host)
+                mydev = rm.open_resource("TCPIP::"+str(ip_addr)+"::INSTR")
+            except (socket.gaierror, pyvisa.VisaIOError) as error:
+                #logger.error(f"Couldn't resolve host {host}")
+                return None
+            
+            mydev.timeout = timeOut  # ms
+            mydev.read_termination = readTerm
+            mydev.write_termination = writeTerm
+            return mydev
       
     def __init__(self, dev=None): #For now, init should get the nrOfChan for this scope as a param.
         """abstract init function. A subclass should be override this function, which wil intitialize object below"""

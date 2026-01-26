@@ -24,6 +24,23 @@ class SDS2kChannel(BaseChannel):
     #IMMEDMEASTYPES =["CRMs","CURSORRms","DELay","FALL",
     #                    "FREQuency","MAXImum","MEAN","MINImum","NONe","NWIdth","PDUty","PERIod","PHAse", 
     #                    "PK2pk","PWIdth","RISe"]
+
+    """According to the programming manual of de SDS2k scope, this scope knows the following channel commands
+     :CHANnel:REFerence
+     :CHANnel<n>:BWLimit
+     :CHANnel<n>:COUPling
+     :CHANnel<n>:IMPedance
+     :CHANnel<n>:INVert
+     :CHANnel<n>:LABel
+     :CHANnel<n>:LABel:TEXT
+     :CHANnel<n>:OFFSet
+     :CHANnel<n>:PROBe
+     :CHANnel<n>:SCALe
+     :CHANnel<n>:SKEW
+     :CHANnel<n>:SWITch
+     :CHANnel<n>:UNIT
+     :CHANnel<n>:VISible
+    """
     
     @classmethod
     def getChannelClass(cls, chan_no, dev):
@@ -113,8 +130,25 @@ class SDS2kChannel(BaseChannel):
         self.WFP.decodePreambleStr(params=wvpRespStr)
         
     def capture(self)->BaseWaveForm:
-        self.getWaveformPreamble() #for quering the preamble, in order to have fresh WVP
-        data = self.visaInstr.query_binary_values(f"{self.name}:WF? DAT2", datatype='B', is_big_endian=False, container=np.ndarray)
+        """"Method for transferring the waveform data from scope to compunter. According to <> the recipe for doing something useful with the
+        tranferred data is:
+        step 1
+        :WAVeform:SOURce C2 => dit is vervelend. Een kanaal wordt door SDS2k aangegeven met "CHANNEL", maar binnen het commando WAVEFORM wordt
+        een bronkanaal aangegeven met C1 of C2. Dat is inconsequent.
+        :WAVeform:DATA?
+        Step 2: Send the query to get the parameters of waveform.
+        :WAVeform:PRE?
+        Step 3: Calculate the voltage value corresponding to the data point.
+        Using the formula: voltage value (V) = code value *(vdiv /code_per_div) voffset.
+        Step 4: Calculate the time value of the data point.
+        Using the formula: time value(S) = delay --(timebase*grid/2)*index*interval
+        
+        
+        """
+        self.WF.setSource(self.chanNr)
+        preambleStr = self.WF.getPreamble()
+        self.WFP.decodePreambleStr(params=preambleStr)
+        data = self.visaInstr.query_binary_values(SCPI["WAVEFORM"]["data?"](), datatype='B', is_big_endian=False, container=np.ndarray)
         try:
             
             trace = np.frombuffer(data, dtype=np.byte)
@@ -275,7 +309,7 @@ class SDS2kChannel(BaseChannel):
   
 
 class SDSWaveFormPreamble(BaseWaveFormPreample):
-    """Class for holding the SIGLENT SDS1000 scope series preamble. Extends BaseWaveFormPreamble.
+    """This class has been written for holding the SIGLENT SDS1000 scope series preamble. Extends BaseWaveFormPreamble.
     A preample is data describing the unit, range and spacing of a Waveform."""
 
     @classmethod
@@ -498,6 +532,7 @@ class SDS2kWaveForm(BaseWaveForm):
 
     def setSource(self, newSrc):
         #TODO: checken geldigheid newSrc, moet C, F of D zijn.
+        #TODO: checken geldigheid van het nummer of id achter de C, F of D.
         self.visaInstr.write(SCPI["WAVEFORM"]["source"](newSrc))
     
     def getSource(self):
@@ -530,7 +565,7 @@ class SDS2kWaveForm(BaseWaveForm):
     
     def getPreamble(self):
         #TODO: fix the decode of preamble
-        return self.visaInstr.query(SCPI["WAVEFORM"]["preamble?"]())
+        return self.visaInstr.query_binary_values(SCPI["WAVEFORM"]["preamble?"](), datatype='B', is_big_endian=False, container=np.ndarray)
     
     def getDataWidth(self):
         """Method for querying the number of bytes during transfer.

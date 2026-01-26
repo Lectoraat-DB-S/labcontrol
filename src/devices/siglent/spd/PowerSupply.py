@@ -3,6 +3,8 @@ import logging
 import socket
 from devices.siglent.spd.SupplyChannel import SPDChannel
 from devices.BaseSupply import BaseSupply
+from devices.BaseConfig import BaseSupplyConfig
+import devices.siglent.spd.util as util
 
 logger = logging.getLogger(__name__)
 #logging.basicConfig(filename='SiglentSupply.log', level=logging.INFO)
@@ -11,6 +13,7 @@ logger.setLevel(logging.INFO)
 class SiglentPowerSupply(BaseSupply):
     KNOWN_MODELS = [
         "SPD3303X",
+        "SPD3303X-E",
     ]
 
     MANUFACTURERS = {
@@ -18,33 +21,56 @@ class SiglentPowerSupply(BaseSupply):
     }
 
     @classmethod
-    def getSupplyClass(cls, rm:pyvisa.ResourceManager, urls:list, host:str):
-        if rm == None:
-            raise Exception("Siglent Powersupply: ERROR: VISA ResourceManager empty")
-        mydev = None
-        if host is None:
+    def getSupplyClass(cls, rm: pyvisa.ResourceManager, urls, host, supplyConfigs: list = None):
+        if cls is SiglentPowerSupply:
+            # first try find the scope on USB,
             pattern = "SPD"
             for url in urls:
                 if pattern in url:
-                    mydev = rm.open_resource(url)
+                    mydev:pyvisa.resources.MessageBasedResource = rm.open_resource(url)
                     mydev.timeout = 10000  # ms
                     mydev.read_termination = '\n'
                     mydev.write_termination = '\n'
-                    #TODO: idn nog decoderen en aantal kanalen daarop instellen!
-                    return (cls, 2, mydev)
-            return (None, None, None)    
                     
-        else:
-            try:
-                logger.info(f"Trying to resolve host {host}")
-                ip_addr = socket.gethostbyname(host)
-                mydev = rm.open_resource('TCPIP::'+str(ip_addr)+'::INSTR')
-                return (cls, 2, mydev)
-            except socket.gaierror:
-                logger.error(f"Couldn't resolve host {host}")
-                mydev = None
+                    #TODO: idn nog decoderen en aantal kanalen daarop instellen! Zie onderstaande
+                    idnRespStr=str(mydev.query("*IDN?"))
+                    myidn = util.decodeIDN(idnstr=idnRespStr)
+                    if myidn == None:
+                        return (None, None, None)
+                    else:
+                        if myidn == None:
+                            return (None,None)
+                        for amodel in SiglentPowerSupply.KNOWN_MODELS:
+                            if myidn.isModelInRange(amodel):
+                                return (cls, 2, mydev)
+                        return (None, None, None)
+                #no return here
+            # no return here
+            if supplyConfigs == None: #If USB connection fails and there is no config section: just quit trying.....
                 return (None, None, None)
-        return (None, None, None)
+            
+            for aconfig in supplyConfigs:
+                # check whether the sectionname of the config contains "SIGLENT"
+                myconfig : BaseSupplyConfig = aconfig
+                if "Siglent" in myconfig.devName: 
+                    mydev = cls.SocketConnect(rm=rm, supplyConfig=myconfig)
+                    if mydev != None:
+    
+                        idnRespStr=str(mydev.query("*IDN?"))
+                        myidn = util.decodeIDN(idnstr=idnRespStr)
+                        if myidn == None:
+                            return (None,None)
+                        for amodel in SiglentPowerSupply.KNOWN_MODELS:
+                            if myidn.isModelInRange(amodel):
+                                return (cls, 2, mydev)     
+                            #No return here!
+                        #No return here!
+                    #No return here!
+                #No return here!
+            return (None, None, None)  # only return None here, after all options have been tried.    
+        else:
+            (None, None, None)
+        
     
     def __init__(self, nrOfChan : int = None, dev : pyvisa.resources.MessageBasedResource = None):
         super().__init__(nrOfChan, dev)

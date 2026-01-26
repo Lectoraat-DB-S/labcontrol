@@ -5,6 +5,8 @@ import devices.siglent.sdm.util as util
 import logging
 import socket
 from devices.BaseDMM import BaseDMM
+from devices.BaseConfig import BaseDMMConfig
+from devices.siglent.sdm.util import SiglentIDN
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -40,12 +42,23 @@ class SiglentDMM(BaseDMM):
         "SDM3055": "Siglent",
         "SDM3065X": "Siglent",
     }
+
+    
     @classmethod
-    def getDMMClass(cls, rm, urls, host):
+    def SocketConnect(cls, rm:pyvisa.ResourceManager = None, dmmConfig: BaseDMMConfig = None,
+                timeOut = 10000, readTerm = '\n', writeTerm = '\n')->pyvisa.resources.MessageBasedResource:
+        myConfig: BaseDMMConfig = dmmConfig
+        mydev = super().SocketConnect(rm,myConfig)
+        if mydev != None:
+            mydev.chunk_size = 20480000 # set to bigsize to prevent time if nrofsamples is large.
+        return mydev  
+
+    @classmethod
+    def getDMMClass(cls, rm, urls, host = None, dmmConfigs: list = None):
         """ Tries to get (instantiate) the device, based on the url. REMARK: this baseclass implementation is empty.
         Inheriting subclasses must implement this functionality."""
-        urlPattern = "SDM" 
-        if host == None:
+        if cls is SiglentDMM:
+            urlPattern = "SDM"         
             for url in urls:
                 if urlPattern in url:
                     mydev = rm.open_resource(url)
@@ -53,20 +66,33 @@ class SiglentDMM(BaseDMM):
                     mydev.read_termination = '\n'
                     mydev.write_termination = '\n'
                     
-                    if cls is SiglentDMM:
-                        return (cls, mydev)
+                    return (cls, mydev)
+            #No return here!   
+            else:
+                if dmmConfigs == None: #If USB connection fails and there is no config section: just quit trying.....
+                    return (None, None, None)
+                
+                for aconfig in dmmConfigs:
+                    # check whether the sectionname of the config contains "SIGLENT"
+                    myconfig : BaseDMMConfig = aconfig
+                    if "Siglent" in myconfig.devName: 
+                        mydev = cls.SocketConnect(rm=rm, dmmConfig=myconfig)
+                        if mydev != None:
+                            idnRespStr=str(mydev.query("*IDN?"))
+                            myidn = util.decodeIDN(idnstr=idnRespStr)
+                            if myidn == None:
+                                return (None,None)
+                            for amodel in SiglentDMM.KNOWN_MODELS:
+                                if myidn.isModelInRange(amodel):
+                                    return (cls, mydev)
+                            #No return here!
+                        #No return here!
+                    #No return here!
+            return (None, None)
+        else:    
+            return (None, None)
                     
-            return (None, None)        
-        else:
-            try:
-                ip_addr = socket.gethostbyname(host)
-                addr = 'TCPIP::'+str(ip_addr)+'::INSTR'
-                mydev = rm.open_resource('TCPIP::'+str(ip_addr)+'::INSTR')
-                return (cls,mydev)
-            except socket.gaierror:
-                return (None, None)
-        return (None, None)
-
+    #'Siglent Technologies,SDM3045X,SDM34FBD5R3723,5.01.01.07R1'
     
     
     ###### VISA SYSTEM FUNCTIONS ########

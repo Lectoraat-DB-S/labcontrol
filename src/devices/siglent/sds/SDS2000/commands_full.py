@@ -240,8 +240,14 @@ TIMEBASE = {
     "reference?":       lambda:             ":TIMebase:REFerence?",
     "position":         lambda n:           f":TIMebase:REFerence:POSition {n}",
     "position?":        lambda:             f":TIMebase:REFerence:POSition?",
-    "scale":           lambda n:            f":TIMebase:SCALe {n}",
-    "scale?":          lambda:             ":TIMebase:SCALe?",
+    "scale":            lambda n:           f":TIMebase:SCALe {n}",
+    "scale?":           lambda:             ":TIMebase:SCALe?",
+    "window":           lambda v:           f":TIMebase:WINDow {v}",
+    "window?":          lambda:             ":TIMebase:WINDow?",
+    "windelay":         lambda v:           f":TIMebase:WINDow:DELay {v}",
+    "windelay?":        lambda:             ":TIMebase:WINDow:DELay?",
+    "winscale":         lambda v:           f":TIMebase:WINDow:SCALe {v}",
+    "winscale?":        lambda:             ":TIMebase:WINDow:SCALe?",
 }
 
 
@@ -264,10 +270,76 @@ DECODE = {
 # MEASURE subsystem (skeleton; many items)
 #
 MEASURE = {
+    "meas?":            lambda:            ":MEASure:?",
+    "meas":             lambda state:      f":MEASure: {state}",
+    
+    "measmode":             lambda mode:      f":MEASure:MODE {mode}",
+    "measmode?":            lambda:            ":MEASure:MODE?",
+
+    "measstat":           lambda status:     f":MEASure:ADVanced:STATistics {status}",
+    "measstat?":          lambda:            ":MEASure:ADVanced:STATistics?",
+    
+    "meashisto":           lambda status:     f":MEASure:ADVanced:STATistics:HISTOGram {status}",
+    "meashisto?":          lambda:            ":MEASure:ADVanced:STATistics:HISTOGram?",
+    "measmaxcnt":           lambda status:     f":MEASure:ADVanced:STATistics:MAXCount {status}",
+    "measmaxcnt?":          lambda:            ":MEASure:ADVanced:STATistics:MAXCount?",
+  
+    "measrststat":          lambda:            ":MEASure:ADVanced:STATistics:RESet",
+
+    "measstyle":           lambda style:     f":MEASure:ADVanced:STYLe {style}",
+    "measstyle?":          lambda:            ":MEASure:ADVanced:STYLe?",
+    
+    "measgate":           lambda status:     f":MEASure:GATE {status}",
+    "measgate?":          lambda:            ":MEASure:GATE?",
+    "measgatea":           lambda gate:     f":MEASure:GATE:GA {gate}",
+    "measgatea?":          lambda:            ":MEASure:GATE:GA?",
+    "measgateb":           lambda gate:     f":MEASure:GATE:GB {gate}",
+    "measgateb?":          lambda:            ":MEASure:GATE:GB?",
+    
+
+    "linenr":           lambda linenr:     f":MEASure:ADVanced:LINenumber {linenr}",
+    "linenr?":          lambda:            ":MEASure:ADVanced:LINenumber?",
+    "measitem":         lambda nr, state:  f":MEASure:ADVanced:P{nr} {state}",
+    "measitem?":        lambda nr:         f":MEASure:ADVanced:P{nr}?",
+ 
+    "meassimpleitem":         lambda item, state:  f":MEASure: SIMPle:ITEM {item},{state}",
+     
+    "measitemsrc1":     lambda nr, src:    f":MEASure:ADVanced:P{nr}:SOURce1 {src}",
+    "measitemsrc1?":    lambda nr:         f":MEASure:ADVanced:P{nr}:SOURce1?",
+    "measitemsrc2":     lambda nr, src:    f":MEASure:ADVanced:P{nr}:SOURce2 {src}",
+    "measitemsrc2?":    lambda nr:         f":MEASure:ADVanced:P{nr}:SOURce2?",
+
+    
+    "meassimplesrc":           lambda linenr:     f":MEASure:SIMPle:SOURce {linenr}",
+    "meassimplesrc?":          lambda:            ":MEASure:ADVanced:LINenumber?",
+    
+    "meassimpleval?":           lambda item:     f":MEASure:SIMPle:VALue? {item}",
+    
+    "measitemstat":     lambda nr, typestat:    f":MEASure:ADVanced:P{nr}:STATistics {typestat}",
+    "measitemstat?":    lambda nr:              f":MEASure:ADVanced:P{nr}:STATistics?",
+    
+    "measitemtype":     lambda nr, mtype:  f":MEASure:ADVanced:P{nr}:TYPE {mtype}",
+    "measitemtype?":    lambda nr:         f":MEASure:ADVanced:P{nr}:TYPE?",
+    
+    "measitemval?":    lambda nr:         f":MEASure:ADVanced:P{nr}:VALue?",
+    
     "item":             lambda spec:       f":MEASure:ITEM {spec}",
     "item?":            lambda:            ":MEASure:ITEM?",
     "auto?":            lambda:            ":MEASure:AUTOn?",
     "list":             lambda:            ":MEASure:LIST?",
+
+    "measthresholdsrc":     lambda src:      f":MEASure:THReshold:SOURce {src}",
+    "measthresholdsrc?":    lambda:         f":MEASure:THReshold:SOURce?",
+
+    "measthresholdtype":     lambda thrtype:      f":MEASure:THReshold:TYPE {thrtype}",
+    "measthresholtype?":    lambda:         ":MEASure:THReshold:TYPE?",
+
+    "measabsthr":     lambda high, mid, low:      f":MEASure:THReshold:ABSolute {high},{mid},{low}",
+    "measabsthr?":    lambda:         ":MEASure:THReshold:ABSolute?",
+
+    "measpercthr":     lambda high, mid, low:      f":MEASure:THReshold:PERCent {high},{mid},{low}",
+    "measpercthr?":    lambda:         ":MEASure:THReshold:PERCent?",
+
     # advanced measure items exist (PSLOPE, NSLOPE, TSR etc in E11C/E11D)
 }
 
