@@ -1,5 +1,9 @@
 # Labcontrol - Bestuur al je elektronische meetapparatuur met jouw laptop
-Labcontrol maakt het mogelijk om met Python een complete meetopstelling (een Lab) te besturen (control) . Labcontrol is een verzameling van diverse Python bibliotheken (of packages), aangevuld met Python scripts die de al die pakketten wegwerkt achter een standaard interface die het programmeren veel makkerlijker maakt.    
+Labcontrol maakt het mogelijk om elektronische meetapparatuur op afstand samen te laten werken. Middels scripts kunnen recepten worden geschreven, waarmee geautomatiseerd testen en meten mogelijk wordt. Labcontrol is een verzameling van diverse Python bibliotheken (of packages), aangevuld met Python scripts die de al die pakketten wegwerkt achter een standaard interface die het programmeren veel makkerlijker maakt.    
 # Installatie op Windows.
-Hoewel Labcontrol voor elk OS geschikt is, is er is op het moment alleen een beschrijving voor installatie op Windows. Zie hiervoor de  [installatiehandleiding](docs/installatie.rst).
-
+Installatie is eenvoudig.
+1. Download install.bat
+2. Dubbelklik install.bat.
+3. Wacht totdat installer helemaal uitgevoerd is.
+4. Start Jupyter Notebook binnen WinPython op
+5. Open install.ipynb en voer die stap voor stap uit
