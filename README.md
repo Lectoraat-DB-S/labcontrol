@@ -7,3 +7,7 @@ Installatie is eenvoudig.
 3. Wacht totdat installer helemaal uitgevoerd is.
 4. Start Jupyter Notebook binnen WinPython op
 5. Open install.ipynb en voer die stap voor stap uit
+
+## Download raw File
+Hieronder staat hoe install.bat kunt downloaden, nadat je op bovenstaande link hebt geklikt:
+<img width="1025" height="394" alt="afbeelding" src="https://github.com/user-attachments/assets/fb146b44-f5f8-4f7f-b4bb-c8a1ea730b6e" />
