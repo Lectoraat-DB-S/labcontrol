@@ -1,0 +1,8 @@
+name: "RC Filter Meting"
+description: "CH1 input, CH2 output, AC coupling, 100us timebase"
+devices:
+  scope:
+    channels:
+      1: { vdiv: 0.5, coupling: AC, probe: 1 }
+      2: { vdiv: 0.5, coupling: AC, probe: 1 }
+    timebase: 100us

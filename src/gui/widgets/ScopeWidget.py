@@ -217,13 +217,21 @@ class ScopeWidget(QWidget):
         self.sample_rate_label.setStyleSheet("font-weight: bold; color: #2196F3;")
         layout.addWidget(self.sample_rate_label, 0, 3)
 
+        # Capture size selector
+        layout.addWidget(QLabel("Capture:"), 1, 0)
+        self.capture_size_combo = QComboBox()
+        self.CAPTURE_SIZES = [256, 512, 1024, 2048, 4096, 6144]
+        self.capture_size_combo.addItems([f"{s}" for s in self.CAPTURE_SIZES])
+        self.capture_size_combo.setCurrentIndex(2)  # Default 1024
+        layout.addWidget(self.capture_size_combo, 1, 1)
+
         # Horizontal position
-        layout.addWidget(QLabel("Position:"), 1, 0)
+        layout.addWidget(QLabel("Position:"), 1, 2)
         self.h_position_spin = QDoubleSpinBox()
         self.h_position_spin.setRange(-5, 5)
         self.h_position_spin.setSuffix(" div")
         self.h_position_spin.setSingleStep(0.5)
-        layout.addWidget(self.h_position_spin, 1, 1)
+        layout.addWidget(self.h_position_spin, 1, 3)
 
         parent_layout.addWidget(group)
 
@@ -342,6 +350,8 @@ class ScopeWidget(QWidget):
             model = getattr(scope, 'model', 'Scope')
             self.info_label.setText(f"Connected: {brand} {model}")
             self.info_label.setStyleSheet("color: #4CAF50; font-weight: bold;")
+            # Auto-start continuous acquisition
+            self._onRunClicked()
         else:
             self._resetUI()
             self.info_label.setText("No scope connected")
@@ -553,16 +563,32 @@ class ScopeWidget(QWidget):
     # === Acquisition control buttons ===
 
     def _onRunClicked(self):
-        """Handle Run button click"""
+        """Handle Run button click - starts continuous acquisition"""
+        if not self.scope:
+            return
         if self._capabilities.get('acquisition'):
             self._safeCall(self.scope.acquisition, 'state', "RUN")
-            self.acquisitionStateChanged.emit("RUN")
+        # Start continuous capture timer
+        if not self._measurement_timer.isActive():
+            try:
+                self._measurement_timer.timeout.disconnect()
+            except:
+                pass
+            self._measurement_timer.timeout.connect(self.refreshMeasurements)
+            self._measurement_timer.start(250)  # 4 Hz refresh rate - less CPU intensive
+        self.acquisitionStateChanged.emit("RUN")
 
     def _onStopClicked(self):
-        """Handle Stop button click"""
+        """Handle Stop button click - stops continuous acquisition"""
         if self._capabilities.get('acquisition'):
             self._safeCall(self.scope.acquisition, 'state', "STOP")
-            self.acquisitionStateChanged.emit("STOP")
+        # Stop capture timer
+        self._measurement_timer.stop()
+        try:
+            self._measurement_timer.timeout.disconnect()
+        except:
+            pass
+        self.acquisitionStateChanged.emit("STOP")
 
     def _onSingleClicked(self):
         """Handle Single button click"""
@@ -583,6 +609,13 @@ class ScopeWidget(QWidget):
         if self.ch1_group.isChecked() and hasattr(self.scope, 'vertical') and self.scope.vertical:
             chan1 = self.scope.vertical.chan(1)
             if chan1:
+                # Capture new data first if channel has capture method
+                try:
+                    if hasattr(chan1, 'capture'):
+                        waveform = chan1.capture()
+                        self.updateWaveform(waveform, channel=1)
+                except Exception as e:
+                    print(f"CH1 capture error: {e}")
                 measurements['ch1'] = self._getMeasurementsForChannel(chan1)
                 self._updateMeasurementLabels(self.ch1_meas, measurements['ch1'])
 
@@ -590,6 +623,13 @@ class ScopeWidget(QWidget):
         if self._capabilities.get('dual_channel') and self.ch2_group.isChecked():
             chan2 = self.scope.vertical.chan(2)
             if chan2:
+                # Capture new data first if channel has capture method
+                try:
+                    if hasattr(chan2, 'capture'):
+                        waveform = chan2.capture()
+                        self.updateWaveform(waveform, channel=2)
+                except Exception as e:
+                    print(f"CH2 capture error: {e}")
                 measurements['ch2'] = self._getMeasurementsForChannel(chan2)
                 self._updateMeasurementLabels(self.ch2_meas, measurements['ch2'])
 
@@ -741,6 +781,24 @@ class ScopeWidget(QWidget):
         self.ch1_group.toggled.connect(lambda v: self._onChannelVisibilityChanged(1, v))
         self.ch2_group.toggled.connect(lambda v: self._onChannelVisibilityChanged(2, v))
 
+        # CH1 settings - apply immediately on change
+        self.ch1_vdiv.currentIndexChanged.connect(lambda: self._applyChannelSetting(1, 'vdiv'))
+        self.ch1_coupling.currentTextChanged.connect(lambda: self._applyChannelSetting(1, 'coupling'))
+        self.ch1_probe.currentIndexChanged.connect(lambda: self._applyChannelSetting(1, 'probe'))
+        self.ch1_position.valueChanged.connect(lambda: self._applyChannelSetting(1, 'position'))
+
+        # CH2 settings - apply immediately on change
+        self.ch2_vdiv.currentIndexChanged.connect(lambda: self._applyChannelSetting(2, 'vdiv'))
+        self.ch2_coupling.currentTextChanged.connect(lambda: self._applyChannelSetting(2, 'coupling'))
+        self.ch2_probe.currentIndexChanged.connect(lambda: self._applyChannelSetting(2, 'probe'))
+        self.ch2_position.valueChanged.connect(lambda: self._applyChannelSetting(2, 'position'))
+
+        # Time/div - apply immediately
+        self.time_div_combo.currentIndexChanged.connect(self._applyTimeDivSetting)
+
+        # Capture size - apply immediately
+        self.capture_size_combo.currentIndexChanged.connect(self._applyCaptureSize)
+
     def _onAcqModeChanged(self, mode):
         """Handle acquisition mode change"""
         is_avg = mode == "AVERAGE"
@@ -754,3 +812,81 @@ class ScopeWidget(QWidget):
         else:
             self.curve_ch2.setVisible(visible)
         self.channelVisibilityChanged.emit(channel, visible)
+
+    def _applyChannelSetting(self, channel, setting_type):
+        """Apply a channel setting immediately to the scope"""
+        if not self.scope or not hasattr(self.scope, 'vertical'):
+            return
+
+        chan = self.scope.vertical.chan(channel)
+        if not chan:
+            return
+
+        try:
+            if channel == 1:
+                vdiv_combo, coupling_combo, probe_combo, position_spin = \
+                    self.ch1_vdiv, self.ch1_coupling, self.ch1_probe, self.ch1_position
+            else:
+                vdiv_combo, coupling_combo, probe_combo, position_spin = \
+                    self.ch2_vdiv, self.ch2_coupling, self.ch2_probe, self.ch2_position
+
+            if setting_type == 'vdiv':
+                vdiv_idx = vdiv_combo.currentIndex()
+                if vdiv_idx >= 0 and vdiv_idx < len(self.VDIV_VALUES):
+                    vdiv = self.VDIV_VALUES[vdiv_idx]
+                    # Apply probe attenuation
+                    probe_idx = probe_combo.currentIndex()
+                    probe = self.PROBE_VALUES[probe_idx] if probe_idx >= 0 else 1
+                    self._safeCall(chan, 'setVdiv', vdiv * probe)
+
+            elif setting_type == 'coupling':
+                coupling = coupling_combo.currentText()
+                self._safeCall(chan, 'setCoupling', coupling)
+
+            elif setting_type == 'probe':
+                # Re-apply vdiv with new probe attenuation
+                self._applyChannelSetting(channel, 'vdiv')
+
+            elif setting_type == 'position':
+                position = position_spin.value()
+                self._safeCall(chan, 'setPosition', position)
+
+        except Exception as e:
+            print(f"Error applying {setting_type} to CH{channel}: {e}")
+
+    def _applyTimeDivSetting(self):
+        """Apply time/div setting immediately to the scope"""
+        if not self.scope or not hasattr(self.scope, 'horizontal'):
+            return
+
+        try:
+            tdiv_idx = self.time_div_combo.currentIndex()
+            if tdiv_idx >= 0 and tdiv_idx < len(self.TDIV_VALUES):
+                tdiv = self.TDIV_VALUES[tdiv_idx]
+                self._safeCall(self.scope.horizontal, 'setTimeDiv', tdiv)
+        except Exception as e:
+            print(f"Error applying time/div: {e}")
+
+    def _applyCaptureSize(self):
+        """Apply capture size setting to the scope"""
+        if not self.scope:
+            return
+
+        try:
+            idx = self.capture_size_combo.currentIndex()
+            if idx >= 0 and idx < len(self.CAPTURE_SIZES):
+                size = self.CAPTURE_SIZES[idx]
+                # Store capture size on scope_obj for channels to use
+                if hasattr(self.scope, 'scope_obj'):
+                    self.scope.scope_obj._capture_size = size
+                self.scope._capture_size = size
+                print(f"Capture size set: {size} samples")
+        except Exception as e:
+            print(f"Error applying capture size: {e}")
+
+    def getCaptureSize(self):
+        """Get current capture size setting"""
+        idx = self.capture_size_combo.currentIndex()
+        if idx >= 0 and idx < len(self.CAPTURE_SIZES):
+            return self.CAPTURE_SIZES[idx]
+        return 1024

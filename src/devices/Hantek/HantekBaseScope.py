@@ -6,8 +6,6 @@ with the BaseScope/BaseChannel interface used throughout labcontrol.
 Supported models: DSO-6022BE, DSO-6022BL, DSO-6021
 """
 
-from threading import Event
-
 import numpy as np
 import usb1
 
@@ -84,43 +82,33 @@ class HantekChannel(BaseChannel):
         self._visible = True
 
     def capture(self) -> BaseWaveForm:
-        """Capture waveform from this channel"""
-        # Request single capture
-        self.scope_obj.start_capture()
+        """Capture waveform from this channel using synchronous read"""
+        # Get capture size from scope (default 1024)
+        capture_size = getattr(self.scope_obj, '_capture_size', 1024)
+        ch1_data, ch2_data = self.scope_obj.read_data(data_size=capture_size, raw=False, timeout=1000)
 
-        # Read data synchronously
-        data_available = Event()
-        captured_data = []
+        # Select the right channel's data
+        if self.chanNr == 1:
+            raw_data = np.array(ch1_data, dtype=np.uint8)
+        else:
+            raw_data = np.array(ch2_data, dtype=np.uint8)
 
-        def callback(ch1_data, ch2_data):
-            if self.chanNr == 1:
-                captured_data.append(ch1_data)
-            else:
-                captured_data.append(ch2_data)
-            data_available.set()
-
-        # Start async read with callback
-        shutdown = self.scope_obj.read_async(callback, 6*1024, outstanding_transfers=1, raw=True)
-
-        # Wait for data (with timeout)
-        data_available.wait(timeout=2.0)
-        shutdown.set()
-
-        if not captured_data:
+        if len(raw_data) == 0:
             raise RuntimeError(f"No data captured from {self.name}")
 
-        # Process raw data
-        raw_data = np.array(captured_data[0], dtype=np.uint8)
+        # Get current sample rate
+        sample_rate_idx = getattr(self.scope_obj, '_sample_rate_index', 1)
+        sr_info = Oscilloscope.SAMPLE_RATES.get(sample_rate_idx, ('1 MS/s', 1e6))
+        sample_rate = sr_info[1]
 
         # Update preamble
-        sample_rate_idx = getattr(self.scope_obj, '_sample_rate_index', 1)
         self.WFP.queryPreamble(self.chanNr, self._voltage_range, sample_rate_idx)
         self.WFP.nrOfSamples = len(raw_data)
+        self.WFP.xincr = 1.0 / sample_rate
 
-        # Scale data to voltage
+        # Scale data to voltage using current voltage range
         vr_info = Oscilloscope.VOLTAGE_RANGES[self._voltage_range]
         scale_factor = vr_info[1]  # V per ADC step
-        offset_volts = vr_info[2]  # Zero offset
 
         scaled_data = (raw_data.astype(np.float32) - 128) * scale_factor
 
@@ -148,6 +136,9 @@ class HantekChannel(BaseChannel):
             self._voltage_range = 5  # +/- 1V
         else:
             self._voltage_range = 10  # +/- 500mV
+
+        vr_info = Oscilloscope.VOLTAGE_RANGES[self._voltage_range]
+        print(f"CH{self.chanNr} V/div set: {value}V -> range {vr_info[0]}")
 
         if self.chanNr == 1:
             self.scope_obj.set_ch1_voltage_range(self._voltage_range)
@@ -254,7 +245,9 @@ class HantekHorizontal(BaseHorizontal):
 
         self._sample_rate_index = best_idx
         self.scope_obj.set_sample_rate(best_idx)
+        self.scope_obj._sample_rate_index = best_idx  # Sync to scope_obj for capture
         self.SR = Oscilloscope.SAMPLE_RATES[best_idx][1]
+        print(f"TimeDiv set: {value}s -> sample rate {Oscilloscope.SAMPLE_RATES[best_idx][0]}")
 
     def getTimeDivs(self):
         """Get available time/div settings"""
@@ -291,6 +284,34 @@ class HantekTrigger(BaseTriggerUnit):
             adc_level = max(0, min(255, adc_level))
             self.scope_obj.set_trigger(self._source_channel, adc_level, is_rim=True)
         return self._trigger_level
+
+
+class HantekAcquisition(BaseAcquisition):
+    """Acquisition control for Hantek scopes"""
+
+    @classmethod
+    def getAcquisitionClass(cls, dev):
+        if cls is HantekAcquisition:
+            return cls
+        return None
+
+    def __init__(self, scope_obj: Oscilloscope):
+        super().__init__(None)  # No VISA instrument
+        self.scope_obj = scope_obj
+        self._state = "STOP"
+        self._mode = "SAMPLE"
+
+    def state(self, runMode=None):
+        """Set/get acquisition state (RUN/STOP)"""
+        if runMode is not None:
+            self._state = runMode.upper()
+        return self._state
+
+    def mode(self, acqMode=None):
+        """Set/get acquisition mode"""
+        if acqMode is not None:
+            self._mode = acqMode
+        return self._mode
 
 
 class HantekScope(BaseScope):
@@ -414,6 +435,7 @@ class HantekScope(BaseScope):
         self.horizontal = HantekHorizontal(scope_obj)
         self.vertical = HantekVertical(nrOfChan, scope_obj)
         self.trigger = HantekTrigger(self.vertical, scope_obj)
+        self.acquisition = HantekAcquisition(scope_obj)
 
         # Store sample rate index for channels to access
         scope_obj._sample_rate_index = 1  # Default
@@ -423,6 +445,7 @@ class HantekScope(BaseScope):
         scope_obj.set_ch1_voltage_range(1)  # +/- 5V
         scope_obj.set_ch2_voltage_range(1)
         scope_obj.set_sample_rate(1)  # 1 MS/s
+        scope_obj._capture_size = 1024  # Default capture size
 
         # Grid divisions
         self.nrOfHoriDivs = 10

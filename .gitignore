@@ -1,2 +1,23 @@
-# Created by venv; see https://docs.python.org/3/library/venv.html
-*
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+
+# Venv
+venv/
+venv_old/
+venv_backup2/
+
+# User presets (not tracked)
+presets/user/*
+!presets/user/.gitkeep
+
+# IDE
+.vscode/
+bin/
+lib/
+lib64
+pyvenv.cfg
+share/

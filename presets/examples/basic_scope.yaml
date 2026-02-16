@@ -1,0 +1,8 @@
+name: "Basic Scope Setup"
+description: "Beide kanalen 1V/div, 1ms timebase"
+devices:
+  scope:
+    channels:
+      1: { vdiv: 1.0, coupling: DC, probe: 1 }
+      2: { vdiv: 1.0, coupling: DC, probe: 1 }
+    timebase: 1ms

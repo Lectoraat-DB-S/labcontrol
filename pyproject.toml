@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "labcontrol"
+version = "2.0.0"
+description = "CLI-first instrument configuration tool"
+requires-python = ">=3.10"
+dependencies = [
+    "click>=8.0",
+    "pyyaml>=6.0",
+    "pydantic>=2.0",
+    "rich>=13.0",
+    "pyusb>=1.2",
+    "libusb1>=3.0",
+    "matplotlib>=3.7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "pytest-mock>=3.0"]
+
+[project.scripts]
+labcontrol = "labcontrol.cli:cli"
+
+[tool.setuptools.packages.find]
+include = ["labcontrol*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

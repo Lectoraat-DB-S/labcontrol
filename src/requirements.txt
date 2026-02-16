@@ -19,7 +19,3 @@ numdifftools
 
 # GUI dependencies
 PyQt5
-
-# TUI dependencies
-textual
-rich
