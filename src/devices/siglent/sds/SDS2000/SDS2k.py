@@ -14,11 +14,12 @@ from devices.siglent.sds.util import SiglentIDN
 from devices.BaseScope import BaseScope
 from devices.siglent.sds.SDS2000.Vertical import SDS2kVertical
 from devices.siglent.sds.SDS2000.Horizontal import SDS2kHorizontal
-from devices.siglent.sds.SDS2000.Trigger import SDSTrigger
+from devices.siglent.sds.SDS2000.Trigger import SDS2kTrigger
 from devices.BaseConfig import BaseScopeConfig, BaseDeviceConfig
 from devices.siglent.sds.SDS2000.Display import SDSDisplay
 from devices.siglent.sds.SDS2000.Acquisition import SDS2kAcquisition 
-
+from devices.siglent.sds.SDS2000.commands_full import SCPI
+from devices.siglent.sds.SDS2000.params import PARAM
 
 
 logger = logging.getLogger(__name__)
@@ -89,14 +90,18 @@ class SiglentScope2k(SiglentScope):
         super().__init__(visaResc, myconfig)
         self.horizontal = SDS2kHorizontal(visaResc)
         self.vertical = SDS2kVertical(2, visaResc)
-        self.trigger = SDSTrigger(self.vertical,visaResc)
+        self.trigger = SDS2kTrigger(self.vertical,visaResc,self.scpiCommand)
         self.display = SDSDisplay(visaResc)
         self.acquisition = SDS2kAcquisition(visaResc)
-    
-   
-    def __exit__(self, *args):
-        self.visaInstr.close()
-
+        """8/2/2026: onderstaande regel toegevoegd in een poging om compacter te implementeren stap voor stap uit te proberen.
+        
+        BaseScope.py bevat SCPICommand class. Tijdens creëren van Basescope object wordt een (leeg) SCPICommand object aangemaakt.
+        Dit object kan zo niet gebruikt worden, eerst moet zowel de juiste SCPI dict met commando's als de PARAM dict met 
+        bijbehorende set geldige parameters gekoppeld worden aan het scpiCommand opbject. Dat doet onderstaande regel.
+        SCPICommand kent een aantal functies waarmee (eventuele) parameters die meegegeven worden aan de constructie 
+        van een SCPI commando, automatisch gecontroleerd. Hiermee wordt (hopellijk) veel herhaling van dezelfde code voorkomen. 
+        Daarmee moet de implementatie van deze klasse een stuk compacter worden."""
+        self.scpiCommand.setSCPI(scpi=SCPI, param=PARAM)
     
     def query(self, cmd: str):
         return self.visaInstr.query(cmd)
@@ -143,31 +148,37 @@ class SiglentScope2k(SiglentScope):
             recalling the complete front-panel setup of the instrument. Panel setup 0 corresponds to the default panel 
             setup.
         """
+        #TODO: checken of dit nog goed is.
         self.write(f"*RCL{panelNr}")
 
     def lock(self, enable):
         """
             The LOCK command enables or disables the panel keyboard of the instrument.
         """
+        #TODO: checken of dit nog goed is.
         if (enable):
             self.write(f"LOCK ON")
         else:
             self.write(f"LOCK OFF")
     
     def isLocked(self):
+        #TODO: checken of dit nog goed is.
         retstr = self.query(f"LOCK?")
         if (retstr=="LOCK ON"):
             return True
         else:
             return False
         
-    def menu(self, enable):
+    def menu(self, enable:bool):
+        myState = "ON"
         if (enable):
-            self.write(f"MENU ON")
+            myState = "ON"
         else:
-            self.write(f"MENU OFF")
+            myState = "OFF"
+        self.write(SCPI["SYSTEM"]["menu"](myState))
     
     def define(self, funct, param):
+        #TODO: checken of dit nog goed is.
         match funct:
             case util.MATH_FUNC_ADD:
                 self.write(f"DEFine EQN,'C1+C2'")
@@ -195,6 +206,7 @@ class SiglentScope2k(SiglentScope):
         :return: int
                     Returns the maximum memory depth
         """
+        #TODO: checken of dit nog goed is.
         return (self.query(":ACQuire:MDEPth?"))
 
     @memory_depth.setter
@@ -210,7 +222,7 @@ class SiglentScope2k(SiglentScope):
 
         :return: Nothing
         """
-        self.write(":AUToset")
+        self.write(SCPI["SYSTEM"]["autoset"]())
 
    
     def save_setup(self, file_location: str):
@@ -233,6 +245,7 @@ class SiglentScope2k(SiglentScope):
 
         :param file_location: string of path with an extension “.xml”.
         """
+        #TODO: checken of dit nog goed is.
         if file_location.endswith(".xml"):
             self.write(':RECall:SETup EXTernal,”{}”'.format(file_location))
         else:
@@ -252,18 +265,14 @@ class SiglentScope2k(SiglentScope):
         """The query returns the current output format for the transfer of waveform
         data.
         """
-        resp = self.query(":WAVeform:WIDTh?")
+        resp = self.query(SCPI["WAVEFORM"]["widht"]())
+        return resp
 
-        match resp:
-            case "BYTE":
-                return SiglentWaveformWidth.BYTE
-            case "WORD":
-                return SiglentWaveformWidth.WORD
-
+        
     def arm(self):
         """Sets up the trigger signal to single
         """
-
+        #TODO: controleren of dit wel juist is.
         self.set_single_trigger()
         self.set_trigger_run()
         return self.query("*OPC?")

@@ -16,6 +16,74 @@ class BaseDevice(object):
     and its associated subclasses.
     At first, this was a dissapointing observation, but on the other hand, it will give the oppurtunity for defining just one list which contains
     aLL instrumenttypes and all subclasses
+
+    edit 2/2/2026: mogelijke andere aanpak implementatie.
+    Elk apparaat van soort apparaat, bijvoorbeeld oscilloscoop, heeft de bijbehorende
+    SCPI commando's in een datastructuur. Voor de sds2k scopes is dat nu een dict, bijvoorbeeld:
+    SCPI = {
+    "CHANNEL": CHANNEL,
+    .....
+    "TRIGGER": TRIGGER,
+    ......
+    "ROOT": ROOT,
+    }
+    Waarbij elke value van de key zelf weer een data structuur is, bijv Trigger:
+    TRIGGER = {
+    "run":              lambda:          ":TRIGger:RUN",
+    "stop":              lambda:          ":TRIGger:STOP",
+    ......
+    "status?":            lambda:            ":TRIGger:STATus?",
+    "EDGE": EDGE,    
+    "SLOPE":SLOPE,
+    "PULSE":PULSE,
+    .....
+    }
+    Deze structuur kan zo ver nodig voortgezet worden.
+    
+    OP basis van bovenstaande is het idee onstaan om van elke SCPI command ook een parameters
+    datastruct te maken, bijv zo: 
+    CHANNEL = {
+    # reference strategy
+    "reference":        [],
+    .....
+    "impedance":        ["ONEMeg","FIFTY"],
+    "impedance?":       [],
+    "invert":           [],
+    .....
+    }
+    Waarbij CHANNEL uit de TRIGGER SUBSYSTEM komt, dat exact dezelfde structuur heeft als
+    SCPI en waarbij alleen 'de bladeren' verschillen van elkaar.
+    DUS:
+    PARAMS = {
+    "CHANNEL": CHANNEL,
+    .....
+    "TRIGGER": TRIGGER,
+    ......
+    "ROOT": ROOT,
+    }
+    
+    Het impedance voorbeeld komt dan uit de CHANNEL subsubsystem.
+
+    TODO: Met behulp van de PARAM datastructuur kan de geldigheid van een input parameter
+    gechecked en kan, bij meerdere opties i.c.m. verschillende ranges, de juiste 
+    SCPI substring in de SCPI datastructuur ingevuld worden. Hoe de selectie van de juiste
+    substring het beste erin gefiets moet worden, is TBD.
+
+    DOEL: indien bovenstaande kan en is geïmplementeerd, kan de wijziging in immplementatie
+    opgepakt worden: die heeft een aantal onderdelen.
+
+    Baseclass methoden voeren in principe alle commando uit, d.w.z. het schrijven gebeurt in 
+    de baseclass, tenzij de subclass de methode overneemt.
+
+    Tijdens de creatie van het meetobject, zal de subclass zorgen voor het setten van de juiste
+    members van de basisklasse, met name de SCPI struct en de param struct. 
+    In deze denkwijze is elke methode bijna gelijk: 1. het controleren van de geldigheid van de parameter of
+    parameters. 2. het retourneren van de juiste SCPI strings 3. het wegschrijven van deze SCPI string naar 
+    het aangesloten apparaat.
+
+    Het alternatief kan ook: baseclass methoden doen niets of geven de melding "not implemented yet"
+    waarbij de subclass al het werk doen.
+
     """
     instrumentList = []        
     

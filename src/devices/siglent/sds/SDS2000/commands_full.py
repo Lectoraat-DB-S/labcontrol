@@ -79,8 +79,8 @@ ACQUIRE = {
     "sequence_count?":  lambda:            ":ACQuire:SEQuence:COUNt?",
     "srate":            lambda v:         f":ACQuire:SRATe {v}",
     "srate?":           lambda:            ":ACQuire:SRATe?",
-    "type_1":             lambda v:         f":ACQuire:TYPE {v}",
-    "type_2":             lambda v1, v2:         f":ACQuire:TYPE {v1},{v2}",
+    "type_1":           lambda v:         f":ACQuire:TYPE {v}",
+    "type_2":           lambda v1, v2:    f":ACQuire:TYPE {v1},{v2}",
     "type?":            lambda:            ":ACQuire:TYPE?",
     "points_to":        lambda v:         f":ACQuire:POINts {v}",  # some models accept set points
 }
@@ -88,27 +88,476 @@ ACQUIRE = {
 #
 # TRIGGER subsystem (large, includes EDGE, FREQuency, BUS-specific)
 #
+#EDGE trigger subsubsystem
+EDGE = {
+    "level":        lambda val:     f":TRIGger:EDGE:LEVel {val}",
+    "level?":       lambda :        ":TRIGger:EDGE:LEVel?",
+    "coupling":     lambda c:       f":TRIGger:EDGE:COUPling {c}",
+    "coupling?":    lambda:         ":TRIGger:EDGE:COUPling?",
+    "events":       lambda t:       f":TRIGger:EDGE:HLDEVent {t}",
+    "events?":      lambda:         ":TRIGger:EDGE:HLDEVent?",
+    
+    "hldtime":      lambda t:       f":TRIGger:EDGE:HLDTime {t}",
+    "hldtime?":     lambda:         ":TRIGger:EDGE:HLDTime?",
+
+    "hldtype":      lambda t:       f":TRIGger:EDGE:HOLDoff {t}",
+    "hldtype?":     lambda:         ":TRIGger:EDGE:HOLDoff?",
+    
+    "hldstart":     lambda t:       f":TRIGger:EDGE:HSTart {t}",
+    "hldstart?":    lambda:         ":TRIGger:EDGE:HSTart?",
+    
+    "impedance":    lambda imp:     f":TRIGger:EDGE:IMPedance {imp}",
+    "impedance?":   lambda:         ":TRIGger:EDGE:IMPedance?",
+    
+    "noise":        lambda state:   f":TRIGger:EDGE:NREJect {state}",
+    "noise?":       lambda:         ":TRIGger:EDGE:NREJect?",
+    
+    "source":       lambda s:       f":TRIGger:EDGE:SOURce {s}",
+    "source?":      lambda:         ":TRIGger:EDGE:SOURce?",
+    "slope":        lambda s:       f":TRIGger:EDGE:SLOPe {s}",
+    "slope?":       lambda:         ":TRIGger:EDGE:SLOPe?",
+}
+
+#SLOPE trigger subsubsystem
+SLOPE = {    
+    "coupling":     lambda v:           f":TRIGger:SLOPe:COUPling {v}",
+    "coupling?":    lambda:             ":TRIGger:SLOPe:COUPling?",
+    "event":        lambda val:         f":TRIGger:SLOPe:HLDEVent {val}",
+    "event?":       lambda :             ":TRIGger:SLOPe:HLDEVent?",
+    "time":         lambda c:           f":TRIGger:SLOPe:HLDTime {c}",
+    "time?":        lambda:             ":TRIGger:SLOPe:HLDTime?",   
+    "level":        lambda t:           f":TRIGger:SLOPe:HLEVel {t}",
+    "level?":       lambda:             ":TRIGger:SLOPe:HLEVel?",
+    "holdoff":      lambda t:           f":TRIGger:SLOPe:HOLDoff {t}",
+    "holdoff?":     lambda:             ":TRIGger:SLOPe:HOLDoff?",
+    "start":        lambda t:           f":TRIGger:SLOPe:HSTart {t}",
+    "start?":       lambda:             ":TRIGger:SLOPe:HSTart?",
+    "LIMit":        lambda t:           f":TRIGger:SLOPe:LIMit {t}",
+    "LIMit?":       lambda:             ":TRIGger:SLOPe:LIMit?",
+    "llevel":       lambda imp:         f":TRIGger:SLOPe:LLEVel {imp}",
+    "llevel?":      lambda:             ":TRIGger:SLOPe:LLEVel?",
+    "noise":        lambda state:       f":TRIGger:SLOPe:NREJect {state}",
+    "noise?":       lambda:            ":TRIGger:SLOPe:NREJect?",
+    
+    "source":       lambda s:           f":TRIGger:SLOPe:SOURce {s}",
+    "source?":      lambda:             ":TRIGger:SLOPe:SOURce?",
+    "slope":        lambda s:           f":TRIGger:SLOPe:SLOPe {s}",
+    "slope?":       lambda:             ":TRIGger:SLOPe:SLOPe?",
+    
+    "tlower":       lambda s:           f":TRIGger:SLOPe:TLOWer {s}",
+    "tlower?":      lambda:             ":TRIGger:SLOPe:TLOWer?",
+    
+    "tupper":       lambda s:           f"TRIGger:SLOPe:TUPPer {s}",
+    "tupper?":      lambda:              "TRIGger:SLOPe:TUPPer?",
+    }
+
+#PULSe trigger subsubsystem command set
+PULSE = {    
+    "coupling":     lambda v:           f":TRIGger:PULSe:COUPling {v}",
+    "coupling?":    lambda:             ":TRIGger:PULSe:COUPling?",
+    "event":        lambda val:         f":TRIGger:PULSe:HLDEVent {val}",
+    "event?":       lambda :             ":TRIGger:PULSe:HLDEVent?",
+    "time":         lambda c:           f":TRIGger:PULSe:HLDTime {c}",
+    "time?":        lambda:             ":TRIGger:PULSe:HLDTime?",   
+    "start":        lambda t:           f":TRIGger:PULSe:HSTart {t}",
+    "start?":       lambda:             ":TRIGger:PULSe:HSTart?",
+    "holdoff":      lambda t:           f":TRIGger:PULSe:HOLDoff {t}",
+    "holdoff?":     lambda:             ":TRIGger:PULSe:HOLDoff?",
+    "level":        lambda t:           f":TRIGger:PULSe:LEVel {t}",
+    "level?":       lambda:             ":TRIGger:PULSe:LEVel?",
+    "limit":        lambda t:           f":TRIGger:PULSe:LIMit {t}",
+    "limit?":       lambda:             ":TRIGger:PULSe:LIMit?",
+    "noise":        lambda state:       f":TRIGger:PULSe:NREJect {state}",
+    "noise?":       lambda:             ":TRIGger:PULSe:NREJect?",
+    "polarity":     lambda s:           f":TRIGger:PULSe:POLarity {s}",
+    "polarity?":    lambda:             ":TRIGger:PULSe:POLarity?",
+    
+    "source":       lambda s:           f":TRIGger:PULSe:SOURce {s}",
+    "source?":      lambda:             ":TRIGger:PULSe:SOURce?",
+    "tlower":       lambda s:           f":TRIGger:PULSe:TLOWer {s}",
+    "tlower?":      lambda:             ":TRIGger:PULSe:TLOWer?",
+    
+    "tupper":       lambda s:           f"TRIGger:PULSe:TUPPer {s}",
+    "tupper?":      lambda:              "TRIGger:PULSe:TUPPer?",
+    }
+#INTERVAL trigger subsubsystem command set
+INTERVAL = {    
+    "coupling":     lambda v:           f":TRIGger:INTerval:COUPling {v}",
+    "coupling?":    lambda:             ":TRIGger:INTerval:COUPling?",
+    "event":        lambda val:         f":TRIGger:INTerval:HLDEVent {val}",
+    "event?":       lambda :             ":TRIGger:INTerval:HLDEVent?",
+    "time":         lambda c:           f":TRIGger:INTerval:HLDTime {c}",
+    "time?":        lambda:             ":TRIGger:INTerval:HLDTime?",   
+    "start":        lambda t:           f":TRIGger:INTerval:HSTart {t}",
+    "start?":       lambda:             ":TRIGger:INTerval:HSTart?",
+    "holdoff":      lambda t:           f":TRIGger:INTerval:HOLDoff {t}",
+    "holdoff?":     lambda:             ":TRIGger:INTerval:HOLDoff?",
+    "level":        lambda t:           f":TRIGger:INTerval:LEVel {t}",
+    "level?":       lambda:             ":TRIGger:INTerval:LEVel?",
+    "limit":        lambda t:           f":TRIGger:INTerval:LIMit {t}",
+    "limit?":       lambda:             ":TRIGger:INTerval:LIMit?",
+    "noise":        lambda state:       f":TRIGger:INTerval:NREJect {state}",
+    "noise?":       lambda:             ":TRIGger:INTerval:NREJect?",
+    
+    "source":       lambda s:           f":TRIGger:INTerval:SOURce {s}",
+    "source?":      lambda:             ":TRIGger:INTerval:SOURce?",
+    "slope":        lambda s:           f":TRIGger:INTerval:SLOPe {s}",
+    "slope?":       lambda:             ":TRIGger:INTerval:SLOPe?",
+    
+    "tlower":       lambda s:           f":TRIGger:INTerval:TLOWer {s}",
+    "tlower?":      lambda:             ":TRIGger:INTerval:TLOWer?",
+    
+    "tupper":       lambda s:           f"TRIGger:INTerval:TUPPer {s}",
+    "tupper?":      lambda:              "TRIGger:INTerval:TUPPer?",
+
+}
+
+#DROPOUT triggering subsubsystem command set
+DROPOUT = {    
+    "coupling":         lambda v:           f":TRIGger:DROPout:COUPling {v}",
+    "coupling?":        lambda:             ":TRIGger:DROPout:COUPling?",
+    "event":            lambda val:         f":TRIGger:DROPout:HLDEVent {val}",
+    "event?":           lambda :             ":TRIGger:DROPout:HLDEVent?",
+    "time":             lambda c:           f":TRIGger:DROPout:HLDTime {c}",
+    "time?":            lambda:             ":TRIGger:DROPout:HLDTime?",   
+    "start":            lambda t:           f":TRIGger:DROPout:HSTart {t}",
+    "start?":           lambda:             ":TRIGger:DROPout:HSTart?",
+    "holdoff":          lambda t:           f":TRIGger:DROPout:HOLDoff {t}",
+    "holdoff?":         lambda:             ":TRIGger:DROPout:HOLDoff?",
+    "level":            lambda t:           f":TRIGger:DROPout:LEVel {t}",
+    "level?":           lambda:             ":TRIGger:DROPout:LEVel?",
+    "noise":            lambda state:       f":TRIGger:DROPout:NREJect {state}",
+    "noise?":           lambda:             ":TRIGger:DROPout:NREJect?",
+    
+    "source":           lambda s:           f":TRIGger:DROPout:SOURce {s}",
+    "source?":          lambda:             ":TRIGger:DROPout:SOURce?",
+    "slope":            lambda s:           f":TRIGger:DROPout:SLOPe {s}",
+    "slope?":           lambda:             ":TRIGger:DROPout:SLOPe?",
+    
+    "time":           lambda s:           f":TRIGger:DROPout:TIME {s}",
+    "time?":          lambda:             ":TRIGger:DROPout:TIME?",
+    
+    "type":           lambda s:           f"TRIGger:DROPout:TYPE {s}",
+    "type?":          lambda:              "TRIGger:DROPout:TYPE?",
+    }
+#RUNT triggering subsubsystem command set
+RUNT = {    
+    "coupling":         lambda v:           f":TRIGger:RUNT:COUPling {v}",
+    "coupling?":        lambda:             ":TRIGger:RUNT:COUPling?",
+    "event":            lambda val:         f":TRIGger:RUNT:HLDEVent {val}",
+    "event?":           lambda :             ":TRIGger:RUNT:HLDEVent?",
+    "time":             lambda c:           f":TRIGger:RUNT:HLDTime {c}",
+    "time?":            lambda:             ":TRIGger:RUNT:HLDTime?",   
+    "start":            lambda t:           f":TRIGger:RUNT:HSTart {t}",
+    "start?":           lambda:             ":TRIGger:RUNT:HSTart?",
+    "holdoff":          lambda t:           f":TRIGger:RUNT:HOLDoff {t}",
+    "holdoff?":         lambda:             ":TRIGger:RUNT:HOLDoff?",
+    "hlevel":           lambda t:           f":TRIGger:RUNT:HLEVel {t}",
+    "hlevel?":          lambda:             ":TRIGger:RUNT:HLEVel?",
+    "llevel":           lambda t:           f":TRIGger:RUNT:LLEVel {t}",
+    "llevel?":          lambda:             ":TRIGger:RUNT:LLEVel?",
+    "limit":            lambda t:           f":TRIGger:RUNT:LIMit {t}",
+    "limit?":           lambda:             ":TRIGger:RUNT:LIMit?",
+    "noise":            lambda state:       f":TRIGger:RUNT:NREJect {state}",
+    "noise?":           lambda:             ":TRIGger:RUNT:NREJect?",
+    "polarity":         lambda t:           f":TRIGger:RUNT:POLarity {t}",
+    "polarity?":        lambda:             ":TRIGger:RUNT:POLarity?",    
+    "source":           lambda s:           f":TRIGger:RUNT:SOURce {s}",
+    "source?":          lambda:             ":TRIGger:RUNT:SOURce?",
+    
+    "tlower":           lambda s:           f":TRIGger:RUNT:TLOWer {s}",
+    "tlower?":          lambda:             ":TRIGger:RUNT:TLOWer?",
+    
+    "tupper":           lambda s:           f"TRIGger:RUNT:TUPPer {s}",
+    "tupper?":          lambda:              "TRIGger:RUNT:TUPPer?",
+    }
+#Window triggering subsubsystem command set
+WINDOW = {    
+    
+    "clevel":           lambda v:           f":TRIGger:WINDow:COUPling {v}",
+    "clevel?":          lambda:             ":TRIGger:WINDow:COUPling?",
+    "dlevel":           lambda t:           f":TRIGger:WINDow:DLEVel {t}",
+    "dlevel?":          lambda:             ":TRIGger:WINDow:DLEVel?",
+    
+    "coupling":         lambda v:           f":TRIGger:WINDow:COUPling {v}",
+    "coupling?":        lambda:             ":TRIGger:WINDow:COUPling?",
+    "event":            lambda val:         f":TRIGger:WINDow:HLDEVent {val}",
+    "event?":           lambda :             ":TRIGger:WINDow:HLDEVent?",
+    "time":             lambda c:           f":TRIGger:WINDow:HLDTime {c}",
+    "time?":            lambda:             ":TRIGger:WINDow:HLDTime?",   
+    "start":            lambda t:           f":TRIGger:WINDow:HSTart {t}",
+    "start?":           lambda:             ":TRIGger:WINDow:HSTart?",
+    "holdoff":          lambda t:           f":TRIGger:WINDow:HOLDoff {t}",
+    "holdoff?":         lambda:             ":TRIGger:WINDow:HOLDoff?",
+    "hlevel":           lambda t:           f":TRIGger:WINDow:HLEVel {t}",
+    "hlevel?":          lambda:             ":TRIGger:WINDow:HLEVel?",
+    "llevel":           lambda t:           f":TRIGger:WINDow:LLEVel {t}",
+    "llevel?":          lambda:             ":TRIGger:WINDow:LLEVel?",
+    "noise":            lambda state:       f":TRIGger:WINDow:NREJect {state}",
+    "noise?":           lambda:             ":TRIGger:WINDow:NREJect?",
+    "source":           lambda s:           f":TRIGger:WINDow:SOURce {s}",
+    "source?":          lambda:             ":TRIGger:WINDow:SOURce?",
+    "type":             lambda s:           f"TRIGger:WINDow:TYPE {s}",
+    "type?":            lambda:              "TRIGger:WINDow:TYPE?",
+    
+    }
+
+#PATTERN triggering subsubsystem command set
+PATTERN = {    
+    
+    "event":            lambda val:         f":TRIGger:PATTern:HLDEVent {val}",
+    "event?":           lambda :             ":TRIGger:PATTern:HLDEVent?",
+    "time":             lambda c:           f":TRIGger:PATTern:HLDTime {c}",
+    "time?":            lambda:             ":TRIGger:PATTern:HLDTime?",   
+    "start":            lambda t:           f":TRIGger:PATTern:HSTart {t}",
+    "start?":           lambda:             ":TRIGger:PATTern:HSTart?",
+    "holdoff":          lambda t:           f":TRIGger:PATTern:HOLDoff {t}",
+    "holdoff?":         lambda:             ":TRIGger:PATTern:HOLDoff?",
+    "input":            lambda t:           f":TRIGger:PATTern:INPut {t}",
+    "input?":           lambda:             ":TRIGger:PATTern:INPut?",
+    "level":            lambda t:           f":TRIGger:PATTern:LEVel {t}",
+    "level?":           lambda:             ":TRIGger:PATTern:LEVel?",
+    "limit":            lambda t:           f":TRIGger:PATTern:LIMit {t}",
+    "limit?":           lambda:             ":TRIGger:PATTern:LIMit?",
+    "logic":            lambda t:           f":TRIGger:PATTern:LOGic {t}",
+    "logic?":           lambda:             ":TRIGger:PATTern:LOGic?",
+    "tlower":           lambda s:           f":TRIGger:PATTern:TLOWer {s}",
+    "tlower?":          lambda:             ":TRIGger:PATTern:TLOWer?",
+    
+    "tupper":           lambda s:           f"TRIGger:PATTern:TUPPer {s}",
+    "tupper?":          lambda:              "TRIGger:PATTern:TUPPer?",
+    }
+
+#DELAY trigger subsubsystem command set
+DELAY = {    
+    "coupling":         lambda v:           f":TRIGger:DELay:COUPling {v}",
+    "coupling?":        lambda:             ":TRIGger:DELay:COUPling?",
+    "source":           lambda s:           f":TRIGger:DELay:SOURce {s}",
+    "source?":          lambda:             ":TRIGger:DELay:SOURce?",
+    "source2":          lambda s:           f":TRIGger:DELay:SOURce2 {s}",
+    "source2?":         lambda:             ":TRIGger:DELay:SOURce2?",
+    "slope":            lambda s:           f":TRIGger:DELay:SLOPe {s}",
+    "slope?":           lambda:             ":TRIGger:DELay:SLOPe?",
+    "slope2":           lambda s:           f":TRIGger:DELay:SLOPe2 {s}",
+    "slope2?":          lambda:             ":TRIGger:DELay:SLOPe2?",
+    "level":            lambda t:           f":TRIGger:DELay:LEVel {t}",
+    "level?":           lambda:             ":TRIGger:DELay:LEVel?",
+    "level2":           lambda t:           f":TRIGger:DELay:LEVel2 {t}",
+    "level2?":          lambda:             ":TRIGger:DELay:LEVel2?",
+    "limit":            lambda t:           f":TRIGger:DELay:LIMit {t}",
+    "limit?":           lambda:             ":TRIGger:DELay:LIMit?",
+    "tlower":           lambda s:           f":TRIGger:DELay:TLOWer {s}",
+    "tlower?":          lambda:             ":TRIGger:DELay:TLOWer?",
+    "tupper":           lambda s:           f"TRIGger:DELay:TUPPer {s}",
+    "tupper?":          lambda:              "TRIGger:DELay:TUPPer?",
+    }
+
+#NEDGE trigge0ring subsubsystem command set
+NEDGE = {      
+    "source":           lambda s:           f":TRIGger:NEDGe:SOURce {s}",
+    "source?":          lambda:             ":TRIGger:NEDGe:SOURce?",
+    "slope":            lambda s:           f":TRIGger:NEDGe:SLOPe {s}",
+    "slope?":           lambda:             ":TRIGger:NEDGe:SLOPe?",
+    "level":            lambda t:           f":TRIGger:NEDGe:LEVel {t}",
+    "level?":           lambda:             ":TRIGger:NEDGe:LEVel?",
+    "event":            lambda val:         f":TRIGger:NEDGe:HLDEVent {val}",
+    "event?":           lambda :             ":TRIGger:NEDGe:HLDEVent?",
+    "time":             lambda c:           f":TRIGger:NEDGe:HLDTime {c}",
+    "time?":            lambda:             ":TRIGger:NEDGe:HLDTime?",   
+    "start":            lambda t:           f":TRIGger:NEDGe:HSTart {t}",
+    "start?":           lambda:             ":TRIGger:NEDGe:HSTart?",
+    "holdoff":          lambda t:           f":TRIGger:NEDGe:HOLDoff {t}",
+    "holdoff?":         lambda:             ":TRIGger:NEDGe:HOLDoff?",
+    "idle":             lambda state:       f":TRIGger:NEDGe:IDLE {state}",
+    "idle?":            lambda:             ":TRIGger:NEDGe:IDLE?",
+    "edge":             lambda state:       f":TRIGger:NEDGe:EDGE {state}",
+    "edge?":            lambda:             ":TRIGger:NEDGe:EDGE?",
+
+    "noise":            lambda state:       f":TRIGger:NEDGe:NREJect {state}",
+    "noise?":           lambda:             ":TRIGger:NEDGe:NREJect?",
+    
+    }
 TRIGGER = {
-    "mode":             lambda v:         f":TRIGger:MODE {v}",
-    "mode?":            lambda:            ":TRIGger:MODE?",
-    "level":            lambda ch, v=None: (f":TRIGger:LEVEl{ch} {v}" if v is not None else f":TRIGger:LEVEl {ch}"),
-    "level?":           lambda ch=None:    (f":TRIGger:LEVEl{ch}?" if ch is not None else ":TRIGger:LEVEl?"),
-    "edge_source":      lambda s:         f":TRIGger:EDGE:SOURce {s}",
-    "edge_source?":     lambda:            ":TRIGger:EDGE:SOURce?",
-    "edge_slope":       lambda s:         f":TRIGger:EDGE:SLOPe {s}",
-    "edge_slope?":      lambda:            ":TRIGger:EDGE:SLOPe?",
+    "run":              lambda:             ":TRIGger:RUN",
+    "stop":             lambda:             ":TRIGger:STOP",
+    "type":             lambda v:           f":TRIGger:TYPE {v}",
+    
+    "mode":             lambda v:           f":TRIGger:MODE {v}",
+    "mode?":            lambda:             ":TRIGger:MODE?",
     # frequency trigger (added in E11D)
-    "freq":             lambda v:         f":TRIGger:FREQuency {v}",
-    "freq?":            lambda:            ":TRIGger:FREQuency?",
-    "edge_impedance":   lambda v:         f":TRIGger:EDGE:IMPedance {v}",
-    "edge_impedance?":  lambda:            ":TRIGger:EDGE:IMPedance?",
-    # IIS bus example (many bus triggers exist; follow same pattern)
-    "iis_wssource":     lambda v:         f":TRIGger:IIS:WSSource {v}",
-    "iis_wssource?":    lambda:            ":TRIGger:IIS:WSSource?",
-    "iis_wsthreshold":  lambda v:         f":TRIGger:IIS:WSThreshold {v}",
-    "iis_wsthreshold?": lambda:            ":TRIGger:IIS:WSThreshold?",
+    "freq":             lambda v:           f":TRIGger:FREQuency {v}",
+    "freq?":            lambda:             ":TRIGger:FREQuency?",
+    "status?":          lambda:             ":TRIGger:STATus?",
+    "EDGE": EDGE,    
+    "SLOPE":SLOPE,
+    "PULSE":PULSE,
+    "INTERVAL":INTERVAL,
+    "DROPOUT":DROPOUT,
+    "RUNT":RUNT,
+    "WINDOW":WINDOW,
+    "PATTERN":PATTERN,    
+    "DELAY":DELAY,
+    "NEDGE":NEDGE,            
     # add generic bus trigger factory
-    "bus":              lambda b,cmd,*args: f":TRIGger:{b}:{cmd} " + ",".join(map(str,args)) if args else f":TRIGger:{b}:{cmd}"
+    "bus":  lambda b,cmd,*args: f":TRIGger:{b}:{cmd} " + ",".join(map(str,args)) if args else f":TRIGger:{b}:{cmd}"
+}
+"""
+:TRIGger:VIDeo Commands
+        The :TRIGGER:VIDeo subsystem commands control the video trigger parameters.
+         :TRIGger:VIDeo:FCNT
+         :TRIGger:VIDeo:FIELd
+         :TRIGger:VIDeo:FRATe
+         :TRIGger:VIDeo:INTerlace
+         :TRIGger:VIDeo:LCNT
+         :TRIGger:VIDeo:LEVel
+         :TRIGger:VIDeo:LINE
+         TRIGger:VIDeo:SOURce
+         :TRIGger:VIDeo:STANdard
+         :TRIGger:VIDeo:SYNC"""
+
+
+"""      :TRIGger:QUALified:ELEVel
+         :TRIGger:QUALified:ESLope
+         :TRIGger:QUALified:ESource
+         :TRIGger:QUALified:LIMit
+         :TRIGger:QUALified:QLEVel
+         :TRIGger:QUALified:QSource
+         :TRIGger:QUALified:TLOWer
+         :TRIGger:QUALified:TUPPer
+         :TRIGger:QUALified:TYPE"""
+
+
+""":TRIGger:SHOLd Commands
+        The :TRIGGER:SHOLd subsystem commands control the setup/hold trigger parameters.
+         : SHOLd :TYPE
+         : SHOLd :CSource
+         : SHOLd :CTHReshold
+         : SHOLd :SLOPe
+         : SHOLd :DSource
+         : SHOLd :DTHReshold
+         : SHOLd :LEVel
+         : SHOLd :LIMit
+         : SHOLd :TUPPer
+         : SHOLd :TLOWer"""
+    
+""" :TRIGger:IIC Commands
+        The :TRIGGER:IIC subsystem commands control the IIC bus trigger parameters.
+         :TRIGger:IIC:ADDRess
+         :TRIGger:IIC:ALENgth
+         :TRIGger:IIC:CONDition
+         :TRIGger:IIC:DAT2
+         :TRIGger:IIC:DATA
+         :TRIGger:IIC:DLENgth
+         :TRIGger:IIC:LIMit
+         :TRIGger:IIC:RWBit
+         :TRIGger:IIC:SCLSource
+         :TRIGger:IIC:SCLThreshold
+         :TRIGger:IIC:SDASource
+         :TRIGger:IIC:SDAThreshold"""
+    
+"""      :TRIGger: BIT ord er
+         :TRIGger:SPI:CLKSource
+         :TRIGger:SPI:CLKThreshold
+         :TRIGger:SPI:CSSource
+         :TRIGger:SPI:CSThreshold
+         :TRIGger:SPI:CSTYpe
+         :TRIGger:SPI:DATA
+         :TRIGger:SPI:DLENgth
+         :TRIGger:SPI:LATChedge
+         :TRIGger:SPI:MISOSource
+         :TRIGger:SPI:MISOThreshold
+         :TRIGger:SPI:MOSISource
+         :TRIGger:SPI:MOSIThreshold
+         :TRIGger:SPI:NCSSource
+         :TRIGger:SPI:NCSThreshold
+         :TRIGger:SPI:TTYPe"""
+    
+"""The :TRIGGER:UART subsystem
+        commands control the UART bus trigger parameters.
+         TRIGger:UART:BAUD
+         :TRIGger: BITorder
+         :TRIGger:UART:CONDition
+         :TRIGger:UART:DATA
+         :TRIGger:UART:DLENgth
+         :TRIGger:UART:IDLE
+         :TRIGger:UART:LIMit
+         :TRIGger:UART:PARity
+         :TRIGger:UART:RXSource
+         :TRIGger:UART:RXThreshold
+         :TRIGger:UART:STOP
+         :TRIGger:UART:TTYPe
+         :TRIGger:UART:TXSource
+         :TRIGger:UART:TXThreshold"""
+    
+""":TRIGger:CAN Commands
+        The :TRIGGER:CAN subsystem commands control the CAN bus trigger parameters.
+         :TRIGger:CAN:BAUD
+         :TRIGger:CAN:CONDition
+         :TRIGger:CAN:DAT2
+         :TRIGger:CAN:DATA
+         :TRIGger:CAN:ID
+         :TRIGger:CAN:IDLength
+         :TRIGger:CAN:SOURce
+         :TRIGger:CAN:THReshold"""
+    
+"""      :TRIGger:LIN:BAUD
+         :TRIGger:LIN:CONDition
+         :TRIGger:LIN:DAT2
+         :TRIGger:LIN:DATA
+         :TRIGger:LIN:ERRor:CHECksum
+         :TRIGger:LIN:ERRor:DLENgth
+         :TRIGger:LIN:ERRor:ID
+         :TRIGger:LIN:ERRor:PARity
+         :TRIGger:LIN:ERRor:SYNC
+         :TRIGger:LIN:ID
+         :TRIGger:LIN:SOURce
+         :TRIGger:LIN:STANdard
+         :TRIGger:LIN:THReshold"""
+    
+"""      :TRIGger:FLEXray:BAUD
+         :TRIGger:FLEXray:CONDition
+         :TRIGger:FLEXray:FRAMe:COMPare
+         :TRIGger:FLEXray:FRAMe:CYCLe
+         :TRIGger:FLEXray:FRAMe:ID
+         :TRIGger:FLEXray:FRAMe:REPetition
+         :TRIGger:FLEXray:SOURce
+         :TRIGger:FLEXray:THReshold"""
+    
+"""      :TRIGger:CANFd:BAUDData
+         : CANFd:BAUDNominal
+         :TRIGger:CANFd:C ONDition
+         :TRIGger:CANFd:DAT2
+         :TRIGger:CANFd:DATA
+         :TRIGger:CANFd:FTYPe
+         :TRIGger:CANFd:ID
+         :TRIGger:CANFd:IDLength
+         :TRIGger:CANFd:SOURce
+         :TRIGger:CANFd:THReshold"""
+
+""":TRIGger:IIS Commands [Option]
+    The :TRIGGER:IIS subsystem  commands control the IIS bus trigger parameters.
+     :TRIGger:IIS:AVARiant
+     :TRIGger:IIS:BCLKSource
+     :TRIGger:IIS:BCLKThreshold
+     :TRIGger: BITorder
+     :TRIGger:IIS:CHANnel
+     :TRIGger:IIS:COMPare
+     :TRIGger:IIS:CONDition
+     :TRIGger:IIS:DLENgth
+     :TRIGger:IIS:DSource
+     :TRIGger:IIS:DTHReshold
+     :TRIGger:IIS:LATChedge
+     :TRIGger:IIS:LCH
+     :TRIGger:IIS:VALue
+     :TRIGger:IIS:WSSource
+     :TRIGger:IIS:WSTHreshold"""
+IIS ={
+    # IIS bus example (many bus triggers exist; follow same pattern)
+    "wssource":         lambda v:         f":TRIGger:IIS:WSSource {v}",
+    "wssource?":        lambda:            ":TRIGger:IIS:WSSource?",
+    "wsthreshold":      lambda v:         f":TRIGger:IIS:WSThreshold {v}",
+    "wsthreshold?":     lambda:            ":TRIGger:IIS:WSThreshold?",
+    
 }
 
 #
@@ -196,28 +645,28 @@ RECALL = {
 # SYSTEM subsystem (many items)
 #
 SYSTEM = {
-    "idn?":             lambda:            "*IDN?",
-    "opc?":             lambda:            "*OPC?",
-    "reset":            lambda:            "*RST",
-    "autoset":          lambda:            ":AUToset",
-    "menu":             lambda s:          f":SYSTem:MENU {s}",
-    "menu?":            lambda:            ":SYSTem:MENU?",
-    "language":         lambda v:          f":SYSTem:LANGuage {v}",
-    "language?":        lambda:            ":SYSTem:LANGuage?",
-    "pon":              lambda s:          f":SYSTem:PON {s}",
-    "pon?":             lambda:            ":SYSTem:PON?",
-    "reboot":           lambda:            ":SYSTem:REBoot",
-    "shutdown":         lambda:            ":SYSTem:SHUTdown",
-    "remote":           lambda s:          f":SYSTem:REMote {s}",
-    "remote?":          lambda:            ":SYSTem:REMote?",
-    "selfcal":          lambda:            ":SYSTem:SELFCal",
-    "selfcal?":         lambda:            ":SYSTem:SELFCal?",
+    "idn?":                 lambda:            "*IDN?",
+    "opc?":                 lambda:            "*OPC?",
+    "reset":                lambda:            "*RST",
+    "autoset":              lambda:            ":AUToset",
+    "menu":                 lambda s:          f":SYSTem:MENU {s}",
+    "menu?":                lambda:            ":SYSTem:MENU?",
+    "language":             lambda v:          f":SYSTem:LANGuage {v}",
+    "language?":            lambda:            ":SYSTem:LANGuage?",
+    "pon":                  lambda s:          f":SYSTem:PON {s}",
+    "pon?":                 lambda:            ":SYSTem:PON?",
+    "reboot":               lambda:            ":SYSTem:REBoot",
+    "shutdown":             lambda:            ":SYSTem:SHUTdown",
+    "remote":               lambda s:          f":SYSTem:REMote {s}",
+    "remote?":              lambda:            ":SYSTem:REMote?",
+    "selfcal":              lambda:            ":SYSTem:SELFCal",
+    "selfcal?":             lambda:            ":SYSTem:SELFCal?",
     # network storage (NSTorage) group
-    "nstorage":         lambda path,user,pwd,anon,auto_con,rem_path,rem_user,rem_pwd: f":SYSTem:NSTorage {qstr(path)},{qstr(user)},{qstr(pwd)},{anon},{auto_con},{rem_path},{rem_user},{rem_pwd}",
-    "nstorage?":        lambda:            ":SYSTem:NSTorage?",
-    "nstorage_connect": lambda:            ":SYSTem:NSTorage:CONNect",
-    "nstorage_disconnect": lambda:         ":SYSTem:NSTorage:DISConnect",
-    "nstorage_status?": lambda:            ":SYSTem:NSTorage:STATus?",
+    "nstorage":             lambda path,user,pwd,anon,auto_con,rem_path,rem_user,rem_pwd: f":SYSTem:NSTorage {qstr(path)},{qstr(user)},{qstr(pwd)},{anon},{auto_con},{rem_path},{rem_user},{rem_pwd}",
+    "nstorage?":            lambda:            ":SYSTem:NSTorage?",
+    "nstorage_connect":     lambda:            ":SYSTem:NSTorage:CONNect",
+    "nstorage_disconnect":  lambda:         ":SYSTem:NSTorage:DISConnect",
+    "nstorage_status?":     lambda:            ":SYSTem:NSTorage:STATus?",
 }
 
 #
@@ -270,75 +719,75 @@ DECODE = {
 # MEASURE subsystem (skeleton; many items)
 #
 MEASURE = {
-    "meas?":            lambda:            ":MEASure:?",
-    "meas":             lambda state:      f":MEASure: {state}",
+    "meas?":            lambda:                 ":MEASure:?",
+    "meas":             lambda state:           f":MEASure: {state}",
     
-    "measmode":             lambda mode:      f":MEASure:MODE {mode}",
-    "measmode?":            lambda:            ":MEASure:MODE?",
+    "measmode":         lambda mode:            f":MEASure:MODE {mode}",
+    "measmode?":        lambda:                 ":MEASure:MODE?",
 
-    "measstat":           lambda status:     f":MEASure:ADVanced:STATistics {status}",
-    "measstat?":          lambda:            ":MEASure:ADVanced:STATistics?",
+    "measstat":         lambda status:          f":MEASure:ADVanced:STATistics {status}",
+    "measstat?":        lambda:                 ":MEASure:ADVanced:STATistics?",
     
-    "meashisto":           lambda status:     f":MEASure:ADVanced:STATistics:HISTOGram {status}",
-    "meashisto?":          lambda:            ":MEASure:ADVanced:STATistics:HISTOGram?",
-    "measmaxcnt":           lambda status:     f":MEASure:ADVanced:STATistics:MAXCount {status}",
-    "measmaxcnt?":          lambda:            ":MEASure:ADVanced:STATistics:MAXCount?",
+    "meashisto":        lambda status:          f":MEASure:ADVanced:STATistics:HISTOGram {status}",
+    "meashisto?":       lambda:                 ":MEASure:ADVanced:STATistics:HISTOGram?",
+    "measmaxcnt":       lambda status:          f":MEASure:ADVanced:STATistics:MAXCount {status}",
+    "measmaxcnt?":      lambda:                 ":MEASure:ADVanced:STATistics:MAXCount?",
   
-    "measrststat":          lambda:            ":MEASure:ADVanced:STATistics:RESet",
+    "measrststat":      lambda:                 ":MEASure:ADVanced:STATistics:RESet",
 
-    "measstyle":           lambda style:     f":MEASure:ADVanced:STYLe {style}",
-    "measstyle?":          lambda:            ":MEASure:ADVanced:STYLe?",
+    "measstyle":        lambda style:           f":MEASure:ADVanced:STYLe {style}",
+    "measstyle?":       lambda:                 ":MEASure:ADVanced:STYLe?",
     
-    "measgate":           lambda status:     f":MEASure:GATE {status}",
-    "measgate?":          lambda:            ":MEASure:GATE?",
-    "measgatea":           lambda gate:     f":MEASure:GATE:GA {gate}",
-    "measgatea?":          lambda:            ":MEASure:GATE:GA?",
-    "measgateb":           lambda gate:     f":MEASure:GATE:GB {gate}",
-    "measgateb?":          lambda:            ":MEASure:GATE:GB?",
+    "measgate":         lambda status:          f":MEASure:GATE {status}",
+    "measgate?":        lambda:                 ":MEASure:GATE?",
+    "measgatea":        lambda gate:            f":MEASure:GATE:GA {gate}",
+    "measgatea?":       lambda:                 ":MEASure:GATE:GA?",
+    "measgateb":        lambda gate:            f":MEASure:GATE:GB {gate}",
+    "measgateb?":       lambda:                 ":MEASure:GATE:GB?",
     
 
-    "linenr":           lambda linenr:     f":MEASure:ADVanced:LINenumber {linenr}",
-    "linenr?":          lambda:            ":MEASure:ADVanced:LINenumber?",
-    "measitem":         lambda nr, state:  f":MEASure:ADVanced:P{nr} {state}",
-    "measitem?":        lambda nr:         f":MEASure:ADVanced:P{nr}?",
+    "linenr":           lambda linenr:          f":MEASure:ADVanced:LINenumber {linenr}",
+    "linenr?":          lambda:                 ":MEASure:ADVanced:LINenumber?",
+    "measitem":         lambda nr, state:       f":MEASure:ADVanced:P{nr} {state}",
+    "measitem?":        lambda nr:              f":MEASure:ADVanced:P{nr}?",
  
-    "meassimpleitem":         lambda item, state:  f":MEASure: SIMPle:ITEM {item},{state}",
+    "meassimpleitem":   lambda item, state:     f":MEASure: SIMPle:ITEM {item},{state}",
      
-    "measitemsrc1":     lambda nr, src:    f":MEASure:ADVanced:P{nr}:SOURce1 {src}",
-    "measitemsrc1?":    lambda nr:         f":MEASure:ADVanced:P{nr}:SOURce1?",
-    "measitemsrc2":     lambda nr, src:    f":MEASure:ADVanced:P{nr}:SOURce2 {src}",
-    "measitemsrc2?":    lambda nr:         f":MEASure:ADVanced:P{nr}:SOURce2?",
+    "measitemsrc1":     lambda nr, src:         f":MEASure:ADVanced:P{nr}:SOURce1 {src}",
+    "measitemsrc1?":    lambda nr:              f":MEASure:ADVanced:P{nr}:SOURce1?",
+    "measitemsrc2":     lambda nr, src:         f":MEASure:ADVanced:P{nr}:SOURce2 {src}",
+    "measitemsrc2?":    lambda nr:              f":MEASure:ADVanced:P{nr}:SOURce2?",
 
     
-    "meassimplesrc":           lambda linenr:     f":MEASure:SIMPle:SOURce {linenr}",
-    "meassimplesrc?":          lambda:            ":MEASure:ADVanced:LINenumber?",
+    "meassimplesrc":    lambda linenr:          f":MEASure:SIMPle:SOURce {linenr}",
+    "meassimplesrc?":   lambda:                 ":MEASure:ADVanced:LINenumber?",
     
-    "meassimpleval?":           lambda item:     f":MEASure:SIMPle:VALue? {item}",
+    "meassimpleval?":   lambda item:            f":MEASure:SIMPle:VALue? {item}",
     
     "measitemstat":     lambda nr, typestat:    f":MEASure:ADVanced:P{nr}:STATistics {typestat}",
     "measitemstat?":    lambda nr:              f":MEASure:ADVanced:P{nr}:STATistics?",
     
-    "measitemtype":     lambda nr, mtype:  f":MEASure:ADVanced:P{nr}:TYPE {mtype}",
-    "measitemtype?":    lambda nr:         f":MEASure:ADVanced:P{nr}:TYPE?",
+    "measitemtype":     lambda nr, mtype:       f":MEASure:ADVanced:P{nr}:TYPE {mtype}",
+    "measitemtype?":    lambda nr:              f":MEASure:ADVanced:P{nr}:TYPE?",
     
-    "measitemval?":    lambda nr:         f":MEASure:ADVanced:P{nr}:VALue?",
+    "measitemval?":     lambda nr:              f":MEASure:ADVanced:P{nr}:VALue?",
     
-    "item":             lambda spec:       f":MEASure:ITEM {spec}",
-    "item?":            lambda:            ":MEASure:ITEM?",
-    "auto?":            lambda:            ":MEASure:AUTOn?",
-    "list":             lambda:            ":MEASure:LIST?",
+    "item":             lambda spec:            f":MEASure:ITEM {spec}",
+    "item?":            lambda:                 ":MEASure:ITEM?",
+    "auto?":            lambda:                 ":MEASure:AUTOn?",
+    "list":             lambda:                 ":MEASure:LIST?",
 
-    "measthresholdsrc":     lambda src:      f":MEASure:THReshold:SOURce {src}",
-    "measthresholdsrc?":    lambda:         f":MEASure:THReshold:SOURce?",
+    "measthresholdsrc": lambda src:             f":MEASure:THReshold:SOURce {src}",
+    "measthresholdsrc?":lambda:                 f":MEASure:THReshold:SOURce?",
 
-    "measthresholdtype":     lambda thrtype:      f":MEASure:THReshold:TYPE {thrtype}",
-    "measthresholtype?":    lambda:         ":MEASure:THReshold:TYPE?",
+    "measthresholdtype":lambda thrtype:         f":MEASure:THReshold:TYPE {thrtype}",
+    "measthresholtype?":lambda:                 ":MEASure:THReshold:TYPE?",
 
-    "measabsthr":     lambda high, mid, low:      f":MEASure:THReshold:ABSolute {high},{mid},{low}",
-    "measabsthr?":    lambda:         ":MEASure:THReshold:ABSolute?",
+    "measabsthr":       lambda high, mid, low:  f":MEASure:THReshold:ABSolute {high},{mid},{low}",
+    "measabsthr?":      lambda:                 ":MEASure:THReshold:ABSolute?",
 
-    "measpercthr":     lambda high, mid, low:      f":MEASure:THReshold:PERCent {high},{mid},{low}",
-    "measpercthr?":    lambda:         ":MEASure:THReshold:PERCent?",
+    "measpercthr":      lambda high, mid, low:  f":MEASure:THReshold:PERCent {high},{mid},{low}",
+    "measpercthr?":     lambda:                 ":MEASure:THReshold:PERCent?",
 
     # advanced measure items exist (PSLOPE, NSLOPE, TSR etc in E11C/E11D)
 }

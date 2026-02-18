@@ -10,6 +10,9 @@ import math
 import numpy as np
 #from tests.testSDS import TestSDSCase
 #from tests.testSDS import suite    
+from devices.siglent.sds.SDS2000.commands_full import SCPI
+from devices.siglent.sds.SDS2000.params import PARAM
+from devices.BaseScope import BaseScope, SCPICommand,SCPIParam
 
 if __name__ == "__main__":
     #rc = ResourceManager(visa_library="@mock")
@@ -17,7 +20,32 @@ if __name__ == "__main__":
     #print(rm.list_resources())  
     #dummyUse()
     #performTransCurve()
-    print("Start testing.")
+    #myscipi:SCPICommand = SCPICommand(SCPI, PARAM) 
+    myparm = SCPIParam(PARAM)
+    myscpi = SCPICommand()
+
+    #testcomm = [ "TRIGGER","run"]
+    #testcomm = [ "CHANNEL","impedance"]
+    testcomm = [ "TRIGGER","EDGE","coupling"]
+    #str = SCPI[testcomm[0]][testcomm[1]]()
+    myparm.setIndex(testcomm)
+    commParam = myparm.list2CommandParams()
+    #paramin = "DC"
+    #paramin = "FIFTY"
+    #paramin = "LFREJect"
+    paramin = "LFReJect"
+    #paramin = "FIFTy"
+    checked = myparm.checkParam(paramin)
+    
+    #onderstaande werkt alleen als matrix vierkant is, anders een error.
+    #toAnumpy = np.asarray(testparam)
+    #listShape = toAnumpy.shape
+    #print(type(listShape))
+    #print(len(listShape))
+    #print(testparam[0][1])
+    #mylist = PARAM[testparam[0]][testparam[1]]
+    #print(mylist)
+    #print("Start testing.")
     #unittest.main()
     #runner = unittest.TextTestRunner()
     #runner.run(suite())

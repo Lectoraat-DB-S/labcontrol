@@ -114,12 +114,12 @@ def initLog():
                             datefmt='%Y-%m-%d %H:%M:%S')
 
 def dummyUse():
+    dmm:BaseDMM = BaseDMM.getDevice()
+    print(dmm.get_current())
     
     gen:BaseGenerator = BaseGenerator.getDevice()
     mygenChan: BaseGenChannel = gen.chan(chanNr=1)
     mygenChan.setAmp(1.2)
-    dmm:BaseDMM = BaseDMM.getDevice()
-    print(dmm.get_current())
     scope:BaseScope = BaseScope.getDevice()
     #vert:BaseVertical = scope.vertical
     #chan1: BaseChannel = vert.chan(1)

@@ -11,6 +11,251 @@ from devices.BaseConfig import LabcontrolConfig, BaseScopeConfig
 
 logger = logging.getLogger(__name__)
 
+class SCPIParam(object): 
+    """Deze klasse is bedoeld om het beheer van multidim list iets logischer te maken.
+    testparam1 = [["ONEMeg","1M", 1e6],["FIFTy",50]]
+    testparam2 = [["ONEMeg","1M", 1e6]]
+    testparam3 = ["ONEMeg","1M", 1e6]
+    Drie 'lists'. len(testparam1) = 2, len(testparam2) = 2, len(testparam3) = 1
+    testparam1 en testparam2 zijn twee geneste 'lists', elk elementen uit de hoofdlist is weer een list.
+    Benaderen van eerste element van de eerste sublist uit testparam1 kan op de volgende manier:
+    (testparam[0])[0], want het eerste element is wederom een list met 3 elementen. De haakjes zijn nodig, want
+    de notatie testparam[0][0] hoort meer bij arrays en niet bij list wat Python als een soort van 'tuple' ziet.   
+    
+    """
+    def __init__(self, mySCPIParamsDict):
+        self.paramsDict:dict = mySCPIParamsDict
+        self.paramDictIndex = None
+        self.paramList = None
+        self.nrOfListsAV = None
+
+    def setIndex(self, myParamIndex:list):
+        self.paramDictIndex = myParamIndex
+        
+    def dim(self, a):
+        if not type(a) == list:
+            return []
+        return [len(a)] + self.dim(a[0]) 
+    
+    def getNrOfListsInList(self):
+        """pre: self.paramList moet gezet zijn"""
+        nrOflists = self.dim(self.paramList)
+        if len(nrOflists) == 2:
+            return nrOflists[0]
+        
+    def findParam(self, anElement):
+        """Bedoeling: zoek de parameter op in een lijst. Hierbij geldt het volgende:
+        1. als de param in de lijst met opties zit, dan is het eerste element in de lijst altijd de correcte SCPI schrijfwijze
+        2. Soms is de lijst met opties een twee of meer dimensionaal geval, in dat geval is de index (ook zelf een lijst) de 
+        referentie naar een lijst waarvan het eerste element de juiste notitatie is.
+         """
+        nrOfAvLists = self.getNrOfListsInList()
+        for y in range(0, nrOfAvLists):
+            myParamList = self.paramList[y]
+            index = [i for i in range(0, len(myParamList)) if anElement == myParamList[i]]
+            if len(index)==1:
+                return y, index[0]
+            else:
+                return None, None
+        
+    def nrOfElements(self, a):
+        nrOflists = self.dim(a)
+        if type(nrOflists) == list:
+            #als dit een list is, dan is de list multidimensionaal.
+            #bijv 2, dan is de eerste is 2. 
+            print(len(nrOflists))
+            #stel len == 2, dan is nrOfList[0] het aantal rijen. en nrOfList[1] het aantal kolommen
+            # stel [1,3] dan is a een list met daarin één list waar dan 3 elementen in zetten.
+            nrElements = 0
+            for k in range(0, nrOflists[0]):
+                suba = a[k]
+                if type(suba) == list:
+                    nrElements=nrElements+len(a[k])
+                else:
+                    nrElements = nrElements +1
+                            
+            return nrElements
+        else:
+            return nrOflists
+
+    def list2CommandParams(self, dictIndex:list = None)->list:
+        """
+        scpiList is the index to a SCPI command and the index to corresponding param options  
+        For example, if one to set the impedance trigger unit when triggering on an edge, one will need the know the correct 
+        SCPI notation of the param. In the edge trigger impedance case, there a two options: 50 of 1e6 Ohms or "FIFTty" and "ONEMeg"
+        in correct SCPI notation. For a user to pass equivalent formats of expressing correct values, the PARAM sub-list for setting
+        the impedance is given bij de two dim list:  [["ONEMeg","1M", 1e6],["FIFTy",50]]
+
+        This function only returns this list, given the self.paramDictIndex member of the object has been set with a
+        SCIPI command reference.  
+        """
+        if dictIndex == None:
+            if self.paramDictIndex != None:
+                dictIndex = self.paramDictIndex
+            else:
+                self.paramDictIndex = dictIndex
+            
+        if self.paramsDict == None:
+            #TODO: is fout dus loggen.
+            return None
+        
+        #scpiList should have a dimension of 1 (one row) and variaring size. If dimension is other than one, return None
+        listShape = self.dim(dictIndex)
+        if len(listShape) == 1: #als listShape lengte 1 heeft, dan zit er in de list niet nog een list
+            listLength = len(dictIndex) #... en dan zijn dit het aantal elementen in de list.
+            myParamList:list = None
+            hulpvar:dict =self.paramsDict.get(dictIndex[0])
+            for i in range(1, listLength-1):
+                hulpvar = hulpvar.get(dictIndex[i])
+            myParamList = hulpvar.get(dictIndex[(listLength-1)])
+            return myParamList
+        elif len(listShape) == 2:
+            return None
+        else:
+            return None #TODO: this is an error, better to throw an exception or other way to inform the caller
+        
+     
+        
+    def checkParam(self, paramIn = None ): 
+        """check if the inputparameter paramIn is in range or not.
+        ParamIn: a single input parameter which need to be checked
+        SCPIStruct = a list of strings, needed to find a list of valid options for parameters of a complementay scpi command.
+        This method checks whether paramIn is a valid option of a scpi command referred to by SCPIStruct.
+        If paramIn is a valid option, this method will return the index where paramIn has been found in the list given by 
+        SCPIStruct. If paramIn was not te be found in that list, it will return None, stating the invalidity of parameter paramIn. 
+        
+        Het lastige hier is paramIn, wat verschillende soorten van parameters kan zijn:
+        1. een optie zou moeten zijn uit een lijstvan pure string opties. De opties (PARAM) staan in eendimensionale lijst.
+        2. idem, maar waar ook numerieke opties bij kunnen.
+        3. Als 1. en/of  2. maar dan gaat het om tweedimensionale lijsten. Dat betekent ook direct dat de return ook een lijst 
+        zou kunnen zijn, hoeft niet.
+        4. een getal dat in een bepaald bereik moet vallen.
+        5. één van bovenstaande opties, maar er zijn meerdere paramters (beter losse functie voor maken, checkParams())
+        Een voorbeeld: lijst met opties ziet er als dit: [["ONEMeg","1M", 1e6],["FIFTy",50]] 
+        """
+        #checkTheParam = lambda paramIn, paramOptions: -1 if paramIn not in paramOptions else [i for i in len(paramOptions) if paramIn in paramOptions(i)]
+        if self.paramsDict == None:
+            #TODO: is fout dus loggen.
+            return None
+        
+        paramList = None
+        paramList = self.list2CommandParams(self.paramDictIndex) # zoek de juiste parameter optielijst op.
+        if paramList==None:
+            return None #TODO: error code of exceptie?
+        
+        nrOfParamListinList = len(self.dim(paramList))
+        #if isinstance(paramIn, int):
+        #    #TODO: code de lijst doorzoekt op aanwezigheid van het (integer) getal en de juiste SCPI notatie retourneert.
+        #    pass
+        #elif isinstance(paramIn, float):
+            #TODO: voor float/double zelfde: doorzoeken op gehele getallen en wetenschappelijke notatie met x cijfers.
+        #    pass
+        #else:
+        match nrOfParamListinList:
+            case 0:
+                return None
+            case 1:
+                #paramin is een string, maar dat hoeft niet voor myParam accepteer juiste SCPI notatie, maar ook hoofd en kleine letters.
+                #kan onderstaande niet soort van automatisch genereerd worden op basis van lengte lijst?    
+                nrOfParamOptions = len(paramList)
+                myParamOptionsList = paramList
+               
+                for x in range(0, nrOfParamOptions):
+                    myParamOption = myParamOptionsList[x]
+                    if type(myParamOption)== type(paramIn) and  paramIn == myParamOption:
+                        return myParamOptionsList[0]
+                    if type(myParamOption) == str:
+                        if type(myParamOption)== type(paramIn) and paramIn.lower() == (myParamOption).lower():
+                            return myParamOptionsList[x]
+                        #TODO: is onderstaande wel nodig?
+                        if type(myParamOption)== type(paramIn) and paramIn.upper() == (myParamOption).upper():
+                            return myParamOptionsList[x]
+            case _:
+                nrOfParamOptions = len(paramList)
+                #blijkbaar zit er meer dan lists in deze list. Doorzoek nu elk van de sublijsten op een treffer.
+                for k in range(0, nrOfParamOptions):
+                    myParamOptionsList = paramList[k]
+                    myNrOfOptions = len(paramList[k])
+                    index = [i for i in range(0, myNrOfOptions) if type(myParamOptionsList[i])== type(paramIn) and paramIn == myParamOptionsList[i]]
+                    if len(index)==1:
+                        return myParamOptionsList[0]
+                    for x in range(0, myNrOfOptions):
+                        myParamOption = myParamOptionsList[x]
+                        if type(myParamOption) == str:
+                            if type(myParamOption)== type(paramIn) and paramIn.lower() == (myParamOption).lower():
+                                return myParamOptionsList[0]
+                            #TODO: is onderstaande wel nodig?
+                            if type(myParamOption)== type(paramIn) and paramIn.upper() == (myParamOption).upper():
+                                return myParamOptionsList[0]
+                        
+                return None        
+        return None #kan eigenlijk niet, maar voor de zekerheid een return None op deze plek.
+
+
+class SCPICommand(object):
+
+    def __init__(self):
+        self.SCPIcomms = None
+        self.SCPIParams = None
+
+    def setSCPI(self, scpi, param):
+        self.SCPIcomms = scpi
+        self.SCPIParams = param
+    
+    def list2lambdaFunc(self, scpiList):
+        """A nice function which returns a lambda function for creating the correct SCPI command"""
+        if self.SCPIcomms == None:
+            #TODO: is fout dus loggen.
+            return None
+        listLength = len(scpiList)
+        myfunc = None
+        #TODO: kan onderstaande niet gewoon in loop? Zou moeten kunnen?
+        match listLength:
+            case 1:
+                myfunc = self.SCPIcomms[scpiList[0]]
+            case 2:
+                myfunc = self.SCPIcomms[scpiList[0]][scpiList[1]]
+            case 3:
+                myfunc = self.SCPIcomms[scpiList[0]][scpiList[1]][scpiList[2]]
+            case _:
+                myfunc = None
+        return myfunc
+    
+    
+
+    def getSCPIStr(self, SCPIListIndex, paramIndex, checkedParam=None):
+        """"
+        Er zijn een aantal situaties bij het constructueren van het SCPI commanda
+        1. Een vast (statisch) SCPI commando. Voorbeeld: SCPI["MEASURE"]["meassimplesrc?"](). Dan geldt dat 
+        checkedParam == None en de paramIndex is ook nod
+            
+        2. Een instructie zoals SCPI["MEASURE"]["meassimplesrc"](newSrc), is niet statisch, omdat er een variabele in zit.
+        Vaak heeft deze variable een zeer beperkt aantal opties, namelijk één uit de lijst van geldige parameters. In dit geval is
+        de checkedParam == None, maar paramIndex bestaat, m.a.w. paramIndex != None
+        3. Instructie met 2 variabelen bestaan ook. Waarschijnlijk is dit de situatie dat zowel checkedParam als paramIndex 
+        een waarde hebben dus checkedParam != None en paramIndex != None. Maar hoe dit moet is TBD. nu return None."""
+        if self.SCPIParams == None or self.SCPIcomms == None:
+            #TODO: is fout dus loggen.
+            return None
+        
+        
+        if checkedParam == None and paramIndex == None:
+            # voor constructie van SCPI commando is alleen een set van indexen nodig
+            mylambdaFunc = self.list2lambdaFunc(SCPIListIndex)
+            return mylambdaFunc()
+        elif checkedParam == None and paramIndex != None:
+            # voor het te versturen SCPI commando heb je ook een juiste scpi param nodig
+            mylambdaFunc = self.list2lambdaFunc(SCPIListIndex) #Get the base lambda function for generating scpi
+            myValParams = self.list2Params(SCPIListIndex)   #Get the right list of parameter option
+            myParam = myValParams[paramIndex]               #Get the right parameter of the list, by using an index.
+            return mylambdaFunc(myParam)
+        elif checkedParam!= None and paramIndex!= None:
+            # er is een geldige input param die blijkbaar ingevuld moet worden in een scpi (fillin) parameter.
+            # T.o.v. van de vorgie case, geldt dat voor een geldige scpi param (of de juiste scpi param uit een range) ook 
+            # een (geldige) waarde nodig is
+            return None
+
+
 class BaseScope(object):
     """BaseScope: base class for oscilloscope implementation.
         Implementations for oscilloscopes have to inherit from this class:
@@ -103,6 +348,7 @@ class BaseScope(object):
         self.acquisition : BaseAcquisition = None
         self.utility = None
         self.host = None
+        self.scpiCommand = SCPICommand()
         
         self.nrOfHoriDivs = None# maximum number of divs horizontally
         self.nrOfVertDivs = None # maximum number of divs vertically 
