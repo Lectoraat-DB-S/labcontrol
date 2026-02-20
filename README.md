@@ -7,8 +7,27 @@ CLI tool voor snelle oscilloscope configuratie via YAML presets, met ingebouwde 
 ```bash
 cd labcontrol
 python3 -m venv venv
-source venv/bin/activate       # bash/zsh
-source venv/bin/activate.fish  # fish
+```
+
+Activeer de virtual environment:
+
+```bash
+# Linux / macOS (bash/zsh)
+source venv/bin/activate
+
+# Linux / macOS (fish)
+source venv/bin/activate.fish
+
+# Windows (PowerShell)
+venv\Scripts\Activate.ps1
+
+# Windows (CMD)
+venv\Scripts\activate.bat
+```
+
+Installeer het pakket:
+
+```bash
 pip install -e ".[dev]"
 ```
 
@@ -28,7 +47,7 @@ labcontrol show <preset>        # Details van een preset bekijken
 labcontrol load <preset>        # Preset laden naar scope
 ```
 
-Presets staan in `presets/examples/`. Eigen presets toevoegen als YAML bestanden.
+Presets staan in `presets/examples/`. Eigen presets toevoegen als YAML bestanden in `presets/user/`.
 
 ### Scope configuratie
 
@@ -44,6 +63,8 @@ labcontrol scope capture                        # Samenvatting in terminal (min/
 labcontrol scope capture --save snapshot.png    # Plot opslaan als PNG/SVG
 labcontrol scope capture --csv data.csv         # Data exporteren als CSV
 labcontrol scope capture --samples 2048         # Aantal samples instellen
+labcontrol scope capture --duration 0.05        # 50ms capture (past sample rate aan)
+labcontrol scope capture --interval 0.00005     # 50us interval (= 20 kS/s)
 labcontrol scope capture --title "RC Filter"    # Plot titel meegeven
 ```
 
@@ -51,6 +72,7 @@ Opties zijn combineerbaar:
 
 ```bash
 labcontrol scope capture --save plot.png --csv data.csv --samples 2048 --title "Meting 1"
+labcontrol scope capture --duration 0.1 --save capture.png --csv capture.csv
 ```
 
 ### OpenHantek

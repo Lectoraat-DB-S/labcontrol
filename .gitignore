@@ -16,8 +16,17 @@ presets/user/*
 
 # IDE
 .vscode/
+
+# Old root-level venv artifacts
 bin/
 lib/
 lib64
+include/
 pyvenv.cfg
 share/
+
+# Capture output
+*.csv
+*.png
+!docs/**/*.png
+!design/**/*.png
