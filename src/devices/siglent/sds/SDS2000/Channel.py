@@ -11,7 +11,7 @@ from devices.siglent.sds.util import TIMEBASE_HASHMAP
 import configparser
 from devices.siglent.sds.SDS2000.commands_full import SCPI
 
-from devices.BaseScope import BaseChannel, BaseWaveForm, BaseWaveFormPreample
+from devices.BaseScope import BaseChannel, BaseWaveForm, BaseWaveFormPreample, SCPICommand
 
 
 # SDSChannel: abstraction of a Siglent oscilloscope channel.
@@ -80,6 +80,13 @@ class SDS2kChannel(BaseChannel):
     def position(self):
         """Gets the (vertical) position of this channel with respect to the center graticule. Unit of position is divisions (divs)."""
         return self.query(SCPI["CHANNEL"]["offset?"](self.chanNr))
+
+    def setImpedance(self, newImp):
+        scpiCommIndex = ["TRIGGER","EDGE","impedance"]
+        myParamIndex=self.scpiComm.checkParam(scpiCommIndex)
+        myScpiStr = self.scpiComm.getSCPIStr(scpiCommIndex, myParamIndex)
+        self.write(SCPI["TRIGGER"]["EDGE"]["impedance"](myScpiStr))
+
 
 
     def position(self, pos):

@@ -126,12 +126,12 @@ trigger type : ["EDGE", "PULSE","SLOPe","INTerval","PATTern","WINDow","DROPout",
 EDGE = {
     "level":        [],
     "level?":       [],
-    "coupling":     [ "DC","AC","LFREJect","HFREJect"],
+    "coupling":     ["DC","AC","LFREJect","HFREJect"],
     "coupling?":    [],
     "events":       [],
     "events?":      [],
     
-    "hldtime":      [],
+    "hldtime":      ["OFF","EVENts","TIME"],
     "hldtime?":     [],
 
     "hldtype":      [ "OFF","EVENts","TIME"],
@@ -140,15 +140,15 @@ EDGE = {
     "hldstart":     ["LAST_TRIG","ACQ_START"],
     "hldstart?":    [],
     
-    "impedance":    [],
+    "impedance":    [["ONEMeg","1M", 1e6],["FIFTy",50]],
     "impedance?":   [],
     
-    "noise":        [],
+    "noise":        [["OFF", 0],["ON", 1]],
     "noise?":       [],
     
     "source":       [],
     "source?":      [],
-    "slope":        [],
+    "slope":        ["RISing","FALLing","ALTernate"],
     "slope?":       [],
 }
 
@@ -160,7 +160,7 @@ TRIGGER = {
                           "NTHEdge","DELay","SETup","hold","IIC","SPI","UART","LIN","CAN","FLEXray","CANFd",
                           "IIS","1553B","SENT"],
     
-    "mode":             [],
+    "mode":             [["SINGle",  0], ["NORMal", 1],["AUTO", 2], ["FTRIG",3]],
     "mode?":            [],
     # frequency trigger (added in E11D)
     "freq":             [],

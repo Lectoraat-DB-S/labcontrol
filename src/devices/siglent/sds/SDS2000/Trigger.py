@@ -28,14 +28,15 @@ class SDS2kTrigger(BaseTriggerUnit):
         else:
             return None      
     
-    def __init__(self, vertical: SDS2kVertical = None, dev: pyvisa.resources.MessageBasedResource=None, scpiComm = None):
+    def __init__(self, vertical: SDS2kVertical = None, dev: pyvisa.resources.MessageBasedResource=None, scpiComm: SCPICommand = None):
         self.vertical = vertical
         self.source = 1
         self.visaInstr = dev
         self.type = None
         self.holdType = None
         self.holdValue = None
-        self.scpiComm: SCPICommand = scpiComm # toegevoegd voor scpi command parsing en checking.
+        self.scpiComm: SCPICommand = scpiComm # toegevoegd voor scpi command parsing en checking. TODO: wat als None? 
+        #Dat is hier een error. Beste oplossingen 1. Exceptie 2. loggen. Waarschijnlijk beiden doen.
         #self.setSource(1)  #dit gaat niet goed.
         #self.auto()
 
@@ -45,6 +46,24 @@ class SDS2kTrigger(BaseTriggerUnit):
     def write(self, cmd: str):
         self.visaInstr.write(cmd)
 
+    def writeSCPICommand(self, spiDictIndex, newValue2Set):
+        """Function for creating and writing SCPI commands, based on two (multi-levelled) dictionaries.
+        Both dictionaries use the same method for indexing. One dict contains lambda functions of all available SCPI commands of a 
+        measurement device, the other dict contains all valid parameter options if needed, of every corresponding command of the SCPI
+        dict. Both dictionaries are set during the creation of a SCPICommand object, at the creation of the Python software object 
+        representing the physically connected device. This SCPICommand will be passed to objects which needs to write commands to a
+        device.
+        Parameters:
+            spiDictIndex: a list of which its elements define the correct index in the SCPI dict for getting the neede lambda function
+            or for getting the available options of parameters for a command out of the PARAM dictionaries
+            newValue2Set: the value a user want to set/write to the device for the given command at index spiDictIndex.
+         """
+        if self.scpiComm is None or spiDictIndex is None:
+            raise TypeError("Invalid call to writeSCPICommand: No SCPICommand object or dictIndex has been set!")
+        self.scpiComm.setIndex(spiDictIndex)
+        mySCPIComm = self.scpiComm.getSCPIStr(paramIn=newValue2Set) #getSCPIStr throws an exception if no command has been found.
+        self.write(mySCPIComm)
+        
     def getCurrSettings(self):
         #TODO:controle of correct is -> zeer waarschijnlijk niet.
         resp = self.query("TRSE?")
@@ -83,7 +102,7 @@ class SDS2kTrigger(BaseTriggerUnit):
                     theChan = val[chanNr]
         
         if theChan!=None:
-            self.write(SCPI["TRIGGER"]["source"]({theChan.name}))
+            self.write(SCPI["TRIGGER"]["source"](theChan.name))
         else:
             return
         
@@ -98,9 +117,8 @@ class SDS2kTrigger(BaseTriggerUnit):
     def setMode(self, newMode):
         """Sets the operating mode of this Trigger
         valid option for newMode: <mode>:= SINGle|NORMal|AUTO |FTRIG"""
-        scpiCommIndex = ["TRIGGER","mode"]
-        myParamIndex = self.scpiComm.checkParam(scpiCommIndex, newMode)
-        mySCPIComm = self.scpiComm.getSCPIStr(SCPIListIndex=scpiCommIndex, paramIndex=myParamIndex)
+        #scpiCommIndex = ["TRIGGER","mode"]
+        self.writeSCPICommand(["TRIGGER","mode"], newMode)
         """Oude code: laat ik nu even staan omdat bovenstaande eerst gechecked moet worden.
         singleModeOptions = ["SINGle", "SINGLE", "single", 0]
         normalModeOptons = ["NORMal","NORMAL","normal", 1]
@@ -117,9 +135,8 @@ class SDS2kTrigger(BaseTriggerUnit):
             mymode = "FTRIG"
         self.write(SCPI["TRIGGER"]["mode"](newMode))
         """
-        self.write(mySCPIComm)
-
-    def getMode(self, newNode):
+        
+    def getMode(self):
         """Gets the current set mode of this Trigger"""
         self.write(SCPI["TRIGGER"]["mode?"]())
 
@@ -139,9 +156,8 @@ class SDS2kTrigger(BaseTriggerUnit):
             hold|IIC|SPI|UART|LIN|CAN|FLEXray|CANFd|IIS|1553B|SENT
             QUERY SYNTAX
             :TRIGger:TYPE?"""
-        scpiCommIndex = ["TRIGGER","type"]
-        myParamIndex = self.scpiComm.checkParam(scpiCommIndex, newType)
-        mySCPIComm = self.scpiComm.getSCPIStr(SCPIListIndex=scpiCommIndex, paramIndex=myParamIndex)
+        self.writeSCPICommand(["TRIGGER","type"], newType)
+    
         """Oude code: kan weg als bovenstaande werkt
         trigTypeOptions= ["EDGE", "PULSE","SLOPe","INTerval","PATTern","WINDow","DROPout","VIDeo","QUALified",
                           "NTHEdge","DELay","SETup","hold","IIC","SPI","UART","LIN","CAN","FLEXray","CANFd",
@@ -149,7 +165,7 @@ class SDS2kTrigger(BaseTriggerUnit):
         if newType not in trigTypeOptions:
             return
         self.write(SCPI["TRIGGER"]["type"](newType))"""
-        self.write(mySCPIComm)
+
 
     def getType(self):
         return self.query(SCPI["TRIGGER"]["type?"]())    
@@ -174,10 +190,15 @@ class SDS2kTrigger(BaseTriggerUnit):
             remove any unwanted low frequency componen ts from a
             trigger waveform, such as power line frequencies, that can
             interfere with proper triggering."""
+        
+        """OUDE CODE: Na test, moet dit eruit!
         couplingOptions = [ "DC","AC","LFREJect","HFREJect"]
         if newCoupling not in couplingOptions:
             return
         self.write(SCPI["TRIGGER"]["EDGE"]["coupling"](newCoupling))
+        """
+        self.writeSCPICommand(["TRIGGER","EDGE","coupling"], newCoupling)
+        
     
     def getCoupling(self):
         return self.query(SCPI["TRIGGER"]["EDGE"]["coupling?"]())
@@ -212,7 +233,9 @@ class SDS2kTrigger(BaseTriggerUnit):
             oscilloscope counts before re arming the trigger circuitry
              TIME means the amount of time that the oscilloscope
             waits before re arming the trigger circuitry"""
-        self.write(SCPI["TRIGGER"]["EDGE"]["hldtype"](newType))
+        #self.write(SCPI["TRIGGER"]["EDGE"]["hldtype"](newType)) TODO: oude code, moet eruit als onderstaande goed werkt
+
+        self.writeSCPICommand(["TRIGGER","EDGE","hldtype"], newType)
             
     def getHOType(self):
         return self.query(SCPI["TRIGGER"]["EDGE"]["hldtype?"]())
@@ -250,11 +273,8 @@ class SDS2kTrigger(BaseTriggerUnit):
         else:
             myImp = "ONEMeg"
         """
-        scpiCommIndex = ["TRIGGER","EDGE","impedance"]
-        myParamIndex=self.scpiComm.checkParam(scpiCommIndex)
-        myScpiStr = self.scpiComm.getSCPIStr(scpiCommIndex, myParamIndex)
-        self.write(SCPI["TRIGGER"]["EDGE"]["impedance"](myScpiStr))
-
+        self.writeSCPICommand(["TRIGGER","EDGE","impedance"], theImp)
+        
     def getImpedance(self):
         return self.query(SCPI["TRIGGER"]["EDGE"]["impedance?"]())
     
@@ -272,13 +292,16 @@ class SDS2kTrigger(BaseTriggerUnit):
         """The command sets the state of the noise rejection.
         <state>:= OFF|ON}
         """
+        """OUDE CODE MOET WEL ALS ONDERAAN WERKT
         myNewState = "ON"
         if newState or newState == "ON" or newState == "on" or newState == 1:
             myNewState = "ON"
         else:
             myNewState = "OFF"
-        
+     
         self.write(SCPI["TRIGGER"]["EDGE"]["level"](myNewState))
+        """
+        self.writeSCPICommand(["TRIGGER","EDGE","level"], newState)
 
     def getNoiseRej(self):
         return self.query(SCPI["TRIGGER"]["EDGE"]["level?"]())
@@ -287,6 +310,7 @@ class SDS2kTrigger(BaseTriggerUnit):
         """The command sets the slope of the edge trigger.
         RISing|FALLing|ALTernate}
         """
+        """ DIT IS OUDE CODE, MOET ERUIT ALS ONDERSTAANDE WERKT
         myNewState = "ON"
         if newSlope == "RISing" or newSlope == "RISING" or newSlope == "rising":
             myNewState = "RISing"
@@ -296,10 +320,13 @@ class SDS2kTrigger(BaseTriggerUnit):
             myNewState = "ALTernate"
         
         self.write(SCPI["TRIGGER"]["EDGE"]["slope"](myNewState))
+        """
+        self.writeSCPICommand(["TRIGGER","EDGE","slope"], newSlope)
 
+##### SLOPE SUBSYSTEM COMMDANDS ######################
     def getSloped(self):
         return self.query(SCPI["TRIGGER"]["slope?"]())
-##### SLOPE SUBSYSTEM COMMDANDS ######################
+
     """:TRIGger:SLOPe Commands
         The :TRIGGER:SLOPe subsystem commands control the slope trigger parameters.
          :TRIGger:SLOPe:COUPling
@@ -600,81 +627,7 @@ class SDS2kTrigger(BaseTriggerUnit):
      :TRIGger:IIS:WSTHreshold"""
     """"""
 
-#### oude commando's, Moeten ernog uit ########
-    
-    def setSlope(self, slope):
-        theChan:SDS2kChannel = None
-        theChan = self.getCurrSrcChannel()
-        if theChan !=None:
 
-            if slope in SDS2kTrigger.TRIG_SLOPE_OPTIONS:
-                self.write(f"{theChan.name}: TRSL {slope}")
-        #TODO: decide if we log something if one is asking for an unkown slope or the source was somehow not set.
-
-    def setMode(self, mode):
-        if mode in SDS2kTrigger.TRIG_MODE_OPTIONS:
-            self.write(f"TRMD {mode}")
-        #TODO: decide if we log something if one is asking for an unkown mode
-
-    def setLevel(self, level):  
-        theChan:SDS2kChannel = self.getCurrSrcChannel()
-        if theChan != None:
-            self.write(f"{theChan.name}: TRLV {level}")
-        #TODO: decide if we log something if one is asking for an unkown mode
-
-    def Auto(self):
-        self.write("TRMD AUTO")
-
-    def normal(self):
-        self.write("TRMD NORM")
-
-    def single(self):
-        self.write("TRMD SINGLE")
-
-    
-    def getlevel(self, chanNr):
-        srcChan = self.getChannel(chanNr)
-        return self.query(f"{srcChan.name}:TRSL?")
-
-    def getSlope(self):
-        srcChan = self.getCurrSrcChannel()
-        return self.query(f"{srcChan}:TRSL?")
-    
-    def setPosSlope(self):
-        srcChan = self.getCurrSrcChannel()
-        self.write(f"{srcChan.name}: TRSL POS") 
-
-    def setNegSlope(self):
-        srcChan = self.getCurrSrcChannel()
-        self.write(f"{srcChan.name}: TRSL NEG") 
-
-    def setWindowSlope(self):
-        srcChan = self.getCurrSrcChannel()
-        self.write(f"{srcChan.name}: TRSL WINDOW") 
-    
-    def setCoupling(self, coup:str):
-        """Sets the coupling of this trigger for the current trigger source
-        Valid coupling settings are: {AC,DC,HFREJ,LFREJ}
-        """
-        if coup in SDS2kTrigger.TRIG_COUPLING_OPTIONS:
-            srcChan = self.getCurrSrcChannel()
-            if srcChan != None:
-                self.write(f"{srcChan.name}: TRCP {coup}")
-
-    def getFrequency(self):
-        response = self.query("CYMOMETER?")
-        splitted = response.split()
-        freq = splitted[1].removesuffix("Hz")
-        return float(freq)
-
-    def getholdOff(self): 
-        pass
-
-    def setDelay(self, delay):
-        self.write(f"TRDL {delay}")
-
-    def getDelay(self):
-        return self.query("TRDL?")
 
   
   

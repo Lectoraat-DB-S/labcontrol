@@ -88,11 +88,13 @@ class SiglentScope2k(SiglentScope):
             during the initing of BaseScope, this method calls super().__init__() 
         """
         super().__init__(visaResc, myconfig)
+        super().setSCPICommand(SCPI, PARAM)
         self.horizontal = SDS2kHorizontal(visaResc)
         self.vertical = SDS2kVertical(2, visaResc)
         self.trigger = SDS2kTrigger(self.vertical,visaResc,self.scpiCommand)
         self.display = SDSDisplay(visaResc)
         self.acquisition = SDS2kAcquisition(visaResc)
+        super().setSCPICommand(SCPI, PARAM)
         """8/2/2026: onderstaande regel toegevoegd in een poging om compacter te implementeren stap voor stap uit te proberen.
         
         BaseScope.py bevat SCPICommand class. Tijdens creëren van Basescope object wordt een (leeg) SCPICommand object aangemaakt.

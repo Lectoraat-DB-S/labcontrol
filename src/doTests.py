@@ -21,22 +21,24 @@ if __name__ == "__main__":
     #dummyUse()
     #performTransCurve()
     #myscipi:SCPICommand = SCPICommand(SCPI, PARAM) 
-    myparm = SCPIParam(PARAM)
-    myscpi = SCPICommand()
+    #myparm = SCPIParam(PARAM)
+    myscpi = SCPICommand(SCPI, PARAM)
 
     #testcomm = [ "TRIGGER","run"]
     #testcomm = [ "CHANNEL","impedance"]
     testcomm = [ "TRIGGER","EDGE","coupling"]
     #str = SCPI[testcomm[0]][testcomm[1]]()
-    myparm.setIndex(testcomm)
-    commParam = myparm.list2CommandParams()
+    #myparm.setIndex(testcomm)
+    myscpi.setIndex(testcomm)
+    #commParam = myparm.list2CommandParams()
     #paramin = "DC"
     #paramin = "FIFTY"
     #paramin = "LFREJect"
     paramin = "LFReJect"
     #paramin = "FIFTy"
-    checked = myparm.checkParam(paramin)
-    
+    #checked = myparm.checkParam(paramin)
+    myspiStr = myscpi.getSCPIStr(paramin)
+    print(myspiStr)
     #onderstaande werkt alleen als matrix vierkant is, anders een error.
     #toAnumpy = np.asarray(testparam)
     #listShape = toAnumpy.shape

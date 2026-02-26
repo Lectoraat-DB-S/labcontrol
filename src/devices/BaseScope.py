@@ -194,36 +194,30 @@ class SCPIParam(object):
 
 class SCPICommand(object):
 
-    def __init__(self):
-        self.SCPIcomms = None
-        self.SCPIParams = None
+    def __init__(self,  mySCPICommandDict: dict = None, myParamDict: dict = None):
+        self.scpiDict:dict = mySCPICommandDict
+        self.scpiDictIndex = None
+        self.scpiFunc = None
+        self.myParam = SCPIParam(myParamDict) # Toevoeging om te onderzoeken of het combineren van scpicomm en scpiparam voordeel heeft
 
-    def setSCPI(self, scpi, param):
-        self.SCPIcomms = scpi
-        self.SCPIParams = param
+    def setIndex(self, mySCPICommIndex:list):
+        self.scpiDictIndex = mySCPICommIndex
+        self.myParam.setIndex(mySCPICommIndex)
     
-    def list2lambdaFunc(self, scpiList):
+    def getLambdaFunc(self):
         """A nice function which returns a lambda function for creating the correct SCPI command"""
-        if self.SCPIcomms == None:
+        if self.scpiDict == None or self.scpiDictIndex == None:
             #TODO: is fout dus loggen.
             return None
-        listLength = len(scpiList)
+        listLength = len(self.scpiDictIndex)
         myfunc = None
-        #TODO: kan onderstaande niet gewoon in loop? Zou moeten kunnen?
-        match listLength:
-            case 1:
-                myfunc = self.SCPIcomms[scpiList[0]]
-            case 2:
-                myfunc = self.SCPIcomms[scpiList[0]][scpiList[1]]
-            case 3:
-                myfunc = self.SCPIcomms[scpiList[0]][scpiList[1]][scpiList[2]]
-            case _:
-                myfunc = None
+        hulpvar:dict =self.scpiDict.get(self.scpiDictIndex[0])
+        for i in range(1, listLength-1):
+            hulpvar = hulpvar.get(self.scpiDictIndex[i])
+            myfunc = hulpvar.get(self.scpiDictIndex[(listLength-1)])
         return myfunc
-    
-    
 
-    def getSCPIStr(self, SCPIListIndex, paramIndex, checkedParam=None):
+    def getSCPIStr(self, paramIn=None):
         """"
         Er zijn een aantal situaties bij het constructueren van het SCPI commanda
         1. Een vast (statisch) SCPI commando. Voorbeeld: SCPI["MEASURE"]["meassimplesrc?"](). Dan geldt dat 
@@ -234,28 +228,22 @@ class SCPICommand(object):
         de checkedParam == None, maar paramIndex bestaat, m.a.w. paramIndex != None
         3. Instructie met 2 variabelen bestaan ook. Waarschijnlijk is dit de situatie dat zowel checkedParam als paramIndex 
         een waarde hebben dus checkedParam != None en paramIndex != None. Maar hoe dit moet is TBD. nu return None."""
-        if self.SCPIParams == None or self.SCPIcomms == None:
+        if self.scpiDict == None or self.scpiDictIndex == None:
             #TODO: is fout dus loggen.
-            return None
+            raise TypeError(f"getSCPIStr: No dict or no dictIndex has been set! ")
         
         
-        if checkedParam == None and paramIndex == None:
-            # voor constructie van SCPI commando is alleen een set van indexen nodig
-            mylambdaFunc = self.list2lambdaFunc(SCPIListIndex)
+        # voor constructie van SCPI commando is alleen een set van indexen nodig
+        mylambdaFunc = self.getLambdaFunc()
+        if mylambdaFunc is None:
+            raise TypeError(f"No lambda function for index: {self.scpiDictIndex} ")
+        if paramIn is None:
             return mylambdaFunc()
-        elif checkedParam == None and paramIndex != None:
-            # voor het te versturen SCPI commando heb je ook een juiste scpi param nodig
-            mylambdaFunc = self.list2lambdaFunc(SCPIListIndex) #Get the base lambda function for generating scpi
-            myValParams = self.list2Params(SCPIListIndex)   #Get the right list of parameter option
-            myParam = myValParams[paramIndex]               #Get the right parameter of the list, by using an index.
-            return mylambdaFunc(myParam)
-        elif checkedParam!= None and paramIndex!= None:
-            # er is een geldige input param die blijkbaar ingevuld moet worden in een scpi (fillin) parameter.
-            # T.o.v. van de vorgie case, geldt dat voor een geldige scpi param (of de juiste scpi param uit een range) ook 
-            # een (geldige) waarde nodig is
-            return None
-
-
+        else:
+            checked = self.myParam.checkParam(paramIn)
+            return mylambdaFunc(checked)
+        
+        
 class BaseScope(object):
     """BaseScope: base class for oscilloscope implementation.
         Implementations for oscilloscopes have to inherit from this class:
@@ -348,7 +336,7 @@ class BaseScope(object):
         self.acquisition : BaseAcquisition = None
         self.utility = None
         self.host = None
-        self.scpiCommand = SCPICommand()
+        self.scpiCommand = None # this member is a ref to a dict() containing all commands known to a device.
         
         self.nrOfHoriDivs = None# maximum number of divs horizontally
         self.nrOfVertDivs = None # maximum number of divs vertically 
@@ -371,6 +359,9 @@ class BaseScope(object):
         Please don't alter this method or override it when deriving this class.
         """
         return self.visaInstr
+    
+    def setSCPICommand(self, SCPICommandDict: dict = None, PARAMDict: dict = None):
+        self.scpiCommand = SCPICommand(SCPICommandDict, PARAMDict)
     
     def acquire(self):
         pass
@@ -436,6 +427,10 @@ class BaseChannel(object):
 
     def readRaw(self, nrOfBytes): # nrOfBytes defaults to None, meaning the resource wide set value is set.
         return self.visaInstr.read_raw(size=nrOfBytes)
+
+    
+    def setImpedance(self, newImp):
+        pass
 
     def getWaveformPreamble(self):
         """Gets the description of the current waveform (i.e. preamble) of this channel. This BaseChannel implementation 

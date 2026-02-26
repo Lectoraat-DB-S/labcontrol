@@ -114,32 +114,34 @@ def initLog():
                             datefmt='%Y-%m-%d %H:%M:%S')
 
 def dummyUse():
-    dmm:BaseDMM = BaseDMM.getDevice()
-    print(dmm.get_current())
+    #dmm:BaseDMM = BaseDMM.getDevice()
+    #print(dmm.get_current())
     
-    gen:BaseGenerator = BaseGenerator.getDevice()
-    mygenChan: BaseGenChannel = gen.chan(chanNr=1)
-    mygenChan.setAmp(1.2)
+    #gen:BaseGenerator = BaseGenerator.getDevice()
+    #mygenChan: BaseGenChannel = gen.chan(chanNr=1)
+    #mygenChan.setAmp(1.2)
     scope:BaseScope = BaseScope.getDevice()
-    #vert:BaseVertical = scope.vertical
-    #chan1: BaseChannel = vert.chan(1)
-    #theWave: BaseWaveForm = chan1.capture()
+    vert:BaseVertical = scope.vertical
+    chan1: BaseChannel = vert.chan(1)
+    theWave: BaseWaveForm = chan1.capture()
    #plt.plot(theWave.scaledXdata, theWave.scaledYdata)
-    supply:BaseSupply = BaseSupply.getDevice()
+    #supply:BaseSupply = BaseSupply.getDevice()
     
-    chan1:BaseSupplyChannel=supply.chan(1)
-    chan1.setV(10)
-    chan1.enable(True)
-    print("")
+    #chan1:BaseSupplyChannel=supply.chan(1)
+    #chan1.setV(10)
+    #chan1.enable(True)
+    #print("")
     
     """
     if dmm != None:
         print("jippie een dmm")
         dmm.get_current()
+    """
     if scope != None:
         #gen: BaseGenerator = BaseGenerator.getDevice()
         scope.horizontal.setTimeDiv(0.00123) #1ms/div
         chan1 = scope.vertical.chan(1)
+        
         #chan1.capture()
         #trig = scope.trigger
         #trig.setSource(2)
@@ -147,7 +149,7 @@ def dummyUse():
         #chan1.setfreq(100000)
         #chan1.enableOutput(True)
         #
-    """
+
 #def testSiglent():
 #    sigTest.doTheTest()
 
