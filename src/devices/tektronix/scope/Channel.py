@@ -79,23 +79,6 @@ class TekChannel(BaseChannel):
         #CH<x>:PRObe { 1 | 10 | 20 | 50 | 100 | 500 | 1000 }
         if factor in TekChannel.VALIDPROBEVALS:
             self.write(f"{self.name}:PRObe {factor}")
-        return
-    
-    """
-    def probe(self):
-        resp = self.query(f"{self.name}:PRObe?")
-        resplist = resp.split()
-        respsize = len(resplist)
-        match respsize:
-            case 0:
-                return "ERROR"
-            case 1:
-                return int(resplist[0])
-            case 2:
-                return int(resplist[1])
-            case _:
-                return "ERROR"
-        return"""
        
     def setVertScale(self, scale):
         """Sets the vertical sensitivity of this channel. Has same functionality as 'setVoltsDiv'"""
@@ -184,7 +167,7 @@ class TekChannel(BaseChannel):
         3. It sets the binary data format for transerring data.
         4. It sets the number of bytes per data point to 1. 
         5. It will query the preamble of this channel.
-    ge    6. It will set the relevant data members of this channels waveformdata structure.
+        6. It will set the relevant data members of this channels waveformdata structure.
         7. It will query the scope for the data.
         8. When data has been transferred, this method will set the relevant datamembers of this channel's waveform
             struct. """
@@ -259,7 +242,7 @@ class TekChannel(BaseChannel):
         response = self.visaInstr.query("MEASUrement:IMMed?")
         return response
     
-    def immedMeasType(self):
+    def getImmedMeasType(self):
         """Queries the immediate type of measurement configured for this TDS oscilloscope"""
         return str(self.visaInstr.query(f"MEASUREMENT:IMMED:TYPE?"))
 
@@ -477,8 +460,45 @@ class TekChannel(BaseChannel):
         # """
         pass
 
+        ############################# FFT Function #########################################
+    def setFFT(self, myWindow:str = None):
+        winOptions = ["HAN", "FLAT", "RECT"]
+        if myWindow is not None and myWindow not in winOptions:
+            return #TODO: iets loggen.
 
-    
+        if myWindow == None:
+            myWindow = "HANNING"
+        
+        self.write(f'MATH:DEFINE "FFT ({self.name}, {myWindow})"')
+        self.write(f"SELect:MATH")
+
+    def toggleFFT(self):
+        response = self.query("SELECT:MATH?")
+        if response:
+            self.write(f"SELECT:{self.name}")
+        else:
+            self.setFFT() #TODO: toevoegen onthouden van een voorlaatste setting van FFT
+
+    def setFFTVpos(self, newPos):
+        self.write(f"MATH:FFT:VERtical:POSition {newPos}")
+
+    def setFFTWin(self, newWindow:str = None):
+        winOptions = ["HAN", "FLAT", "RECT"]
+        if newWindow == None:
+            return #TODO: log something
+        if newWindow is not None and newWindow not in winOptions:
+            return #TODO: iets loggen.
+        self.write(f'MATH:DEFINE "FFT ({self.name}, {newWindow})"')
+
+    def setFFTZoom(self, newZoom):
+        zoomOptions = [0.5, 1, 2, 5, 10]
+        if newZoom not in zoomOptions:
+            return
+        self.write(f"MATH:FFT:VERtical:SCAle {newZoom}")
+
+    def setFFTscale(self, newScale):
+        #TODO: log iets, want niet geïmplementeerd
+        return
 
     ##################################################################################################
     

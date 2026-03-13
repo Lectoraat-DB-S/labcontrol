@@ -280,7 +280,103 @@ class SDSChannel(BaseChannel):
         in order to resolve the name later.
         """
         return self.visaInstr.query(f"MEAD PHA,{self.name}-{input.name}")    
-  
+
+    ########## MATH FUNCTIONALITY ######################
+    """
+    According to the programming manual of SDS1000X-E series, docnr: RC01020-E01C
+    page: 45 
+
+    the oscilloscope has the following options for function setting:
+
+    <source1> + <source2>   Addition
+    <source1> - <source2>   Subtraction
+    <source1>*<source2>     Multiplication
+    <source1>/<source2>     Ratio
+    FFT(source x)           FFT
+    INTG(source x)          Integral
+    DIFF(source x)          Differentiator
+    SQRT(source x)          Square Root
+
+      
+    """
+    def setMath(self, funct2Set):
+        self.write("DEFine EQN'" + funct2Set + "'")
+
+    def setSQRT(self):
+        self.write(f"DEFine EQN'SQRT({self.name})'")
+
+    def setIntg(self):
+        self.write(f"DEFine EQN'INTG({self.name})'")
+    
+    def setDiff(self):
+        self.write(f"DEFine EQN'DIFF({self.name})'")
+        
+    def setFFT(self):
+        #FFT is a strange function of SDS1kX-E series. From the programming manual, one cannot determine
+        #if one is able to retrieve the FFT waveform data from the scope. Assuming correctness, setting
+        #the fft mode is useless.
+        #self.write(f"DEFine EQN,'FFT{self.name}'")
+        pass
+
+    
+    def toggleFFT(self):
+        """TODO 4-3-26: unable to turn off/exit math mode of a SDS1202X-E scope (SCPI) programmatically, 
+        after turning it on by the functions below. Turning off math is only possible by pushing the 
+        math button on the front panel, or by clicking the virtual button on the virtual panel of
+        Easyscope. Analysing the traffic between computer and scope during virtual button presses, 
+        reveals that the remote functionality has been implemented by (> 1600) vxi messages for every 
+        virtual button press.
+        The only way of turning off math mode remotely now, is by using the IEEE488 reset command: *RST,
+        which could be an usable way, only if the state of the scope has been saved fully prio to calling
+        Math mode, in order to put the scope in its original state directly after calling *RST.      
+        """
+        resp1 = self.query(f"{self.name}:TRAce?")
+        """Did a lot trial and error with the aid of ChatGPT. Nothing works: once MATH MODE has been
+         turned on, it cannot be turned off programmatically. The query below was a line of test to test the 
+         options which Chat had been given......."""
+        #resp2 = self.query(":CALCulate:MATH:OPERator?") 
+        if "ON" in resp1:
+            #TODO: save complete state of oscilloscope before enabling MATH MODE.
+            self.setFFT()
+        else:
+            #TODO: restore previously save state of oscilloscope
+            self.write("*RST")
+
+    def setFFTVpos(self, newPos):
+        fftName = None
+        match self.name:
+            case "C1":
+                fftName = "TA"
+            case "C2":
+                fftName = "TB"
+            case "C3":
+                fftName = "TC"
+            case "C4":
+                fftName = "TD"
+        
+        self.write(f"{fftName}: VPOS {newPos}DIV")
+
+    def setFFTWin(self, newWindow:str):
+       fftWinOption = ["RECT","BLAC","HANN","HAMM"]
+       if newWindow not in fftWinOption:
+           return
+       else:
+           self.write(f"FFTW {newWindow}")
+
+    def setFFTZoom(self, newZoom):
+        fftZoomOptions = [1,2,5,10]
+        if newZoom not in fftZoomOptions:
+            return
+        else:
+            self.write(f"FFTZ {newZoom}")
+
+    def setFFTscale(self, newScale):
+        fftScaleOptions = ["VRMS","DBVRMS"]
+        if newScale not in fftScaleOptions:
+            return
+        else:
+            self.write(f"FFTS {newScale}")
+
 
 class SDSWaveFormPreamble(BaseWaveFormPreample):
     """Class for holding the SIGLENT SDS1000 scope series preamble. Extends BaseWaveFormPreamble.
@@ -484,5 +580,4 @@ class SDSWaveForm(BaseWaveForm):
         self.scaledXdata = timeArr
         
         return timeArr
-
 

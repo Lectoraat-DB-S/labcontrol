@@ -12,9 +12,22 @@ import numpy as np
 #from tests.testSDS import suite    
 from devices.siglent.sds.SDS2000.commands_full import SCPI
 from devices.siglent.sds.SDS2000.params import PARAM
-from devices.BaseScope import BaseScope, SCPICommand,SCPIParam
+from devices.BaseScope import BaseScope, SCPICommand,SCPIParam, BaseMath, BaseFFT, BasePhaseEstimator, BaseChannel
+import logging
+from scipy.fft import fft
+import matplotlib.pyplot as plt
+
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(filename="myapp2.log", level=logging.INFO)
+
+
 
 if __name__ == "__main__":
+    
+    myChan:BaseChannel = BaseChannel(1, None)
+    myMath:BaseMath = BaseMath()
+    myFFTfunc = myMath.get("FFT", myChan)
     #rc = ResourceManager(visa_library="@mock")
     #rm=pyvisa.ResourceManager()
     #print(rm.list_resources())  
@@ -22,14 +35,14 @@ if __name__ == "__main__":
     #performTransCurve()
     #myscipi:SCPICommand = SCPICommand(SCPI, PARAM) 
     #myparm = SCPIParam(PARAM)
-    myscpi = SCPICommand(SCPI, PARAM)
+    #myscpi = SCPICommand(SCPI, PARAM)
 
     #testcomm = [ "TRIGGER","run"]
     #testcomm = [ "CHANNEL","impedance"]
     testcomm = [ "TRIGGER","EDGE","coupling"]
     #str = SCPI[testcomm[0]][testcomm[1]]()
     #myparm.setIndex(testcomm)
-    myscpi.setIndex(testcomm)
+   # myscpi.setIndex(testcomm)
     #commParam = myparm.list2CommandParams()
     #paramin = "DC"
     #paramin = "FIFTY"
@@ -37,8 +50,8 @@ if __name__ == "__main__":
     paramin = "LFReJect"
     #paramin = "FIFTy"
     #checked = myparm.checkParam(paramin)
-    myspiStr = myscpi.getSCPIStr(paramin)
-    print(myspiStr)
+    #myspiStr = myscpi.getSCPIStr(paramin)
+    #print(myspiStr)
     #onderstaande werkt alleen als matrix vierkant is, anders een error.
     #toAnumpy = np.asarray(testparam)
     #listShape = toAnumpy.shape

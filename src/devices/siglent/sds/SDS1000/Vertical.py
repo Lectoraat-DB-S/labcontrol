@@ -2,6 +2,7 @@ import pyvisa
 import numpy as np
 from devices.BaseScope import BaseVertical
 from devices.siglent.sds.SDS1000.Channel import SDSChannel
+from scipy import fft
 
 class SDSVertical(BaseVertical):
     """"Subclass of BaseVertical for Tektronix TDS1000 scope series. This class implements the baseclass."""
@@ -31,3 +32,13 @@ class SDSVertical(BaseVertical):
         except ValueError:
             print("Requested channel not available")
             return None     
+
+    def getFFT(self, x):
+        return fft(x)
+    
+    def getFFT(self, chan:SDSChannel):
+        if chan == None:
+            return None
+        else:
+            myYdata = chan.WF.scaledYdata
+            myXdata = chan.WF.scaledXdata

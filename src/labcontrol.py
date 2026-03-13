@@ -24,7 +24,7 @@ from devices.Korad.KoradSupply import Korad3305P
 #import tests.testSDG as sigTest
 #import tests.testSDS as scopeTest
 #import control.gutter as gootje
-from devices.BaseScope import BaseChannel, BaseScope, BaseHorizontal, BaseVertical, BaseWaveForm, BaseWaveFormPreample
+from devices.BaseScope import BaseChannel, BaseScope, BaseHorizontal, BaseVertical, BaseWaveForm, BaseWaveFormPreample, BaseFFT
 from devices.BaseGenerator import BaseGenerator, BaseGenChannel
 from devices.BaseDMM import BaseDMM
 #from devices.siglent.sds.SDS1000.SDS1k import  SiglentScope
@@ -47,6 +47,9 @@ from measurements.frequencyResponse import doACSweep
 import devices.BaseLabDeviceUtils as bu
 from devices.siglent.sds.util import SiglentIDN
 import usbtmc
+from scipy.fft import fft
+
+logger = logging.getLogger(__name__)
 
 def testEthConfig():
     bu.setEthernet()
@@ -68,23 +71,6 @@ def testUSBTMC():
     instr.write_raw("CURVE?")
     #dev.write(endpoint=0x6, data="*IDN?")
 
-def testTekTm():
-    with DeviceManager(verbose=True) as device_manager:
-        # Explicitly specify to use the system VISA backend, this is the default,
-        # **this code is not required** to use the system default.
-        device_manager.visa_library = SYSTEM_DEFAULT_VISA_BACKEND
-        # The above code can also be replaced by:
-        device_manager.visa_library = "@ivi"
-
-        # To use the PyVISA-py backend
-        #device_manager.visa_library = PYVISA_PY_BACKEND
-        # The above code can also be replaced by:
-        #device_manager.visa_library = "@py"
-        rm = pyvisa.ResourceManager()
-        urls = rm.list_resources()
-        print(urls)
-        myscope = device_manager.add_scope("USB::0x0699::0x03A1::C012743::INSTR")
-        print(myscope)
 
 def testTekVisa():
     scope: BaseScope = BaseScope.getDevice()
@@ -116,17 +102,23 @@ def initLog():
 def dummyUse():
     #dmm:BaseDMM = BaseDMM.getDevice()
     #print(dmm.get_current())
-    
     #gen:BaseGenerator = BaseGenerator.getDevice()
     #mygenChan: BaseGenChannel = gen.chan(chanNr=1)
     #mygenChan.setAmp(1.2)
     scope:BaseScope = BaseScope.getDevice()
     vert:BaseVertical = scope.vertical
+    myfft:BaseFFT = vert.getMath("FFT")
     chan1: BaseChannel = vert.chan(1)
+    myfft.setChan(chan1)
     theWave: BaseWaveForm = chan1.capture()
-   #plt.plot(theWave.scaledXdata, theWave.scaledYdata)
-    #supply:BaseSupply = BaseSupply.getDevice()
-    
+    myfft.get()
+    plt.figure(1)
+    plt.plot(myfft.myFreqAxis,abs(myfft.myFFT))
+  
+    plt.figure(2)
+    plt.plot(theWave.scaledXdata, theWave.scaledYdata)
+    fig = plt.figure(3)
+    ax = fig.get_axes()
     #chan1:BaseSupplyChannel=supply.chan(1)
     #chan1.setV(10)
     #chan1.enable(True)
@@ -137,11 +129,7 @@ def dummyUse():
         print("jippie een dmm")
         dmm.get_current()
     """
-    if scope != None:
-        #gen: BaseGenerator = BaseGenerator.getDevice()
-        scope.horizontal.setTimeDiv(0.00123) #1ms/div
-        chan1 = scope.vertical.chan(1)
-        
+   
         #chan1.capture()
         #trig = scope.trigger
         #trig.setSource(2)
@@ -175,12 +163,16 @@ if __name__ == "__main__":
     rm = pyvisa.ResourceManager()
     urls = rm.list_resources()
     print(urls)
+    #logging.basicConfig(filename='myapp.log', level=logging.INFO)
+    #logger.info('Started')
     #bu.testlmfit()
     #bf.testlmfit()
     #a  = input()
     #bu.setEthernet()
     #maakIRLEDcurve()
+    #input("druk toets om te starten")
     dummyUse()
+    #input("druk toets om te stoppen .....")
     
     #ledcurve.testDiodePlotCurve()
     #doACSweep()
