@@ -16,9 +16,7 @@ class SDSVertical(BaseVertical):
             return None   
 
     def __init__(self, nrOfChan, dev:pyvisa.resources.MessageBasedResource):
-        super().__init__()
-        self.nrOfChan = nrOfChan
-        self.channels = list()
+        super().__init__(nrOfChan,dev)
         
         for i in range(1, nrOfChan+1):
             self.channels.append({i:SDSChannel(i, dev)})
@@ -33,12 +31,4 @@ class SDSVertical(BaseVertical):
             print("Requested channel not available")
             return None     
 
-    def getFFT(self, x):
-        return fft(x)
     
-    def getFFT(self, chan:SDSChannel):
-        if chan == None:
-            return None
-        else:
-            myYdata = chan.WF.scaledYdata
-            myXdata = chan.WF.scaledXdata

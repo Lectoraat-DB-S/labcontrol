@@ -9,7 +9,8 @@ from tests.testTDS import suite
 import math
 import numpy as np
 #from tests.testSDS import TestSDSCase
-#from tests.testSDS import suite    
+#from tests.testSDS import suite
+from devices.siglent.sds.SDS1000.Channel import SDSChannel    
 from devices.siglent.sds.SDS2000.commands_full import SCPI
 from devices.siglent.sds.SDS2000.params import PARAM
 from devices.BaseScope import BaseScope, SCPICommand,SCPIParam, BaseMath, BaseFFT, BasePhaseEstimator, BaseChannel
@@ -25,7 +26,7 @@ logging.basicConfig(filename="myapp2.log", level=logging.INFO)
 
 if __name__ == "__main__":
     
-    myChan:BaseChannel = BaseChannel(1, None)
+    myChan:BaseChannel = SDSChannel(1, None)
     myMath:BaseMath = BaseMath()
     myFFTfunc = myMath.get("FFT", myChan)
     #rc = ResourceManager(visa_library="@mock")

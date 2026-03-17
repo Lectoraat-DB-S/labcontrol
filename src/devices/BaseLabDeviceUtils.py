@@ -176,7 +176,7 @@ def findAllZC(input: BaseWaveForm):
 
     ysamp = np.array(input.scaledYdata)
     myZCArray = findAllZCinSampArray(ysamp)
-    # to find zero crossings, one need the offset
+    
     return myZCArray
 
 def fitSineParam2Data(waveformSamples, freq_in, fitmethod="basinhopping"):

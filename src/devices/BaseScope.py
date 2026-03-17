@@ -1265,8 +1265,20 @@ class BaseFunction(object):
             self.functionType = theFunction
 
     def setOperands(self, oper1 =  None, oper2 = None):
-        pass
+        if oper1 == None and oper2 == None:
+            logger.log("Trying to set operands of functions with NoneType!")
             
+class BaseZCD(BaseFunction):
+    def __init__(self, theFunction = None):
+        super().__init__(theFunction)   
+
+    def find(self, inputSamp: np.array):
+        """"""     
+        # to find zero crossings, one need the offset    
+        offset = np.mean(inputSamp)
+        positive = inputSamp > offset
+        idx = np.where(np.bitwise_xor(positive[1:], positive[:-1]))[0]
+        return idx
 
 
 class BaseFFT(BaseFunction):
@@ -1275,7 +1287,6 @@ class BaseFFT(BaseFunction):
         param: chan: the (visible) channel of whichthe FFT must be calculated"""
         super().__init__(BaseFunction.FFT)
         self.scopeChan: BaseChannel = chan
-        self.freqAxis = None
         self._FFT  = None
         self._freqAxis = None
 
@@ -1283,6 +1294,10 @@ class BaseFFT(BaseFunction):
     def freqAxis(self):
         if self.scopeChan == None or self.scopeChan.WF == None:
             logger.log(logging.ERROR, "Trying to create FFT frequency array of NoneType, return now... ")
+            return
+        if self.scopeChan.WF.xincr == None:
+            self.scopeChan.capture()
+       
         myfx = np.arange(self.scopeChan.WF.nrOfSamples)
         self._freqAxis = myfx*(1.0/(self.scopeChan.WF.xincr*self.scopeChan.WF.nrOfSamples))
         return self._freqAxis
@@ -1291,33 +1306,66 @@ class BaseFFT(BaseFunction):
     def FFT(self):
         if self.scopeChan == None or self.scopeChan.WF == None:
             logger.log(logging.INFO, "Trying to take the FFT of NoneType, return now... ")
+            return
+        if self.scopeChan.WF.xincr == None:
+            self.scopeChan.capture()
         self._FFT = fft(self.scopeChan.WF.scaledYdata)
         return self._FFT
     
-    def setOperands(self, oper1 =  None, oper2 = None):
-        if type(oper1) is BaseChannel :
-            self.setChan(oper1)
+    def setOperands(self, oper1:BaseChannel =  None, oper2:BaseChannel = None):
+        super().setOperands(oper1,oper2)
+        if isinstance(oper1, BaseChannel):
+            self.scopeChan = oper1
 
     def setChan(self, newChan: BaseChannel):
         self.scopeChan = newChan
+
+    def get(self):
+        myftt= self.FFT
+        return (self.freqAxis,self.FFT)
     
-    def plot(self, captureFirst: bool = False, linear: bool = False):
-        """Convenient function for showing a Matplotlib of this fft"""
+    def plot(self, captureFirst: bool = False, linear: bool = True, aliasing:bool = False, autoRange: bool = True):
+        """Convenient function for showing a Matplotlib of this fft.
+        This function is under construction, it doesn't take the number of samples used for FFT calclulation into
+        account. See: https://dsp.stackexchange.com/questions/78188/units-of-a-fast-fourier-transform-fft-and-spectrogram
+        Parameters:
+            captureFirst: make capture first (True) or not. Default = False.
+            linear      : True for lineair axis, False to dB plot. Default = True
+            aliasing    : Plotting a complete FFT bin (True), of half of it (False), to prevent aliasing. Default = False
+            autoRange   : Automatic scaling of FFT, based on a power threshold."""
+
+        #TODO: implement autoRange
         if self.scopeChan == None or self.scopeChan.WF == None:
             logger.log(logging.ERROR, "Trying to plot FFT without source channel set or data")
             return
         if captureFirst:
             self.scopeChan.capture()
         myfig = plt.figure()
-        if linear:
-            plt.plot(self.freqAxis, np.abs(self.FFT))
+        if not aliasing:
+            currFreqAxisSize = int(len(self.freqAxis)/2)
+            plotFreqAxis = self.freqAxis[0:currFreqAxisSize-1]
+            plotFFTAxis = self.FFT[0:currFreqAxisSize-1]
         else:
-            plt.plot(np.log10(self.freqAxis), np.log10(np.abs(self.FFT)))
+            plotFreqAxis = self.freqAxis
+            plotFFTAxis = self.FFT
+        if autoRange:
+            maxFFT = np.max(abs(plotFFTAxis))
+            threshold = maxFFT*0.707
+            autoRangeFFTBoolIndex = abs(plotFFTAxis)>threshold
+            myindex = np.where(autoRangeFFTBoolIndex == True)
+            myMaxindex = int(myindex[0])*2
+            plotFFTAxis = plotFFTAxis[0:myMaxindex-1]
+            plotFreqAxis = plotFreqAxis[0:myMaxindex-1]
+        if linear:
+            plt.plot(plotFreqAxis, np.abs(plotFFTAxis))
+        else:
+            plt.plot(np.log10(plotFreqAxis), 20*np.log10(np.abs(plotFFTAxis)))
         plt.title(f"FFT of Channel {self.scopeChan.name}")
         axs = myfig.get_axes()
         axs[0].set_xlabel("frequency [Hz]")
         axs[0].set_ylabel("|X(f)|")
         axs[0].grid(True)
+        #plt.show()
 
         return myfig
     
@@ -1495,20 +1543,11 @@ class BaseSineFitter(object):
 
 
     def makeFit(self):
-        #self._model = lmfit.Model(self.sine_function, independent_vars=['x'], param_names=['amp', 'freq', 'phase', 'offset'])
+        
         self._model = lmfit.Model(self.sine_function)
-        #guess = self.guess_sine_params(self.xdat, self.ydat)
-        #guess = self.guess_sine_params_irregular(self.xdat, self.ydat)
         self.makeParam()
-        #self.params  = self._model.make_params(**guess)
-        #self.params['freq'].set(vary=False)
-        #self.params['amp'].set(vary=False)
-        #self.params.create_uvars()
         self._result = self._model.fit(data=self.ydat, params=self.params, x=self.xdat, 
                                        method=self.method)
-        #print(self._result.fit_report())
-        #for name, par in self._result.params.items():
-        #    print(name, par.value, par.stderr)
         self._summary = self._result.summary()
         self._bestval = self._summary['best_values']
         self.yfit = self.sine_function(self.xdat, self.bestAmp, self.bestFreq, self.bestPhase, 
@@ -1520,7 +1559,7 @@ class BaseSineFitter(object):
         print(f"Value of fitted phase: {self.phase}")
         print(f"Value of fitted offset: {self.offset}")
 
-    #TODO: statistische gegevens eruit halen: hoe goed is de fit
+    #TODO: statistische gegevens eruit halen: hoe goed is de fit?
     #TODO: beter om het lmfit ingebouwde lmfit sinus model te pakken?
     #TODO: een plot functie om te zin of de fit gelukt is. En op basis daarvan een functie om melding te krijgen als 
     # fit onder en bepaalde grens komt.
@@ -1531,6 +1570,7 @@ class BasePhaseEstimator(BaseFunction):
     
     def __init__(self, inputWF:BaseWaveForm=None, outputWF:BaseWaveForm=None, debugPrint=False):
         super().__init__(BaseFunction.PHASEFIT)
+        #TODO: create input- and outputfitter setters and getters for changing the fitting waveform function.
         self._inputFitter = BaseSineFitter()
         self._outputFitter = BaseSineFitter()
         
@@ -1558,6 +1598,15 @@ class BasePhaseEstimator(BaseFunction):
         
         self._debug = debugPrint
         self._phaseDiff = None
+
+    def setOperands(self, oper1:BaseWaveForm=None, oper2:BaseWaveForm=None):
+        super().setOperands(oper1, oper2)
+
+        if isinstance(oper1,BaseWaveForm) and isinstance(oper2,BaseWaveForm): 
+            self.setWFs(oper1, oper2)
+        else:
+            logger.log(logging.CRITICAL, "Try to set estimater without setting correct operandtypes!")
+            return
 
 
     @property
@@ -1632,6 +1681,9 @@ class BasePhaseEstimator(BaseFunction):
 
         return (self._phaseDiff*180.0)/math.pi
 
+
+    
+
     def setWFs(self, inWF: BaseWaveForm = None, outWF: BaseWaveForm = None):
         if inWF == None or outWF == None:
             logger.log(logging.WARNING, "Trying to set (one of) estimator WF with a None type")
@@ -1647,14 +1699,9 @@ class BasePhaseEstimator(BaseFunction):
     #def estimate(self, wfIn: BaseWaveForm, wfOut: BaseWaveForm):
     def estimate(self):
         """Estimates the phase difference between input and output, assuming fitparams for both signals have been set."""
-        #self._inputFitter.makeParam()
-        #self._outputFitter.makeParam()
-        #self.inputFitter.setData(xdata=wfIn.scaledXdata, ydata=wfIn.scaledYdata)
-
-        #self.outputFitter.setData(xdata=wfOut.scaledXdata, ydata=wfOut.scaledYdata)
+        
         self._inputFitter.makeFit()
         self._outputFitter.makeFit()
-        #self.ph0aseDiff = self._outputFitter.bestPhase - self._inputFitter.bestPhase
         #TODO: check chi squared value or other indication of fit.
         if self._debug:
             # y = A sin (2 pi f t + phi),  waar is een zerocrossing?
@@ -1703,13 +1750,9 @@ class BasePhaseEstimator(BaseFunction):
         #nfit = self.inputFitter.yfit
         infit = self.inputFitter.yfit
         index = np.where(infit >= 0)
-        ## outfit = self.outputFitter.yfit
-       # tzc_in = outfit[outfit==0]
+        
         myindex = index[0][0]-1
-        #tzc_in = self.inputFitter.xdat[myindex]
-        #TODO: onderstaande nog niet correct.
-        #plt.figure(1)
-        fig = plt.figure(1)
+        fig = plt.figure()
         ax = plt.gca()
         # first plot original input data
         ax.plot(self._inputFitter.xdat, self._inputFitter.ydat, self._inputFitter.xdat, self._outputFitter.ydat,
@@ -1838,11 +1881,14 @@ class BaseVertical(object):
     def addMath(self, newFunction: BaseFunction):
         self.math.add(newFunction)
     
-    def getMath(self):
-        pass
-
-    def getMath(self, functionStr:str):
-        pass
+    
+    def getMath(self, functionStr:str = None, oper1 = None, oper2 = None):
+        if functionStr == None:
+            return self.math
+        elif oper1 != None and oper2 == None:
+            return self.math.get("FFT",oper1)
+        else:
+            return self.math.get(functionStr, oper1, oper2)
 
     #def chan(self, chanNr:int):          
     #def chan(self, chanNr)->BaseChannel: 
