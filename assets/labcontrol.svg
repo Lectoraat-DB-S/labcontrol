@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="wave" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="128" height="128" rx="20" fill="url(#bg)"/>
+  <!-- Grid lines -->
+  <g stroke="#334155" stroke-width="0.5" opacity="0.5">
+    <line x1="16" y1="32" x2="112" y2="32"/>
+    <line x1="16" y1="48" x2="112" y2="48"/>
+    <line x1="16" y1="64" x2="112" y2="64"/>
+    <line x1="16" y1="80" x2="112" y2="80"/>
+    <line x1="16" y1="96" x2="112" y2="96"/>
+    <line x1="32" y1="20" x2="32" y2="108"/>
+    <line x1="48" y1="20" x2="48" y2="108"/>
+    <line x1="64" y1="20" x2="64" y2="108"/>
+    <line x1="80" y1="20" x2="80" y2="108"/>
+    <line x1="96" y1="20" x2="96" y2="108"/>
+  </g>
+  <!-- Scope border -->
+  <rect x="14" y="18" width="100" height="92" rx="4" fill="none" stroke="#475569" stroke-width="1.5"/>
+  <!-- Waveform CH1 - cyan -->
+  <polyline fill="none" stroke="url(#wave)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+    points="18,64 28,64 32,64 36,40 40,88 44,40 48,88 52,40 56,88 60,40 64,88 68,40 72,88 76,40 80,88 84,40 88,64 92,64 110,64"/>
+  <!-- Waveform CH2 - yellow/green -->
+  <polyline fill="none" stroke="#a3e635" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"
+    points="18,64 30,64 38,52 46,76 54,52 62,76 70,52 78,76 86,52 94,76 100,64 110,64"/>
+  <!-- Terminal cursor -->
+  <text x="20" y="114" font-family="monospace" font-size="11" fill="#22d3ee" opacity="0.8">&gt;_</text>
+</svg>
