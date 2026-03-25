@@ -2,9 +2,9 @@ import pyvisa as visa
 import numpy as np
 from prefixed import Float   
 
-from devices.BaseScope import BaseHorizontal
+from devices.BaseScope.BaseHorizontal import Horizontal
 
-class SDSHorizontal(BaseHorizontal):
+class SDSHorizontal(Horizontal):
     """Subclass of BaseHorizontal. Implements horizontal functionalities of the Siglen SDS1202X-E oscilloscope. Horizontal functions are
     querying en setting the timebase, horizontal axis position and zoom factor."""
     

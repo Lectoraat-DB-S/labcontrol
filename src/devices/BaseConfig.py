@@ -146,7 +146,7 @@ class BaseScopeConfig(BaseDeviceConfig):
     @classmethod
     def getConfigClass(cls, devName, baseType, derivedType):
         """ Tries to get (instantiate) the config object"""
-        if baseType == "BaseScope":
+        if baseType == "Scope":
             return (cls, devName)
         else:
             return (None, None)

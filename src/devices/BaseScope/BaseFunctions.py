@@ -1,24 +1,145 @@
-import numpy as np
-import lmfit
-from lmfit.model import ModelResult
+import logging
 import math
-import matplotlib.pyplot as plt
-from devices.BaseScope import BaseWaveForm
-from astropy.timeseries import LombScargle  # zit vaak in astropy
-
+import lmfit
 import numpy as np
 
+import matplotlib.pyplot as plt
+from scipy.fft import fft
+from devices.BaseScope.BaseChannel import Channel, WaveForm
+
+logger = logging.getLogger(__name__)
+########## BASEFUNCTION ###########
+class ScopeFunction(object):
+    ADD = {0: "+"}
+    SUB = {1: "-"}
+    MUL = {2: "*"}
+    FFT:dict = {3: "FFT"}
+    PHASEFIT = {4: "PHASE"}
+    VALIDFUNCTONS:list = [ADD, SUB, MUL, FFT, PHASEFIT]
+    def __init__(self, theFunction:dict = None):
+        self.functionType = None
+        if type(theFunction) != dict or len(theFunction) != 1:
+            return
+        
+        index = [i for i in range(0, len(ScopeFunction.VALIDFUNCTONS)) if (list(theFunction.values()))[0] in ScopeFunction.VALIDFUNCTONS[i].values()]
+        if len(index)>0:
+            self.functionType = theFunction
+
+    def setOperands(self, oper1 =  None, oper2 = None):
+        if oper1 == None and oper2 == None:
+            logger.log("Trying to set operands of functions with NoneType!")
+            
+class ZeroCrossDetect(ScopeFunction):
+    def __init__(self, theFunction = None):
+        super().__init__(theFunction)   
+
+    def find(self, inputSamp: np.array):
+        """"""     
+        # to find zero crossings, one need the offset    
+        offset = np.mean(inputSamp)
+        positive = inputSamp > offset
+        idx = np.where(np.bitwise_xor(positive[1:], positive[:-1]))[0]
+        return idx
 
 
+class FFT(ScopeFunction):
+    def __init__(self, chan: Channel = None):
+        """Inits the BaseFFT.
+        param: chan: the (visible) channel of whichthe FFT must be calculated"""
+        super().__init__(ScopeFunction.FFT)
+        self.scopeChan: Channel = chan
+        self._FFT  = None
+        self._freqAxis = None
 
-VALID_METHODS = ['least_squares', 'differential_evolution', 'brute',
-                 'basinhopping', 'ampgo', 'nelder', 'lbfgsb', 'powell', 'cg',
-                 'newton', 'cobyla', 'bfgs', 'tnc', 'trust-ncg', 'trust-exact',
-                 'trust-krylov', 'trust-constr', 'dogleg', 'slsqp', 'emcee',
-                 'shgo', 'dual_annealing']
+    @property
+    def freqAxis(self):
+        if self.scopeChan == None or self.scopeChan.WF == None:
+            logger.log(logging.ERROR, "Trying to create FFT frequency array of NoneType, return now... ")
+            return
+        if self.scopeChan.WF.xincr == None:
+            self.scopeChan.capture()
+       
+        myfx = np.arange(self.scopeChan.WF.nrOfSamples)
+        self._freqAxis = myfx*(1.0/(self.scopeChan.WF.xincr*self.scopeChan.WF.nrOfSamples))
+        return self._freqAxis
+
+    @property
+    def FFT(self):
+        if self.scopeChan == None or self.scopeChan.WF == None:
+            logger.log(logging.INFO, "Trying to take the FFT of NoneType, return now... ")
+            return
+        if self.scopeChan.WF.xincr == None:
+            self.scopeChan.capture()
+        self._FFT = fft(self.scopeChan.WF.scaledYdata)
+        return self._FFT
+    
+    def setOperands(self, oper1:Channel =  None, oper2:Channel = None):
+        super().setOperands(oper1,oper2)
+        if isinstance(oper1, Channel):
+            self.scopeChan = oper1
+
+    def setChan(self, newChan: Channel):
+        self.scopeChan = newChan
+
+    def get(self):
+        myftt= self.FFT
+        return (self.freqAxis,self.FFT)
+    
+    def plot(self, captureFirst: bool = False, linear: bool = True, aliasing:bool = False, autoRange: bool = True):
+        """Convenient function for showing a Matplotlib of this fft.
+        This function is under construction, it doesn't take the number of samples used for FFT calclulation into
+        account. See: https://dsp.stackexchange.com/questions/78188/units-of-a-fast-fourier-transform-fft-and-spectrogram
+        Parameters:
+            captureFirst: make capture first (True) or not. Default = False.
+            linear      : True for lineair axis, False to dB plot. Default = True
+            aliasing    : Plotting a complete FFT bin (True), of half of it (False), to prevent aliasing. Default = False
+            autoRange   : Automatic scaling of FFT, based on a power threshold."""
+
+        #TODO: implement autoRange
+        if self.scopeChan == None or self.scopeChan.WF == None:
+            logger.log(logging.ERROR, "Trying to plot FFT without source channel set or data")
+            return
+        if captureFirst:
+            self.scopeChan.capture()
+        myfig = plt.figure()
+        if not aliasing:
+            currFreqAxisSize = int(len(self.freqAxis)/2)
+            plotFreqAxis = self.freqAxis[0:currFreqAxisSize-1]
+            plotFFTAxis = self.FFT[0:currFreqAxisSize-1]
+        else:
+            plotFreqAxis = self.freqAxis
+            plotFFTAxis = self.FFT
+        if autoRange:
+            maxFFT = np.max(abs(plotFFTAxis))
+            threshold = maxFFT*0.707
+            autoRangeFFTBoolIndex = abs(plotFFTAxis)>threshold
+            myindex = np.where(autoRangeFFTBoolIndex == True)
+            myMaxindex = int(myindex[0])*2
+            plotFFTAxis = plotFFTAxis[0:myMaxindex-1]
+            plotFreqAxis = plotFreqAxis[0:myMaxindex-1]
+        if linear:
+            plt.plot(plotFreqAxis, np.abs(plotFFTAxis))
+        else:
+            plt.plot(np.log10(plotFreqAxis), 20*np.log10(np.abs(plotFFTAxis)))
+        plt.title(f"FFT of Channel {self.scopeChan.name}")
+        axs = myfig.get_axes()
+        axs[0].set_xlabel("frequency [Hz]")
+        axs[0].set_ylabel("|X(f)|")
+        axs[0].grid(True)
+        #plt.show()
+
+        return myfig
+    
+
+class SineFitter(object):
+
+    VALID_METHODS = ['least_squares', 'differential_evolution', 'brute',
+                    'basinhopping', 'ampgo', 'nelder', 'lbfgsb', 'powell', 'cg',
+                    'newton', 'cobyla', 'bfgs', 'tnc', 'trust-ncg', 'trust-exact',
+                    'trust-krylov', 'trust-constr', 'dogleg', 'slsqp', 'emcee',
+                    'shgo', 'dual_annealing']
 
 
-class FitSine():
     """A class for fitting a model of a sine,"""
     def __init__(self, amp=1, freq=1000, phase=0, offset=0):
         self._amp = amp
@@ -31,7 +152,7 @@ class FitSine():
         self._method = "basinhopping"
         self._summary = None
         self._bestval = None
-        self._WF: BaseWaveForm = None
+        self._WF: WaveForm = None
         self._xdat = None
         self._ydat = None
         self._yfit = None
@@ -136,7 +257,7 @@ class FitSine():
     
     @method.setter
     def method(self, newMethod):
-        if newMethod in VALID_METHODS:
+        if newMethod in SineFitter.VALID_METHODS:
             self._method = newMethod
 
     @property     
@@ -181,20 +302,11 @@ class FitSine():
 
 
     def makeFit(self):
-        #self._model = lmfit.Model(self.sine_function, independent_vars=['x'], param_names=['amp', 'freq', 'phase', 'offset'])
+        
         self._model = lmfit.Model(self.sine_function)
-        #guess = self.guess_sine_params(self.xdat, self.ydat)
-        #guess = self.guess_sine_params_irregular(self.xdat, self.ydat)
         self.makeParam()
-        #self.params  = self._model.make_params(**guess)
-        #self.params['freq'].set(vary=False)
-        #self.params['amp'].set(vary=False)
-        #self.params.create_uvars()
         self._result = self._model.fit(data=self.ydat, params=self.params, x=self.xdat, 
                                        method=self.method)
-        #print(self._result.fit_report())
-        #for name, par in self._result.params.items():
-        #    print(name, par.value, par.stderr)
         self._summary = self._result.summary()
         self._bestval = self._summary['best_values']
         self.yfit = self.sine_function(self.xdat, self.bestAmp, self.bestFreq, self.bestPhase, 
@@ -206,27 +318,54 @@ class FitSine():
         print(f"Value of fitted phase: {self.phase}")
         print(f"Value of fitted offset: {self.offset}")
 
-    #TODO: statistische gegevens eruit halen: hoe goed is de fit
+    #TODO: statistische gegevens eruit halen: hoe goed is de fit?
     #TODO: beter om het lmfit ingebouwde lmfit sinus model te pakken?
     #TODO: een plot functie om te zin of de fit gelukt is. En op basis daarvan een functie om melding te krijgen als 
     # fit onder en bepaalde grens komt.
 
-class PhaseEstimator(object):
 
-    def __init__(self, inputWF:BaseWaveForm=None, outputWF:BaseWaveForm=None, debugPrint=False):
-        self._inputWF = inputWF
-        self._outWF = outputWF
-        self._input = inputWF.scaledYdata
-        self._output = outputWF.scaledYdata
-        self._tAxis = inputWF.scaledXdata
-        self._inputFitter = FitSine()
-        self._outputFitter = FitSine()
-        self._inputFitter.WF = inputWF
-        self._outputFitter.WF = outputWF
-        #self._inputFitter.makeParam()
-        #self._outputFitter.makeParam()
+
+class PhaseEstimator(ScopeFunction):
+    
+    def __init__(self, inputWF:WaveForm=None, outputWF:WaveForm=None, debugPrint=False):
+        super().__init__(ScopeFunction.PHASEFIT)
+        #TODO: create input- and outputfitter setters and getters for changing the fitting waveform function.
+        self._inputFitter = SineFitter()
+        self._outputFitter = SineFitter()
+        
+        self._inputWF = None
+        self._input = None
+        self._tAxis = None
+        self._inputFitter.WF = None
+
+        self._outWF = None
+        self._output = None
+        self._outputFitter.WF = None
+
+        if inputWF != None:
+            self._inputWF = inputWF
+            self._input = inputWF.scaledYdata
+            self._tAxis = inputWF.scaledXdata
+            self._inputFitter.WF = inputWF
+
+        if outputWF != None:
+            self._outWF = outputWF
+            self._output = outputWF.scaledYdata
+            self._outputFitter.WF = outputWF
+        
+        
+        
         self._debug = debugPrint
         self._phaseDiff = None
+
+    def setOperands(self, oper1:WaveForm=None, oper2:WaveForm=None):
+        super().setOperands(oper1, oper2)
+
+        if isinstance(oper1,WaveForm) and isinstance(oper2,WaveForm): 
+            self.setWFs(oper1, oper2)
+        else:
+            logger.log(logging.CRITICAL, "Try to set estimater without setting correct operandtypes!")
+            return
 
 
     @property
@@ -236,7 +375,18 @@ class PhaseEstimator(object):
     @property
     def outputFitter(self):
         return self._outputFitter
-        
+
+    @property
+    def inputWF(self):
+        return self._inputWF
+    
+    @inputWF.setter
+    def inputWF(self, inWF: WaveForm):
+        if inWF.any() != None:
+           self._inputWF = inWF
+           self._input = self.inputWF.scaledYdata
+           self.inputFitter.WF = inWF
+
     @property
     def input(self):
         return self._input
@@ -246,6 +396,17 @@ class PhaseEstimator(object):
         if signal.any() != None:
            self._input = signal
 
+    @property
+    def outputWF(self):
+        return self._outWF
+    
+    @outputWF.setter
+    def outputWF(self, outWF: WaveForm):
+        if outWF.any() != None:
+           self._outWF = outWF
+           self._output = self.outputWF.scaledYdata
+           self.outputFitter.WF = outWF
+    
     @property
     def output(self):
         return self._output
@@ -279,7 +440,16 @@ class PhaseEstimator(object):
 
         return (self._phaseDiff*180.0)/math.pi
 
+
     
+
+    def setWFs(self, inWF: WaveForm = None, outWF: WaveForm = None):
+        if inWF == None or outWF == None:
+            logger.log(logging.WARNING, "Trying to set (one of) estimator WF with a None type")
+            return
+        self.inputWF = inWF
+        self.outputWF = outWF
+
     def setAPriori(self, ampIn=0, ampOut=0, freq=0, phase=0, offset=0):
         #set input param for lmfit with some known values
         self._inputFitter.setAPrioriData(ampIn,freq,phase,offset)
@@ -288,14 +458,9 @@ class PhaseEstimator(object):
     #def estimate(self, wfIn: BaseWaveForm, wfOut: BaseWaveForm):
     def estimate(self):
         """Estimates the phase difference between input and output, assuming fitparams for both signals have been set."""
-        #self._inputFitter.makeParam()
-        #self._outputFitter.makeParam()
-        #self.inputFitter.setData(xdata=wfIn.scaledXdata, ydata=wfIn.scaledYdata)
-
-        #self.outputFitter.setData(xdata=wfOut.scaledXdata, ydata=wfOut.scaledYdata)
+        
         self._inputFitter.makeFit()
         self._outputFitter.makeFit()
-        #self.phaseDiff = self._outputFitter.bestPhase - self._inputFitter.bestPhase
         #TODO: check chi squared value or other indication of fit.
         if self._debug:
             # y = A sin (2 pi f t + phi),  waar is een zerocrossing?
@@ -344,13 +509,9 @@ class PhaseEstimator(object):
         #nfit = self.inputFitter.yfit
         infit = self.inputFitter.yfit
         index = np.where(infit >= 0)
-        ## outfit = self.outputFitter.yfit
-       # tzc_in = outfit[outfit==0]
+        
         myindex = index[0][0]-1
-        #tzc_in = self.inputFitter.xdat[myindex]
-        #TODO: onderstaande nog niet correct.
-        #plt.figure(1)
-        fig = plt.figure(1)
+        fig = plt.figure()
         ax = plt.gca()
         # first plot original input data
         ax.plot(self._inputFitter.xdat, self._inputFitter.ydat, self._inputFitter.xdat, self._outputFitter.ydat,
@@ -380,96 +541,59 @@ class PhaseEstimator(object):
         #ax.set_ylim(-1, 1)
         fig.suptitle('With estimated phase', fontsize=11)
         #ax.title.set_text(f"Sampled & parameterized waveforms")
-        ax.legend(["sampled input", "sample output","fitted input","fitted output"], loc="lower right")
+        ax.legend(["sampled input", "sa mple output","fitted input","fitted output"], loc="lower right")
         input(f'Press [Enter] to proceed to the next plot.')
         plt.clf()
 
-##OUDE ZOOOI, van Chat, had ik niks aan.....
-"""
-    from astropy.timeseries import LombScargle  # zit vaak in astropy
 
-    def guess_sine_params_irregular(self, x, y):
-        offset = np.mean(y)
-        amp = (np.max(y) - np.min(y)) / 2
-        
-        # Gebruik Lomb–Scargle voor frequentie
-        y_detrended = y - offset
-        freq_grid = np.linspace(0.1, 10, 5000)  # scan 0.1–10 Hz
-        power = LombScargle(x, y_detrended).power(freq_grid)
-        freq = freq_grid[np.argmax(power)]
-        
-        # Schat fase met regressie
-        sin_basis = np.sin(2*np.pi*freq*x)
-        cos_basis = np.cos(2*np.pi*freq*x)
-        A = np.vstack([sin_basis, cos_basis]).T
-        coeffs, _, _, _ = np.linalg.lstsq(A, y_detrended, rcond=None)
-        phase = np.arctan2(coeffs[1], coeffs[0])
-        
-        return dict(amp=amp, freq=freq, phase=phase, offset=offset)
-    """
+########## BASEMATH ###########
+class ScopeMath(object):
+    """A class for holding software defined scopefunctions"""
+    def __init__(self):
+        self.functions:list = [] # list for holding the function
+        self.functions.append(FFT())
+        self.functions.append(PhaseEstimator())
+
+    def add(self, aFunction: ScopeFunction):
+        self.functions.append(aFunction)
     
-"""
-    def guess_sine_params(self, x, y):
-        
-        Schat amplitude, offset, frequentie en fase voor een sinus-fit.
-       
-        # Offset = gemiddelde
-        offset = np.mean(y)
+    def remove(self, aFunction: ScopeFunction):
+        """Removes a function from the BaseVertical list. Called by BaseVertical."""
+        pass
 
-        # Amplitude = halve bereik
-        amp = (np.max(y) - np.min(y)) / 2
+    #def get(self, aFunction: BaseFunction):
+    #    pass
 
-        # Frequentie schatten met FFT
-        y_detrended = y - offset
-        fft = np.fft.rfft(y_detrended)
-        freqs = np.fft.rfftfreq(len(x), d=(x[1]-x[0]))
-        freq = freqs[np.argmax(np.abs(fft[1:])) + 1]  # skip DC
+    def get(self, functionStr: str = None, oper1 = None, oper2 = None):
+        # self.functions is a list, which element is a dict. So from every item of the list functions, one wants to have the value of the
+        # functionType member of the BaseFunction element in the list
+        # So the line of code is: (self.function[i]).values(), because every dict element of list has only one value elemet
+        if functionStr == None:
+            return
+        myFunction:ScopeFunction = None
+        index = [i for i in range(0, len(self.functions)) if functionStr in self.functions[i].functionType.values()]
+        if index != None and len(index)==1:
+            myFunction =  self.functions[index[0]]
 
-        # Fase schatten via correlatie met een sin/cos basis
-        sin_basis = np.sin(2*np.pi*freq*x)
-        cos_basis = np.cos(2*np.pi*freq*x)
-        A = np.vstack   ([sin_basis, cos_basis]).T
-        coeffs, _, _, _ = np.linalg.lstsq(A, y_detrended, rcond=None)
-        phase = np.arctan2(coeffs[1], coeffs[0])
+        if myFunction is None:
+            return None
+        if oper1 is None:
+            return myFunction
+        elif oper2 is None:
+            myFunction.setOperands(oper1)
+        else:
+            myFunction.setOperands(oper1, oper2)
+        return myFunction
+            
+            
+            
+    #def get(self):
+    #    return self.functions
 
-        return dict(amp=amp, freq=freq, phase=phase, offset=offset)
-     
-     oude debug print
-     #                           
-            tzc_in = -1* self.inputFitter.bestPhase/(2*math.pi*self.inputFitter.bestFreq)
-            tzc_out = -1* self.outputFitter.bestPhase/(2*math.pi*self.outputFitter.bestFreq)
-            #See for non-blocking plotting: https://www.geeksforgeeks.org/python/plotting-in-a-non-blocking-way-with-matplotlib/
-            plt.ion()
-
-            #TODO: onderstaande nog niet correct.
-            #plt.figure(1)
-            fig, axs = plt.subplots(2)
-            # first plot original input data
-            axs[0].plot(self._inputFitter.xdat, self._inputFitter.ydat, self._inputFitter.xdat, self._outputFitter.ydat)
-            axs[0].title.set_text(f"Sampled waveforms")
-            axs[0].legend(["x samples", "y samples"], loc="lower right")
-            # then plot fitted sinefunction 
-            inphase = self.inputFitter.bestPhase
-            outphase = self.outputFitter.bestPhase
-            print(f"fase input = {inphase/math.pi}, fase output = {outphase/math.pi}")
-            axs[1].plot(self._inputFitter.xdat, self._inputFitter.yfit, self._inputFitter.xdat, self._outputFitter.yfit)
-            axs[1].plot([tzc_in, 0],'o') #marker for zero cross of input signal
-            axs[1].plot([tzc_out, 0],'o') #marker for zero cross of output signal
-            line1y =[0, self.inputFitter.bestAmp*1.2]
-            line1x =[tzc_in, tzc_in]
-            line2y =[0, self.inputFitter.bestAmp*1.2]
-            line2x =[tzc_out, tzc_out]
-            if tzc_out > tzc_in:
-                line3x =[tzc_in*0.8, tzc_out*1.2]
-            else:
-                line3x =[tzc_out*0.8, tzc_in*1.2]
-            line3y = [self.inputFitter.bestAmp*1.1, self.inputFitter.bestAmp*1.1]
-            axs[1].plot(line1x,line1y,linestyle=':', color='b') 
-            axs[1].plot(line2x,line2y,linestyle=':', color='r') 
-            axs[1].plot(line3x,line3y,linestyle=':', color='k') 
-            axs[1].title.set_text(f"parameterized waveforms")
-            axs[1].legend(["x samples", "fitted sinewave"], loc="lower right")
-
-     
-     
-     """
+    def clear(self):
+        "Clears all added functions"
+        self.functions.clear()
+    
+    def visible(self, aFunction: ScopeFunction=None, status: bool=True):
+        """Defines whether or not the function will be Visible"""
+        pass

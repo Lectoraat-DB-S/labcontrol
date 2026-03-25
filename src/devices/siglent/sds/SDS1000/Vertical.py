@@ -1,10 +1,10 @@
 import pyvisa
 import numpy as np
-from devices.BaseScope import BaseVertical
+from devices.BaseScope.BaseVertical import Vertical
 from devices.siglent.sds.SDS1000.Channel import SDSChannel
 from scipy import fft
 
-class SDSVertical(BaseVertical):
+class SDSVertical(Vertical):
     """"Subclass of BaseVertical for Tektronix TDS1000 scope series. This class implements the baseclass."""
 
     @classmethod

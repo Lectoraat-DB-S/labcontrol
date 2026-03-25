@@ -1,7 +1,7 @@
-from devices.BaseScope import BaseAcquisition
+from devices.BaseScope.BaseAcquisition import Acquisition
 import pyvisa
 
-class SDSAcquisition(BaseAcquisition):
+class SDSAcquisition(Acquisition):
     """"Subclass of BaseDisplay for Siglent SDS 1000 and 2000 series. This class implements the baseclass."""
 
     @classmethod

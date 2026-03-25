@@ -13,7 +13,7 @@ import numpy as np
 from devices.siglent.sds.SDS1000.Channel import SDSChannel    
 from devices.siglent.sds.SDS2000.commands_full import SCPI
 from devices.siglent.sds.SDS2000.params import PARAM
-from devices.BaseScope import BaseScope, SCPICommand,SCPIParam, BaseMath, BaseFFT, BasePhaseEstimator, BaseChannel
+from devices.BaseScope.BaseScope import BaseScope, SCPICommand,SCPIParam, BaseMath, BaseFFT, BasePhaseEstimator, BaseChannel
 import logging
 from scipy.fft import fft
 import matplotlib.pyplot as plt

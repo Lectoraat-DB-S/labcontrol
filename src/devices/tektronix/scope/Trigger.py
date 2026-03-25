@@ -1,8 +1,8 @@
 import pyvisa
-from devices.BaseScope import BaseTriggerUnit
+from devices.BaseScope.BaseTrigger import TriggerUnit
 from devices.tektronix.scope.Vertical import TekVertical, TekChannel
 
-class TekTrigger(BaseTriggerUnit):
+class TekTrigger(TriggerUnit):
 
     @classmethod
     def getTriggerUnitClass(cls, vertical:TekVertical, visaInstr:pyvisa.resources.MessageBasedResource=None):

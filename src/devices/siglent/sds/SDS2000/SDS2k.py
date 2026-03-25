@@ -11,7 +11,6 @@ from devices.siglent.sds.SDS2000.Channel import SDS2kChannel
 from devices.siglent.sds.util import INR_HASHMAP
 import devices.siglent.sds.util as util
 from devices.siglent.sds.util import SiglentIDN 
-from devices.BaseScope import BaseScope
 from devices.siglent.sds.SDS2000.Vertical import SDS2kVertical
 from devices.siglent.sds.SDS2000.Horizontal import SDS2kHorizontal
 from devices.siglent.sds.SDS2000.Trigger import SDS2kTrigger

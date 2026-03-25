@@ -1,11 +1,11 @@
 import pyvisa as visa
 import numpy as np
 
-from devices.BaseScope import BaseHorizontal
+from devices.BaseScope.BaseHorizontal import Horizontal
 from devices.siglent.sds.SDS2000.commands_full import SCPI
 #commands_full import SCPI
 
-class SDS2kHorizontal(BaseHorizontal):
+class SDS2kHorizontal(Horizontal):
     """Subclass of BaseHorizontal. Implements horizontal functionalities of the Siglent SDS2000X-E series oscilloscope.
     Horizontal functions are querying en setting the timebase, horizontal axis position and zoom factor.
     Avaialble Timebase functions according to Programming Guide EN11D:

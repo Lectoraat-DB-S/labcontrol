@@ -10,7 +10,7 @@ from devices.siglent.sds.SDS1000.Channel import SDSChannel
 from devices.siglent.sds.util import INR_HASHMAP
 import devices.siglent.sds.util as util
 from devices.siglent.sds.util import SiglentIDN 
-from devices.BaseScope import BaseScope
+from devices.BaseScope.BaseScope import Scope
 from devices.siglent.sds.SDS1000.Vertical import SDSVertical
 from devices.siglent.sds.SDS1000.Horizontal import SDSHorizontal
 from devices.siglent.sds.SDS1000.Trigger import SDSTrigger
@@ -29,7 +29,7 @@ class SiglentWaveformWidth(Enum):
     BYTE = "BYTE"
     WORD = "WORD"
 
-class SiglentScope(BaseScope):
+class SiglentScope(Scope):
 
     sigScopeList = []  
 

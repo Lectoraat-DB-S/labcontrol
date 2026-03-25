@@ -1,6 +1,6 @@
 from devices.tektronix.scope.TekScopes import TekScope
 from devices.tektronix.scope.Channel import TekChannel, TekWaveForm, TekWaveFormPreamble
-from devices.BaseScope import BaseScope
+from devices.BaseScope.BaseScope import BaseScope
 import unittest
 from unittest.mock import call, patch, MagicMock
 import pyvisa

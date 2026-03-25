@@ -12,7 +12,6 @@ from devices.siglent.sds.SDS1000.Channel import SDSChannel
 from devices.siglent.sds.util import INR_HASHMAP
 import devices.siglent.sds.util as util
 from devices.siglent.sds.util import SiglentIDN 
-from devices.BaseScope import BaseScope
 from devices.siglent.sds.SDS1000.Vertical import SDSVertical
 from devices.siglent.sds.SDS1000.Horizontal import SDSHorizontal
 from devices.siglent.sds.SDS1000.Trigger import SDSTrigger
@@ -99,15 +98,46 @@ class SiglentScope1k(SiglentScope):
         self.acquisition = SDSAcquisition(visaResc)
     
 
-    def inr(self):
+    def INR(self):
         """
             The INR? query reads and clears the contents of the INternal state change Register (INR). 
             The INR register (see table programming manual) records the completion of various internal operations 
             and state transitions.
         """
-        inrResp = self.query("*INR?")
-        return INR_HASHMAP[inrResp]        
+        inrResp = self.query("INR?")
+        #return INR_HASHMAP[inrResp] #this crashed
+        return inrResp        
     
+    def STB(self):
+        resp = self.query("*STB?")
+        return resp
+    
+    def SRE(self):
+        resp = self.query("*SRE?")
+        return resp
+    
+    def ESE(self):
+        resp = self.query("*ESE?")
+        return resp
+
+    def CMR(self):
+        resp = self.query("CMR?")
+        return resp
+    
+    def CLS(self):
+        resp = self.query("*CLS?")
+        return resp
+    
+    def DDR(self):
+        resp = self.query("DDR?")
+        return resp
+    
+    def EXR(self):
+        resp = self.query("EXR?")
+        return resp
+    
+
+
     def rst(self):
         """
             The RST command initiates a device reset. The RST sets recalls the default setup.

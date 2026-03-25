@@ -1,11 +1,13 @@
 import time
 import numpy as np
 from devices.BaseGenerator import BaseGenerator, BaseGenChannel
-from devices.BaseScope import BaseScope, BaseChannel, BaseVertical,  BaseWaveForm
+from devices.BaseScope.BaseScope import Scope
+from devices.BaseScope.BaseChannel import Channel, WaveForm
+from devices.BaseScope.BaseVertical import Vertical
 import matplotlib.pyplot as plt
 import pandas as pd
 import devices.BaseLabDeviceUtils as utils
-from devices.BaseFitter import FitSine, PhaseEstimator
+from devices.BaseScope.BaseFunctions import PhaseEstimator, SineFitter
 import math
 
 def createBodePlot(wr, logMagnitude, phase):
@@ -27,12 +29,12 @@ def createBodePlot(wr, logMagnitude, phase):
     fig.show()
 
 def doACSweep():
-    scope: BaseScope = BaseScope.getDevice()
-    scopeVert: BaseVertical = scope.vertical
+    scope: Scope = Scope.getDevice()
+    scopeVert: Vertical = scope.vertical
     gen: BaseGenerator = BaseGenerator.getDevice()
     genChan1: BaseGenChannel = gen.chan(1)
-    scopeChan1: BaseChannel = scopeVert.chan(1)
-    scopeChan2: BaseChannel = scopeVert.chan(2)
+    scopeChan1: Channel = scopeVert.chan(1)
+    scopeChan2: Channel = scopeVert.chan(2)
     signalIn = None     #was list(), maar dat lijkt me erg veel ruimte te kosten.
     signalOut =  None   #idem
     phaseDiffList = list()
@@ -104,8 +106,8 @@ def doACSweep():
         #print(scopeChan1.query("MEASUrement:IMMed?"))
         #start = time.time()
         time.sleep(WAITTIME)
-        signalIn:BaseWaveForm=scopeChan1.capture()
-        signalOut:BaseWaveForm=scopeChan2.capture()
+        signalIn:WaveForm=scopeChan1.capture()
+        signalOut:WaveForm=scopeChan2.capture()
         time.sleep(WAITTIME)
         #phasediff= scopeChan2.getPhaseBetween(scopeChan1,freq)
         #end = time.time()

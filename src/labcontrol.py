@@ -3,8 +3,6 @@ import usb.core
 import usb.backend.libusb1
 import time
 
-
-
 from tm_devices import DeviceManager
 from tm_devices.drivers import MSO4B
 from tm_devices.helpers import PYVISA_PY_BACKEND, SYSTEM_DEFAULT_VISA_BACKEND
@@ -24,7 +22,10 @@ from devices.Korad.KoradSupply import Korad3305P
 #import tests.testSDG as sigTest
 #import tests.testSDS as scopeTest
 #import control.gutter as gootje
-from devices.BaseScope import BaseChannel, BaseScope, BaseHorizontal, BaseVertical, BaseWaveForm, BaseWaveFormPreample, BaseFFT
+from devices.BaseScope.BaseScope import Scope
+from devices.BaseScope.BaseChannel import Channel
+from devices.BaseScope.BaseVertical import Vertical
+from devices.BaseScope.BaseFunctions import FFT
 from devices.BaseGenerator import BaseGenerator, BaseGenChannel
 from devices.BaseDMM import BaseDMM
 #from devices.siglent.sds.SDS1000.SDS1k import  SiglentScope
@@ -73,20 +74,15 @@ def testUSBTMC():
 
 
 def testTekVisa():
-    scope: BaseScope = BaseScope.getDevice()
-    scopeVert: BaseVertical = scope.vertical
-    scopeChan1: BaseChannel = scopeVert.chan(1)
-    scopeChan2: BaseChannel = scopeVert.chan(2)
+    scope: Scope = Scope.getDevice()
+    scopeVert: Vertical = scope.vertical
+    scopeChan1: Channel = scopeVert.chan(1)
+    scopeChan2: Channel = scopeVert.chan(2)
     start = time.time()
     scopeChan1.capture()
     end = time.time()
     print(f"1 maal een capture kost: {end-start}")
     
-
-def testHantek():
-    ServerGui.createApp()
-    
-
 
 def readConfig():
     config = configparser.ConfigParser()
@@ -106,15 +102,21 @@ def dummyUse():
     #gen:BaseGenerator = BaseGenerator.getDevice()
     #mygenChan: BaseGenChannel = gen.chan(chanNr=1)
     #mygenChan.setAmp(1.2)
-    scope:BaseScope = BaseScope.getDevice()
-    vert:BaseVertical = scope.vertical
-    chan1: BaseChannel = vert.chan(1)
-    myfft:BaseFFT = vert.getMath("FFT", chan1)
+    scope:Scope = Scope.getDevice()
+    #scope.trigger.mode('SINGLE')
+    print(scope.INR())
+    print(scope.INR())
+    print(scope.INR())
+    print(scope.STB())
+    print(scope.SRE())
+    vert:Vertical = scope.vertical
+    chan1: Channel = vert.chan(1)
+    myfft:FFT = vert.getMath("FFT", chan1)
     xdat, ydat = myfft.get()
     #plt.figure()
     #plt.plot(xdat, abs(ydat))
     #plt.show()
-    fig = myfft.plot(linear=True)
+    fig = myfft.plot(linear=True, autoRange=False)
     print(max(abs(ydat)))
     plt.show()
     #chan1:BaseSupplyChannel=supply.chan(1)
@@ -173,7 +175,7 @@ if __name__ == "__main__":
     #input("druk toets om te stoppen .....")
     
     #ledcurve.testDiodePlotCurve()
-    #doACSweep()
+    doACSweep()
     #testUSBTMC()
     #testTekTm()
 

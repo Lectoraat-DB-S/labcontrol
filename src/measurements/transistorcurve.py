@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 from devices.siglent.spd.PowerSupply import SiglentPowerSupply
 from devices.siglent.sdm.DigitalMultiMeter import SiglentDMM
 from devices.siglent.sds.SDS1000.SDS1k import SiglentScope
-from devices.BaseScope import BaseScope
 from devices.BaseSupply import BaseSupply, BaseSupplyChannel
+from devices.BaseScope.BaseScope import Scope
 import pandas as pd
 
 WAITTIME = 0.1
@@ -53,7 +53,7 @@ def makeCurveWithOnlySupply():
 def createTransCurve():
     supply = BaseSupply()
     dmm    = SiglentDMM()
-    scope  = BaseScope()
+    scope  = Scope()
     #set supply
     
     supply.chan(1).set_voltage(15)

@@ -1,9 +1,9 @@
 import pyvisa as visa
 import numpy as np
-from devices.BaseScope import BaseVertical
+from devices.BaseScope.BaseVertical import Vertical
 from devices.tektronix.scope.Channel import TekChannel
 
-class TekVertical(BaseVertical):
+class TekVertical(Vertical):
     """"Subclass of BaseVertical for Tektronix TDS1000 scope series. This class implements the baseclass."""
 
     VDIV_HASHMAP = {

@@ -1,4 +1,3 @@
-from devices.BaseScope import BaseChannel, BaseWaveForm, BaseWaveFormPreample
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
@@ -6,13 +5,245 @@ import sys
 import math
 import pandas as pd
 from dataclasses import make_dataclass
-from devices.BaseScope import BaseWaveForm
 import lmfit
 from lmfit.model import ModelResult
-from devices.BaseFitter import FitSine, PhaseEstimator
 import subprocess
 import json
 import os
+
+from devices.BaseScope.BaseChannel import WaveForm
+
+class SCPIParam(object): 
+    """Deze klasse is bedoeld om het beheer van multidim list iets logischer te maken.
+    testparam1 = [["ONEMeg","1M", 1e6],["FIFTy",50]]
+    testparam2 = [["ONEMeg","1M", 1e6]]
+    testparam3 = ["ONEMeg","1M", 1e6]
+    Drie 'lists'. len(testparam1) = 2, len(testparam2) = 2, len(testparam3) = 1
+    testparam1 en testparam2 zijn twee geneste 'lists', elk elementen uit de hoofdlist is weer een list.
+    Benaderen van eerste element van de eerste sublist uit testparam1 kan op de volgende manier:
+    (testparam[0])[0], want het eerste element is wederom een list met 3 elementen. De haakjes zijn nodig, want
+    de notatie testparam[0][0] hoort meer bij arrays en niet bij list wat Python als een soort van 'tuple' ziet.   
+    
+    """
+    def __init__(self, mySCPIParamsDict):
+        self.paramsDict:dict = mySCPIParamsDict
+        self.paramDictIndex = None
+        self.paramList = None
+        self.nrOfListsAV = None
+
+    def setIndex(self, myParamIndex:list):
+        self.paramDictIndex = myParamIndex
+        
+    def dim(self, a):
+        if not type(a) == list:
+            return []
+        return [len(a)] + self.dim(a[0]) 
+    
+    def getNrOfListsInList(self):
+        """pre: self.paramList moet gezet zijn"""
+        nrOflists = self.dim(self.paramList)
+        if len(nrOflists) == 2:
+            return nrOflists[0]
+        
+    def findParam(self, anElement):
+        """Bedoeling: zoek de parameter op in een lijst. Hierbij geldt het volgende:
+        1. als de param in de lijst met opties zit, dan is het eerste element in de lijst altijd de correcte SCPI schrijfwijze
+        2. Soms is de lijst met opties een twee of meer dimensionaal geval, in dat geval is de index (ook zelf een lijst) de 
+        referentie naar een lijst waarvan het eerste element de juiste notitatie is.
+         """
+        nrOfAvLists = self.getNrOfListsInList()
+        for y in range(0, nrOfAvLists):
+            myParamList = self.paramList[y]
+            index = [i for i in range(0, len(myParamList)) if anElement == myParamList[i]]
+            if len(index)==1:
+                return y, index[0]
+            else:
+                return None, None
+        
+    def nrOfElements(self, a):
+        nrOflists = self.dim(a)
+        if type(nrOflists) == list:
+            #als dit een list is, dan is de list multidimensionaal.
+            #bijv 2, dan is de eerste is 2. 
+            print(len(nrOflists))
+            #stel len == 2, dan is nrOfList[0] het aantal rijen. en nrOfList[1] het aantal kolommen
+            # stel [1,3] dan is a een list met daarin één list waar dan 3 elementen in zetten.
+            nrElements = 0
+            for k in range(0, nrOflists[0]):
+                suba = a[k]
+                if type(suba) == list:
+                    nrElements=nrElements+len(a[k])
+                else:
+                    nrElements = nrElements +1
+                            
+            return nrElements
+        else:
+            return nrOflists
+
+    def list2CommandParams(self, dictIndex:list = None)->list:
+        """
+        scpiList is the index to a SCPI command and the index to corresponding param options  
+        For example, if one to set the impedance trigger unit when triggering on an edge, one will need the know the correct 
+        SCPI notation of the param. In the edge trigger impedance case, there a two options: 50 of 1e6 Ohms or "FIFTty" and "ONEMeg"
+        in correct SCPI notation. For a user to pass equivalent formats of expressing correct values, the PARAM sub-list for setting
+        the impedance is given bij de two dim list:  [["ONEMeg","1M", 1e6],["FIFTy",50]]
+
+        This function only returns this list, given the self.paramDictIndex member of the object has been set with a
+        SCIPI command reference.  
+        """
+        if dictIndex == None:
+            if self.paramDictIndex != None:
+                dictIndex = self.paramDictIndex
+            else:
+                self.paramDictIndex = dictIndex
+            
+        if self.paramsDict == None:
+            #TODO: is fout dus loggen.
+            return None
+        
+        #scpiList should have a dimension of 1 (one row) and variaring size. If dimension is other than one, return None
+        listShape = self.dim(dictIndex)
+        if len(listShape) == 1: #als listShape lengte 1 heeft, dan zit er in de list niet nog een list
+            listLength = len(dictIndex) #... en dan zijn dit het aantal elementen in de list.
+            myParamList:list = None
+            hulpvar:dict =self.paramsDict.get(dictIndex[0])
+            for i in range(1, listLength-1):
+                hulpvar = hulpvar.get(dictIndex[i])
+            myParamList = hulpvar.get(dictIndex[(listLength-1)])
+            return myParamList
+        elif len(listShape) == 2:
+            return None
+        else:
+            return None #TODO: this is an error, better to throw an exception or other way to inform the caller
+        
+     
+        
+    def checkParam(self, paramIn = None ): 
+        """check if the inputparameter paramIn is in range or not.
+        ParamIn: a single input parameter which need to be checked
+        SCPIStruct = a list of strings, needed to find a list of valid options for parameters of a complementay scpi command.
+        This method checks whether paramIn is a valid option of a scpi command referred to by SCPIStruct.
+        If paramIn is a valid option, this method will return the index where paramIn has been found in the list given by 
+        SCPIStruct. If paramIn was not te be found in that list, it will return None, stating the invalidity of parameter paramIn. 
+        
+        Het lastige hier is paramIn, wat verschillende soorten van parameters kan zijn:
+        1. een optie zou moeten zijn uit een lijstvan pure string opties. De opties (PARAM) staan in eendimensionale lijst.
+        2. idem, maar waar ook numerieke opties bij kunnen.
+        3. Als 1. en/of  2. maar dan gaat het om tweedimensionale lijsten. Dat betekent ook direct dat de return ook een lijst 
+        zou kunnen zijn, hoeft niet.
+        4. een getal dat in een bepaald bereik moet vallen.
+        5. één van bovenstaande opties, maar er zijn meerdere paramters (beter losse functie voor maken, checkParams())
+        Een voorbeeld: lijst met opties ziet er als dit: [["ONEMeg","1M", 1e6],["FIFTy",50]] 
+        """
+        #checkTheParam = lambda paramIn, paramOptions: -1 if paramIn not in paramOptions else [i for i in len(paramOptions) if paramIn in paramOptions(i)]
+        if self.paramsDict == None:
+            #TODO: is fout dus loggen.
+            return None
+        
+        paramList = None
+        paramList = self.list2CommandParams(self.paramDictIndex) # zoek de juiste parameter optielijst op.
+        if paramList==None:
+            return None #TODO: error code of exceptie?
+        
+        nrOfParamListinList = len(self.dim(paramList))
+        #if isinstance(paramIn, int):
+        #    #TODO: code de lijst doorzoekt op aanwezigheid van het (integer) getal en de juiste SCPI notatie retourneert.
+        #    pass
+        #elif isinstance(paramIn, float):
+            #TODO: voor float/double zelfde: doorzoeken op gehele getallen en wetenschappelijke notatie met x cijfers.
+        #    pass
+        #else:
+        match nrOfParamListinList:
+            case 0:
+                return None
+            case 1:
+                #paramin is een string, maar dat hoeft niet voor myParam accepteer juiste SCPI notatie, maar ook hoofd en kleine letters.
+                #kan onderstaande niet soort van automatisch genereerd worden op basis van lengte lijst?    
+                nrOfParamOptions = len(paramList)
+                myParamOptionsList = paramList
+               
+                for x in range(0, nrOfParamOptions):
+                    myParamOption = myParamOptionsList[x]
+                    if type(myParamOption)== type(paramIn) and  paramIn == myParamOption:
+                        return myParamOptionsList[0]
+                    if type(myParamOption) == str:
+                        if type(myParamOption)== type(paramIn) and paramIn.lower() == (myParamOption).lower():
+                            return myParamOptionsList[x]
+                        #TODO: is onderstaande wel nodig?
+                        if type(myParamOption)== type(paramIn) and paramIn.upper() == (myParamOption).upper():
+                            return myParamOptionsList[x]
+            case _:
+                nrOfParamOptions = len(paramList)
+                #blijkbaar zit er meer dan lists in deze list. Doorzoek nu elk van de sublijsten op een treffer.
+                for k in range(0, nrOfParamOptions):
+                    myParamOptionsList = paramList[k]
+                    myNrOfOptions = len(paramList[k])
+                    index = [i for i in range(0, myNrOfOptions) if type(myParamOptionsList[i])== type(paramIn) and paramIn == myParamOptionsList[i]]
+                    if len(index)==1:
+                        return myParamOptionsList[0]
+                    for x in range(0, myNrOfOptions):
+                        myParamOption = myParamOptionsList[x]
+                        if type(myParamOption) == str:
+                            if type(myParamOption)== type(paramIn) and paramIn.lower() == (myParamOption).lower():
+                                return myParamOptionsList[0]
+                            #TODO: is onderstaande wel nodig?
+                            if type(myParamOption)== type(paramIn) and paramIn.upper() == (myParamOption).upper():
+                                return myParamOptionsList[0]
+                        
+                return None        
+        return None #kan eigenlijk niet, maar voor de zekerheid een return None op deze plek.
+
+class SCPICommand(object):
+
+    def __init__(self,  mySCPICommandDict: dict = None, myParamDict: dict = None):
+        self.scpiDict:dict = mySCPICommandDict
+        self.scpiDictIndex = None
+        self.scpiFunc = None
+        self.myParam = SCPIParam(myParamDict) # Toevoeging om te onderzoeken of het combineren van scpicomm en scpiparam voordeel heeft
+
+    def setIndex(self, mySCPICommIndex:list):
+        self.scpiDictIndex = mySCPICommIndex
+        self.myParam.setIndex(mySCPICommIndex)
+    
+    def getLambdaFunc(self):
+        """A nice function which returns a lambda function for creating the correct SCPI command"""
+        if self.scpiDict == None or self.scpiDictIndex == None:
+            #TODO: is fout dus loggen.
+            return None
+        listLength = len(self.scpiDictIndex)
+        myfunc = None
+        hulpvar:dict =self.scpiDict.get(self.scpiDictIndex[0])
+        for i in range(1, listLength-1):
+            hulpvar = hulpvar.get(self.scpiDictIndex[i])
+            myfunc = hulpvar.get(self.scpiDictIndex[(listLength-1)])
+        return myfunc
+
+    def getSCPIStr(self, paramIn=None):
+        """"
+        Er zijn een aantal situaties bij het constructueren van het SCPI commanda
+        1. Een vast (statisch) SCPI commando. Voorbeeld: SCPI["MEASURE"]["meassimplesrc?"](). Dan geldt dat 
+        checkedParam == None en de paramIndex is ook nod
+            
+        2. Een instructie zoals SCPI["MEASURE"]["meassimplesrc"](newSrc), is niet statisch, omdat er een variabele in zit.
+        Vaak heeft deze variable een zeer beperkt aantal opties, namelijk één uit de lijst van geldige parameters. In dit geval is
+        de checkedParam == None, maar paramIndex bestaat, m.a.w. paramIndex != None
+        3. Instructie met 2 variabelen bestaan ook. Waarschijnlijk is dit de situatie dat zowel checkedParam als paramIndex 
+        een waarde hebben dus checkedParam != None en paramIndex != None. Maar hoe dit moet is TBD. nu return None."""
+        if self.scpiDict == None or self.scpiDictIndex == None:
+            #TODO: is fout dus loggen.
+            raise TypeError(f"getSCPIStr: No dict or no dictIndex has been set! ")
+        
+        
+        # voor constructie van SCPI commando is alleen een set van indexen nodig
+        mylambdaFunc = self.getLambdaFunc()
+        if mylambdaFunc is None:
+            raise TypeError(f"No lambda function for index: {self.scpiDictIndex} ")
+        if paramIn is None:
+            return mylambdaFunc()
+        else:
+            checked = self.myParam.checkParam(paramIn)
+            return mylambdaFunc(checked)
+        
 
 
 ###### network configure scripts ###### Needs administrator rights to work ######################-
@@ -78,7 +309,7 @@ def sine_function(x, amp=1, freq=1000, phase=0, offset=0):
 def sine_functionw(x, amp, omega, phase, offset):
     return amp * np.sin(omega * x + phase) + offset
 
-def wf2numpyArray(wf: BaseWaveForm):
+def wf2numpyArray(wf: WaveForm):
     """Utility function to get both set of scaled samples out of a WaveForm.
     returns a tuple: xArray, yArray
     Where xArray = scaled time instances of waveform
@@ -127,7 +358,7 @@ def meas2DF():
     "written to disk."
     pass
 
-def createDFfromWF(wf: BaseWaveForm, format = "scaledOnly"):
+def createDFfromWF(wf: WaveForm, format = "scaledOnly"):
     if format == "scaledOnly":
         xArray, yArray = wf2numpyArray(wf)
         xColHeader = 'time '+ wf.chanstr
@@ -140,7 +371,7 @@ def createDFfromWF(wf: BaseWaveForm, format = "scaledOnly"):
         #for col in colNames:
         #
 
-def addWF2DF(wfToAdd: BaseWaveForm, df: pd.DataFrame):
+def addWF2DF(wfToAdd: WaveForm, df: pd.DataFrame):
     nrOfRows, nrOfCols = df.shape
     myx, myy = wf2numpyArray(wfToAdd)
     if len(nrOfRows) != len(myy):
@@ -172,156 +403,14 @@ def findAllZCinSampArray(inputSamp: np.array):
     return idx
 
 
-def findAllZC(input: BaseWaveForm):
+def findAllZC(input: WaveForm):
 
     ysamp = np.array(input.scaledYdata)
     myZCArray = findAllZCinSampArray(ysamp)
     
     return myZCArray
 
-def fitSineParam2Data(waveformSamples, freq_in, fitmethod="basinhopping"):
-    """Function for fitting a sine model on actual data.
-    Input parameters:
-    
-    returns: """
-    
-    pass
 
-
-#def calcPhaseShiftBetweenSampArrays(signalIn: np.array, signalOut: np.array, 
-def findInOutPhaseShift(signalIn: np.array, signalOut: np.array,
-                        inTimeArray: np.array, outTimeArray: np.array, freq,
-                        method = "zcd", fitmethod = "basinhopping", 
-                        ampVal=1, phaseVal = 0, freqVal = 1000, offVal = 0): 
-    
-        # calcPhaseShiftTo(self, input: 'BaseChannel', targetFreq)
-        # 1. get idx of zcd of this channel
-    paramValDict ={"method":method, "fittingMethod":fitmethod}
-    inParamDict = {"inputParameters":paramValDict}
-    if method == "zcd":
-        #TODO: 1. reuse basefunctionality, this just copy-paste code! 2. Add falling or rising edge indication
-        # 3. check if differences fit with frequency
-        #deze functie werkt: getest op 3-9-2025
-        inputIdx= findAllZCinSampArray(signalIn)
-        outputIdx = findAllZCinSampArray(signalOut)
-        #aanpak? 1. inputIdx[0] 2. zoek de eerste outputIdx die groter is dan in punt 1.
-        # 1. Op welke plek (dus index) in de array ging wfIn voor het eerst door nul (falling/rising)? antwoord: inputIdx[0]
-        # 2. voor welke plekken in de ZC array van wfOut geldt dat deze na inputIdx[0] komen? 
-        idxOfFirstZCDinput = inputIdx[0]
-        idx_mask = outputIdx >= idxOfFirstZCDinput
-        inZCtdata = inTimeArray[inputIdx]
-        outZCtdata = outTimeArray[outputIdx]
-        outZCDTimeInstance = outZCtdata[idx_mask][0]
-        inZCDTimeInstance = inTimeArray[idxOfFirstZCDinput]
-            
-        #bool_mask = inZCtdata >= outZCtdata[0]
-        #inZCtdata = inZCtdata[bool_mask][0]
-        diff = inZCDTimeInstance- outZCDTimeInstance
-        #diff =  outZCDTimeInstance-inTimeData[idxOfFirstZCDinput]
-        #phasedifResDict = {"phasedif":diff*freq*360.0}
-        #resultdict={"results": phasedifResDict}
-        
-        #return {inParamDict, resultdict}
-        return diff*freq*360.0
-    elif method == "fit":
-        if fitmethod not in VALID_METHODS:
-            return {None, None}
-        estimator = PhaseEstimator(inputSignal=signalIn, 
-                                    outputSignal=signalOut,
-                                    timeData=inTimeArray,
-                                    debugPrint=True)
-        phShift = estimator.estimate()
-        return phShift
-    
-
-def calcPhaseShiftBetweenWFs(wfIn: BaseWaveForm, wfOut: BaseWaveForm, freq, 
-                             method = "zcd", fitmethod = "basinhopping", ampVal=1, phaseVal = 0, freqVal = 1000, offVal = 0):    
-    """Function for estimating the phase shift between signalOut and signalIn. This function determines the phase change of the output
-    with respect to the input. In other words: the phase of the input will be regarded as reference i.e. no phase.
-    The phase will be calculated by:
-     1. finding the time instances of zero crossings of the input signal
-     2. finding the time instances of zero crossings of the output signal
-     3. Calculating the time difference between the first zerocrossing in the input and the first subsequent zero crossing of the
-     output: timediff = zcd_out - zcd_in
-     4. Calculating the estimatie of the phase difference by the formulae: timdiff * freq * 360. 
-    
-        Parameters 
-            signalIn, signalOut: BaseWaveForm objects
-            freq : an estimate of the current frequency, needed to calculate the shift, based on the delay between the signals.
-            method : a string. Valid options are:
-                "zcd" : This is default method. It is a zerocrossing detection algoritm written in software. Fast, simple and 
-                        quite stupid, therefore subseptible for noise or signal disturbances. 
-                        The algorithm determines the sample-indices of the first zerocrossing in both signal, if present. The indices 
-                        will be translated to timeinstances, which will be converted to a phase shift between both signals.
-                "fit" : All samples or a convienent slice of the smaples of both waveforms will be used to fit a parameterised 
-                        sine_function(x, amp, omega, phase, offset):
-                            return amp * np.sin(omega * x + phase) + offset
-                        This function will be fitted to both Waveform acquisitions using a configuarable matching method wich will 
-                        try to estimate the parameters amp, omega, phase and offset based on the input (sample)array x.
-            fitmethod : a string parameter for setting the method used to do the fitting. The following options are avalaible:
-                        'least_squares', 'differential_evolution', 'brute', 'basinhopping', 'ampgo', 'nelder', 'lbfgsb', 'powell', 
-                        'cg', 'newton', 'cobyla', 'bfgs', 'tnc', 'trust-ncg', 'trust-exact', 'trust-krylov', 'trust-constr', 'dogleg',
-                        'slsqp', 'emcee','shgo', 'dual_annealing'. Default selected method is 'basinhopping'           
-
-
-            return: a float containing the phase difference. """
-    #TODO: 1. reuse basefunctionality, this just copy-paste code! 2. Add falling or rising edge indication
-    # 3. check if differences fit with frequency
-    #deze functie werkt: getest op 3-9-2025
-    inTimeData = np.array(wfIn.scaledXdata)
-    outTimeData = np.array(wfOut.scaledXdata)
-    signalIn = np.array(wfIn.scaledYdata)
-    signalOut = np.array(wfOut.scaledYdata)
-    phasedif = calcPhaseShiftBetweenSampArrays(signalIn,signalOut, inTimeData, outTimeData, freq, method, fitmethod)
-    
-    ### OLD CODE starts here ######
-    #inputIdx = findAllZC(wfIn)
-    #outputIdx = findAllZC(wfOut)
-    #aanpak? 1. inputIdx[0] 2. zoek de eerste outputIdx die groter is dan in punt 1.
-    # 1. Op welke plek (dus index) in de array ging wfIn voor het eerst door nul (falling/rising)? antwoord: inputIdx[0]
-    # 2. voor welke plekken in de ZC array van wfOut geldt dat deze na inputIdx[0] komen? 
-    #idxOfFirstZCDinput = inputIdx[0]
-    #idx_mask = outputIdx >= idxOfFirstZCDinput
-    #inZCtdata = inTimeData[inputIdx]
-    #outZCtdata = outTimeData[outputIdx]
-    #outZCDTimeInstance = outZCtdata[idx_mask][0]
-    #inZCDTimeInstance = inTimeData[idxOfFirstZCDinput]
-        
-    #bool_mask = inZCtdata >= outZCtdata[0]
-    #inZCtdata = inZCtdata[bool_mask][0]
-    #diff = inZCDTimeInstance- outZCDTimeInstance
-    #diff =  outZCDTimeInstance-inTimeData[idxOfFirstZCDinput]
-
-    return phasedif
-
-def calcPhaseShiftBetweenChan(chanIn: BaseChannel, chanOut: BaseChannel, freq): #input is een channeltype of een MATH type.
-    
-        # calcPhaseShiftTo(self, input: 'BaseChannel', targetFreq)
-        # 1. get idx of zcd of this channel
-    mywf1 = chanIn.WF
-    mywf2 = chanOut.WF
-    
-    # 2. get idx of zcd of the input channel
-    # 3. As we want to know the phase to the input, the idx value of the input channel must be smaller 
-    # than the idx of the zero crossing of this channel.
-    myPhaseShift = calcPhaseShiftBetweenWFs(mywf1,mywf2, freq)
-    
-    return myPhaseShift
-
-def calcPhaseShiftBetweenWFLists(WFList1: list, WFList2: list, freq=1000)->list:
-    """"Calculates for each element of both lists, the phaseshift between WFList1 and WFList 2, according phase 2 - phase 2.
-    Precondition: WFList1 and WFList2 are both lists of WaveForms."""   
-    if len(WFList1) != len(WFList2):
-        return None
-
-    phaseList = list()
-    index = 0
-    for waveform1 in WFList1:
-        waveform2 = WFList2.index(index)
-        phaseEstimate = calcPhaseShiftBetweenWFs(waveform1, waveform2, freq)
-        phaseList.append(phaseEstimate)
-
-    return phaseList
 
 def createBodePlot(wr, logMagnitude, phase):
     #gejat van: https://aleksandarhaber.com/how-to-create-bode-plots-of-transfer-functions-in-python-using-scipy-control-engineering-tutorial/
@@ -355,99 +444,8 @@ def testBodePlot():
     createBodePlot(wr,logMagnitude,phase)
 
 
-def testlmfit():
-    
-    x = np.linspace(0, 0.005, 201)
-    np.random.seed(2)
-
-    #ydat = sine_function(x, 2, 10000, 4.10, 0) + np.random.normal(size=len(x), scale=1)
-    ydat = sine_function(x, 2, 1000, math.pi/4, 0) + np.random.normal(size=len(x), scale=0.25)
-
-    model = lmfit.Model(sine_function)
-    params = model.make_params(amp={'value': 1.9, 'min': 0, 'max': 2},
-                            omega={'value': 0.4, 'min': 0, 'max': 1.0},
-                            phase={'value': math.pi/3, 'min': 0.001, 'max': 89.99},
-                            offset={'value': 0, 'min': -10, 'max': 10})
-
-    #params = model.make_params(amplitude={'value': 10, 'min': 0, 'max': 1000},
-    #                        frequency={'value': 2.0, 'min': 0, 'max': 6.0},
-    #                        decay={'value': 2.0, 'min': 0.001, 'max': 12},
-    #                        offset=1.0)
-
-    # fit with leastsq
-    result0 = model.fit(data=ydat, params=params, x=x, method='leastsq')
-    print("# Fit using leastsq:")
-    print(result0.fit_report())
-    tmp = result0.summary()
-    print(tmp)
-    method2 = 'basinhopping'
-    if len(sys.argv) > 1 and sys.argv[1] in VALID_METHODS:
-        method2 = sys.argv[1]
-
-
-    # fit with other method
-    result = model.fit(ydat, params, x=x, method=method2)
-    print(f"\n#####################\n# Fit using {method2}:")
-    print(result.fit_report())
-
-    # plot comparison
-    plt.plot(x, ydat, 'o', label='data')
-    plt.plot(x, result0.best_fit, '+', label='leastsq')
-    plt.plot(x, result.best_fit, '-', label=method2)
-    plt.legend()
-    plt.show()
-
-
 #def sine_decay(x, amplitude, frequency, decay, offset, phase=0):
 def sine_decay(x, amplitude, frequency, offset, phase=0):
     #return offset + amplitude * np.sin(x*frequency + phase) * np.exp(-x/decay)
     return offset + amplitude * np.sin(x*frequency + phase)
 
-def testlmfitDecaySine():
-    
-    x = np.linspace(0, 15.5, 201)
-    np.random.seed(2)
-
-    ydat = sine_decay(x, 12.5, 2.0, 1.25,math.pi/3) + np.random.normal(size=len(x), scale=0.40)
-
-    model = lmfit.Model(sine_decay)
-    """
-    params = model.make_params(amplitude={'value': 10, 'min': 0, 'max': 1000},
-                            frequency={'value': 0.1, 'min': 0, 'max': 6.0},
-                            decay={'value': 2.0, 'min': 0.001, 'max': 12},
-                            offset=0,
-                            phase=2)
-
-    """
-    
-    params = model.make_params(amplitude={'value': 10, 'min': 5, 'max': 100},
-                            frequency={'value': 0.9, 'min': 0.5, 'max': 6.0},
-                            offset={'value': 0.1, 'min': 0, 'max': 6.0},
-                            phase={'value': 2, 'min': 0.5, 'max': 6.0})
-
-    # fit with leastsq
-    result0 = model.fit(ydat, params, x=x, method='leastsq')
-    print("# Fit using leastsq:")
-    print(result0.fit_report())
-    tmp = result0.summary()
-    schattings = tmp['params']
-    print(tmp)
-
-    #method2 = 'basinhopping'
-    #method2 = 'brute'
-    method2 = 'differential_evolution'
-    if len(sys.argv) > 1 and sys.argv[1] in VALID_METHODS:
-        method2 = sys.argv[1]
-
-
-    # fit with other method
-    result = model.fit(ydat, params, x=x, method=method2)
-    print(f"\n#####################\n# Fit using {method2}:")
-    print(result.fit_report())
-
-    # plot comparison
-    plt.plot(x, ydat, 'o', label='data')
-    plt.plot(x, result0.best_fit, '+', label='leastsq')
-    plt.plot(x, result.best_fit, '-', label=method2)
-    plt.legend()
-    plt.show()

@@ -1,8 +1,8 @@
 import pyvisa
 import numpy as np
-from devices.BaseScope import BaseDisplay
+from devices.BaseScope.BaseDisplay import Display
 
-class SDSDisplay(BaseDisplay):
+class SDSDisplay(Display):
     """"Subclass of BaseDisplay for Tektronix TDS1k en 2k scope series. This class implements the BaseDisplay baseclass."""
 
     @classmethod

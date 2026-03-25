@@ -3,12 +3,12 @@ import numpy as np
 import time
 import struct
 
-from devices.BaseScope import BaseHorizontal
+from devices.BaseScope.BaseHorizontal import Horizontal
 
 
 from devices.tektronix.scope.TekLogger import TekLog
 
-class TekHorizontal(BaseHorizontal):
+class TekHorizontal(Horizontal):
     """Subclass of BaseHorizontal. Implements horizontal functionalities of the Tektronix TDS2002x oscilloscope. Horizontal functions are
     querying en setting the timebase, horizontal axis position and zoom factor."""
        

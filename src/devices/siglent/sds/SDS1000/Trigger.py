@@ -1,9 +1,9 @@
 import pyvisa
-from devices.BaseScope import BaseTriggerUnit
+from devices.BaseScope.BaseTrigger import TriggerUnit
 from devices.tektronix.scope.Vertical import TekVertical, TekChannel
 from devices.siglent.sds.SDS1000.Vertical import SDSVertical, SDSChannel
 
-class SDSTrigger(BaseTriggerUnit):
+class SDSTrigger(TriggerUnit):
 
     TRIG_COUPLING_OPTIONS = ("AC","DC","HFREJ","LFREJ")
     TRIG_SLOPE_OPTIONS = ( "NEG", "POS", "WINDOW")
@@ -86,7 +86,7 @@ class SDSTrigger(BaseTriggerUnit):
                 self.write(f"{theChan.name}: TRSL {slope}")
         #TODO: decide if we log something if one is asking for an unkown slope or the source was somehow not set.
 
-    def setMode(self, mode):
+    def mode(self, mode):
         if mode in SDSTrigger.TRIG_MODE_OPTIONS:
             self.write(f"TRMD {mode}")
         #TODO: decide if we log something if one is asking for an unkown mode

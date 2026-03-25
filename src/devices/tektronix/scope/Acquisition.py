@@ -1,7 +1,7 @@
-from devices.BaseScope import BaseAcquisition
+from devices.BaseScope.BaseAcquisition import Acquisition
 import pyvisa
 
-class TekAcquisition(BaseAcquisition):
+class TekAcquisition(Acquisition):
     """"Subclass of BaseDisplay for Tektronix TDS1k en 2k scope series. This class implements the baseclass."""
 
     @classmethod

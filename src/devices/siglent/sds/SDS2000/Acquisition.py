@@ -1,8 +1,8 @@
-from devices.BaseScope import BaseAcquisition
+from devices.BaseScope.BaseAcquisition import Acquisition
 from devices.siglent.sds.SDS2000.commands_full import SCPI 
 import pyvisa
 
-class SDS2kAcquisition(BaseAcquisition):
+class SDS2kAcquisition(Acquisition):
     """"Subclass of BaseDisplay for Siglent SDS 2000 series. This class implements the base Acquisiton class.
     The subsequent commands are taken from Siglent Programming Programming Guide PEN11D """
 

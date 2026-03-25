@@ -1,5 +1,6 @@
 import pyvisa
-from devices.BaseScope import BaseTriggerUnit, SCPICommand
+from devices.BaseScope.BaseTrigger import TriggerUnit 
+from devices.BaseLabDeviceUtils import SCPICommand
 from devices.tektronix.scope.Vertical import TekVertical, TekChannel
 from devices.siglent.sds.SDS2000.Vertical import SDS2kVertical, SDS2kChannel
 from devices.siglent.sds.SDS2000.commands_full import SCPI
@@ -10,7 +11,7 @@ from devices.siglent.sds.SDS2000.commands_full import SCPI
 
 """
 
-class SDS2kTrigger(BaseTriggerUnit):
+class SDS2kTrigger(TriggerUnit):
 
     TRIG_COUPLING_OPTIONS = ("AC","DC","HFREJ","LFREJ")
     TRIG_SLOPE_OPTIONS = ( "NEG", "POS", "WINDOW")

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from devices.siglent.spd.PowerSupply import SiglentPowerSupply
 from devices.siglent.sdm.DigitalMultiMeter import SiglentDMM
 from devices.tektronix.scope import TekScopes
-from devices.BaseScope import BaseScope, BaseChannel, BaseVertical,  BaseWaveForm
+from devices.BaseScope.BaseScope import Scope
 from devices.BaseSupply import BaseSupply, BaseSupplyChannel
 from devices.BaseDMM import BaseDMM
 import matplotlib.pyplot as plt
@@ -53,7 +53,7 @@ def createCurve():
 
     supply:BaseSupply   = BaseSupply.getDevice()
     dmm:BaseDMM         = BaseDMM.getDevice()
-    scope:BaseScope     = BaseScope.getDevice()
+    scope:Scope     = Scope.getDevice()
     if (supply == None or dmm == None or scope == None):
         print("Een van de benodigde apparaten is niet aanwezig. Exit. Doei.")
         return -1

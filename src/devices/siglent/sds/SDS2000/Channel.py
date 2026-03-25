@@ -11,8 +11,8 @@ from devices.siglent.sds.util import TIMEBASE_HASHMAP
 import configparser
 from devices.siglent.sds.SDS2000.commands_full import SCPI
 
-from devices.BaseScope import BaseChannel, BaseWaveForm, BaseWaveFormPreample, SCPICommand
-
+from devices.BaseScope.BaseChannel import Channel, WaveForm, WaveFormPreample 
+from devices.BaseLabDeviceUtils import SCPICommand
 
 # SDSChannel: abstraction of a Siglent oscilloscope channel.
 # Usage: set or get 'vertical' channel properties of a scope and/or start a capture.
@@ -20,7 +20,7 @@ from devices.BaseScope import BaseChannel, BaseWaveForm, BaseWaveFormPreample, S
 # Getting vertical div, vertical offset,
 
 
-class SDS2kChannel(BaseChannel):
+class SDS2kChannel(Channel):
     #IMMEDMEASTYPES =["CRMs","CURSORRms","DELay","FALL",
     #                    "FREQuency","MAXImum","MEAN","MINImum","NONe","NWIdth","PDUty","PERIod","PHAse", 
     #                    "PK2pk","PWIdth","RISe"]
@@ -136,7 +136,7 @@ class SDS2kChannel(BaseChannel):
         wvpRespStr = self.visaInstr.query_binary_values(f"{self.name}:WaveForm? DESC", datatype='B', is_big_endian=False, container=np.ndarray)
         self.WFP.decodePreambleStr(params=wvpRespStr)
         
-    def capture(self)->BaseWaveForm:
+    def capture(self)->WaveForm:
         """"Method for transferring the waveform data from scope to compunter. According to <> the recipe for doing something useful with the
         tranferred data is:
         step 1
@@ -315,7 +315,7 @@ class SDS2kChannel(BaseChannel):
         return self.visaInstr.query(f"MEAD PHA,{self.name}-{input.name}")    
   
 
-class SDSWaveFormPreamble(BaseWaveFormPreample):
+class SDSWaveFormPreamble(WaveFormPreample):
     """This class has been written for holding the SIGLENT SDS1000 scope series preamble. Extends BaseWaveFormPreamble.
     A preample is data describing the unit, range and spacing of a Waveform."""
 
@@ -445,7 +445,7 @@ class SDSWaveFormPreamble(BaseWaveFormPreample):
 
     
     
-class SDS2kWaveForm(BaseWaveForm):
+class SDS2kWaveForm(WaveForm):
 
     def setInstr(self, visaInstr:pyvisa.resources.MessageBasedResource):
         self.visaInstr = visaInstr

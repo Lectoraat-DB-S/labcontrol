@@ -17,9 +17,9 @@ import configparser
 # Getting vertical div, vertical offset,
 
 
-from devices.BaseScope import BaseChannel, BaseWaveForm, BaseWaveFormPreample
+from devices.BaseScope.BaseChannel import Channel, WaveForm, WaveFormPreample
 
-class SDSChannel(BaseChannel):
+class SDSChannel(Channel):
     #IMMEDMEASTYPES =["CRMs","CURSORRms","DELay","FALL",
     #                    "FREQuency","MAXImum","MEAN","MINImum","NONe","NWIdth","PDUty","PERIod","PHAse", 
     #                    "PK2pk","PWIdth","RISe"]
@@ -119,7 +119,7 @@ class SDSChannel(BaseChannel):
         wvpRespStr = self.visaInstr.query_binary_values(f"{self.name}:WaveForm? DESC", datatype='B', is_big_endian=False, container=np.ndarray)
         self.WFP.decodePreambleStr(params=wvpRespStr)
         
-    def capture(self)->BaseWaveForm:
+    def capture(self)->WaveForm:
         self.getWaveformPreamble() #for quering the preamble, in order to have fresh WVP
         self.WF.setWaveForm(self.WFP)
         data = self.visaInstr.query_binary_values(f"{self.name}:WF? DAT2", datatype='B', is_big_endian=False, container=np.ndarray)
@@ -378,7 +378,7 @@ class SDSChannel(BaseChannel):
             self.write(f"FFTS {newScale}")
 
 
-class SDSWaveFormPreamble(BaseWaveFormPreample):
+class SDSWaveFormPreamble(WaveFormPreample):
     """Class for holding the SIGLENT SDS1000 scope series preamble. Extends BaseWaveFormPreamble.
     A preample is data describing the unit, range and spacing of a Waveform."""
 
@@ -508,7 +508,7 @@ class SDSWaveFormPreamble(BaseWaveFormPreample):
 
     
     
-class SDSWaveForm(BaseWaveForm):
+class SDSWaveForm(WaveForm):
 
     def setInstr(self, visaInstr:pyvisa.resources.MessageBasedResource):
         self.visaInstr = visaInstr

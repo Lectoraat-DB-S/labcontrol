@@ -4,11 +4,11 @@ import numpy as np
 import time
 import struct
 
-from devices.BaseScope import BaseChannel, BaseWaveForm, BaseWaveFormPreample
+from devices.BaseScope.BaseChannel import Channel, WaveForm, WaveFormPreample
 from devices.tektronix.scope.TekLogger import TekLog
 
 
-class TekChannel(BaseChannel):
+class TekChannel(Channel):
     IMMEDMEASTYPES =["CRMs","CURSORRms","DELay","FALL",
                         "FREQuency","MAXImum","MEAN","MINImum","NONe","NWIdth","PDUty","PERIod","PHAse", 
                         "PK2pk","PWIdth","RISe"]
@@ -151,7 +151,7 @@ class TekChannel(BaseChannel):
         # correct handling of event code 2244
         return int(self.visaInstr.query(f"wfmpre:{self.name}:nr_pt?")) #For a channel version of this command:see programming guide page 231
           
-    def capture(self)->BaseWaveForm:
+    def capture(self)->WaveForm:
         """Capture: getting the waveform data from the oscilloscope. This is the Tektronix TDS2000 series 
         implementation. According to the information in the TDS programming manual on page 54, 86, this method 
         implements the following logic:
@@ -377,7 +377,7 @@ class TekChannel(BaseChannel):
         else:
             return None
         
-    def getPhaseTo(self, input:'BaseChannel', freqEstimate=1000):
+    def getPhaseTo(self, input:Channel, freqEstimate=1000):
         """Performs a phase measurement with respect to the input. This method is an overridden variant of getPhase to and is
         fully implementend in software. Therefore, this method should be used if a scope has no features on board for measurering phase,
          or when the scope is to slow, which is the case with the TDS2002C."""
@@ -502,7 +502,7 @@ class TekChannel(BaseChannel):
 
     ##################################################################################################
     
-class TekWaveFormPreamble(BaseWaveFormPreample):
+class TekWaveFormPreamble(WaveFormPreample):
     """Class for holding the Tektronix TDS1000 scope series preamble. Extends BaseWaveFormPreamble.
     A preample is data describing the unit, range and spacing of a Waveform."""
 
@@ -588,7 +588,7 @@ class TekWaveFormPreamble(BaseWaveFormPreample):
         hulp = (channelParamList[5].strip())
         self.acqModeStr = str(hulp)
 
-class TekWaveForm(BaseWaveForm):
+class TekWaveForm(WaveForm):
 
     @classmethod
     def getWaveFormClass(cls):

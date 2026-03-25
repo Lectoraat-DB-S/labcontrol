@@ -1,13 +1,13 @@
 import pyvisa
 import numpy as np
 import socket
-from devices.BaseScope import BaseScope, BaseVertical, BaseHorizontal
+from devices.BaseScope.BaseScope import Scope
 from devices.tektronix.scope.Horizontal import TekHorizontal
 from devices.tektronix.scope.Vertical import TekVertical
 from devices.tektronix.scope.Trigger import TekTrigger
 from devices.tektronix.scope.Acquisition import TekAcquisition
 from devices.tektronix.scope.display import TekDisplay
-from devices.BaseConfig import BaseDeviceConfig, BaseScopeConfig, LabcontrolConfig
+from devices.BaseConfig import BaseScopeConfig
 from enum import Enum
 from devices.tektronix.scope.TekLogger import TekLog
 
@@ -21,7 +21,7 @@ class TekScopeEncodings(Enum):
     SRPbinary = "SRPbinary"#positive Integer, least significant byte first
       
 
-class TekScope(BaseScope):
+class TekScope(Scope):
     
     @classmethod
     def getScopeClass(cls, rm, urls, nrOfChan=None, host=None, scopeConfig: BaseScopeConfig = None):

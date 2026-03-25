@@ -1,5 +1,5 @@
-from devices.BaseScope import BaseScope, BaseChannel, BaseVertical
-from devices.BaseScope import pyvisa
+from devices.BaseScope.BaseScope import BaseScope, BaseChannel, BaseVertical
+from devices.BaseScope.BaseScope import pyvisa
 import unittest
 from unittest.mock import call, patch, MagicMock
 from src.devices.siglent.sds.SDS1000.SDS1k import SiglentScope
