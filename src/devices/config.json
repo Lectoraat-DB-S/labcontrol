@@ -3,7 +3,7 @@
         "werk": {
             "mode": "dhcp"
         },
-        "apparaatA": {
+        "Lab Perron038": {
             "mode": "static",
             "ip": "192.168.0.102",
             "mask": "255.255.255.0",

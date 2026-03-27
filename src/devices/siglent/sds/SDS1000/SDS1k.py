@@ -97,7 +97,6 @@ class SiglentScope1k(SiglentScope):
         self.display = SDSDisplay(visaResc)
         self.acquisition = SDSAcquisition(visaResc)
     
-
     def INR(self):
         """
             The INR? query reads and clears the contents of the INternal state change Register (INR). 
@@ -136,21 +135,19 @@ class SiglentScope1k(SiglentScope):
         resp = self.query("EXR?")
         return resp
     
-
-
-    def rst(self):
+    def RST(self):
         """
             The RST command initiates a device reset. The RST sets recalls the default setup.
         """
         self.write("*RST")
     
-    def sav(self, panelNr):
+    def SAV(self, panelNr):
         """
             The SAV command stores the current state of the instrument in internal memory. The SAV command stores 
             the complete front-panel setup of the instrument at the time the command is issued."""
         self.write(f"*SAV{panelNr}")
 
-    def rcl(self, panelNr):
+    def RCL(self, panelNr):
         """
             The RCL command sets the state of the instrument, using one of the ten non-volatile panel setups, by 
             recalling the complete front-panel setup of the instrument. Panel setup 0 corresponds to the default panel 
@@ -158,7 +155,7 @@ class SiglentScope1k(SiglentScope):
         """
         self.write(f"*RCL{panelNr}")
 
-    def lock(self, enable):
+    def LOCK(self, enable):
         """
             The LOCK command enables or disables the panel keyboard of the instrument.
         """

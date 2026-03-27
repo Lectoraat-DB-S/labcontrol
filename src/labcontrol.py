@@ -104,11 +104,6 @@ def dummyUse():
     #mygenChan.setAmp(1.2)
     scope:Scope = Scope.getDevice()
     #scope.trigger.mode('SINGLE')
-    print(scope.INR())
-    print(scope.INR())
-    print(scope.INR())
-    print(scope.STB())
-    print(scope.SRE())
     vert:Vertical = scope.vertical
     chan1: Channel = vert.chan(1)
     myfft:FFT = vert.getMath("FFT", chan1)

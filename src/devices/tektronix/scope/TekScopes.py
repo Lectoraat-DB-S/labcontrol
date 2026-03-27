@@ -211,26 +211,3 @@ class TekScope(Scope):
     def getDefault(self):
         return self.visaInstr.query("FACtory?")
     
-    def acquire(self):
-        return self.visaInstr.query("ACQuire?")
-    
-    def acquire(self, state, mode=None, nrOfAvg=None, stopAfter=None):
-        acqStr = ""
-        if state == "OFF" or state =="ON" or state =="RUN" or state =="STOP":
-            pass
-        else:
-            state = "RUN"
-            
-        acqStr += f"ACQUIRE:STATE {state}"
-
-        if nrOfAvg == 4 or nrOfAvg == 16 or nrOfAvg == 64 or nrOfAvg == 128:
-            acqStr += f"; NUMAVG {nrOfAvg}"
-
-        if mode =="SAMPLE" or mode == "PEAKdetect" or mode == "AVErage":
-            acqStr += f"; MODE {mode}"
-
-        if stopAfter== "RUNSTop" or stopAfter == "SEQUENCE":
-            acqStr += f"; STOPAFTER {stopAfter}"
-        
-        self.visaInstr.write(acqStr)
-    

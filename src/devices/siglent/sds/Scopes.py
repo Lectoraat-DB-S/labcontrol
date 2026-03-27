@@ -153,26 +153,79 @@ class SiglentScope(Scope):
         """
         return self.query("*IDN?")
     
-    def inr(self):
-        pass        
+    def INR(self):
+        """
+            The INR? query reads and clears the contents of the INternal state change Register (INR). 
+            The INR register (see table programming manual) records the completion of various internal operations 
+            and state transitions.
+        """
+        inrResp = self.query("INR?")
+        #return INR_HASHMAP[inrResp] #this crashed
+        return inrResp        
     
-    def rst(self):
-        pass
+    def STB(self):
+        resp = self.query("*STB?")
+        return resp
     
-    def sav(self, panelNr):
-        pass
+    def SRE(self):
+        resp = self.query("*SRE?")
+        return resp
+    
+    def ESE(self):
+        resp = self.query("*ESE?")
+        return resp
 
-    def rcl(self, panelNr):
-        pass
+    def CMR(self):
+        resp = self.query("CMR?")
+        return resp
+    
+    def CLS(self):
+        resp = self.query("*CLS?")
+        return resp
+    
+    def DDR(self):
+        resp = self.query("DDR?")
+        return resp
+    
+    def EXR(self):
+        resp = self.query("EXR?")
+        return resp
+    
+    def SAV(self, panelNr):
+        """
+            The SAV command stores the current state of the instrument in internal memory. The SAV command stores 
+            the complete front-panel setup of the instrument at the time the command is issued."""
+        self.write(f"*SAV{panelNr}")
 
-    def lock(self, enable):
-        pass 
+    def RCL(self, panelNr):
+        """
+            The RCL command sets the state of the instrument, using one of the ten non-volatile panel setups, by 
+            recalling the complete front-panel setup of the instrument. Panel setup 0 corresponds to the default panel 
+            setup.
+        """
+        self.write(f"*RCL{panelNr}")
 
+    def LOCK(self, enable):
+        """
+            The LOCK command enables or disables the panel keyboard of the instrument.
+        """
+        if (enable):
+            self.write(f"LOCK ON")
+        else:
+            self.write(f"LOCK OFF")
+    
     def isLocked(self):
-        pass
-
+        retstr = self.query(f"LOCK?")
+        if (retstr=="LOCK ON"):
+            return True
+        else:
+            return False
+        
     def menu(self, enable):
-        pass
+        if (enable):
+            self.write(f"MENU ON")
+        else:
+            self.write(f"MENU OFF")
     
     def define(self, funct, param):
         pass

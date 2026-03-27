@@ -19,6 +19,7 @@ from devices.siglent.sds.SDS2000.Display import SDSDisplay
 from devices.siglent.sds.SDS2000.Acquisition import SDS2kAcquisition 
 from devices.siglent.sds.SDS2000.commands_full import SCPI
 from devices.siglent.sds.SDS2000.params import PARAM
+from devices.BaseLabDeviceUtils import SCPICommand
 
 
 logger = logging.getLogger(__name__)
@@ -94,16 +95,7 @@ class SiglentScope2k(SiglentScope):
         self.display = SDSDisplay(visaResc)
         self.acquisition = SDS2kAcquisition(visaResc)
         super().setSCPICommand(SCPI, PARAM)
-        """8/2/2026: onderstaande regel toegevoegd in een poging om compacter te implementeren stap voor stap uit te proberen.
         
-        BaseScope.py bevat SCPICommand class. Tijdens creëren van Basescope object wordt een (leeg) SCPICommand object aangemaakt.
-        Dit object kan zo niet gebruikt worden, eerst moet zowel de juiste SCPI dict met commando's als de PARAM dict met 
-        bijbehorende set geldige parameters gekoppeld worden aan het scpiCommand opbject. Dat doet onderstaande regel.
-        SCPICommand kent een aantal functies waarmee (eventuele) parameters die meegegeven worden aan de constructie 
-        van een SCPI commando, automatisch gecontroleerd. Hiermee wordt (hopellijk) veel herhaling van dezelfde code voorkomen. 
-        Daarmee moet de implementatie van deze klasse een stuk compacter worden."""
-        self.scpiCommand.setSCPI(scpi=SCPI, param=PARAM)
-    
     def query(self, cmd: str):
         return self.visaInstr.query(cmd)
     

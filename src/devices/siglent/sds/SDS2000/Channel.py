@@ -148,13 +148,11 @@ class SDS2kChannel(Channel):
         Step 3: Calculate the voltage value corresponding to the data point.
         Using the formula: voltage value (V) = code value *(vdiv /code_per_div) voffset.
         Step 4: Calculate the time value of the data point.
-        Using the formula: time value(S) = delay --(timebase*grid/2)*index*interval
-        
-        
-        """
+        Using the formula: time value(S) = delay --(timebase*grid/2)*index*interval."""
         self.WF.setSource(self.chanNr)
         preambleStr = self.WF.getPreamble()
         self.WFP.decodePreambleStr(params=preambleStr)
+        self.WF.setWaveForm(self.WFP)
         data = self.visaInstr.query_binary_values(SCPI["WAVEFORM"]["data?"](), datatype='B', is_big_endian=False, container=np.ndarray)
         try:
             

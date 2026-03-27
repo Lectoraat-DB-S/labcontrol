@@ -7,7 +7,7 @@ class Acquisition(object):
     acquisitionList = []
 
     def __init_subclass__(cls, **kwargs):
-        """Method for auto registration of BaseChannel subclasses according to PEP487.
+        """Method for auto registration of Acquisition subclasses according to PEP487.
         DO NOT ALTER THIS METHOD NOR TRY TO OVERRIDE IT.
         """
         super().__init_subclass__(**kwargs)
@@ -15,13 +15,13 @@ class Acquisition(object):
     
     @classmethod
     def getAcquisitionClass(cls, dev):
-        """getChannelClass: factory method for scope channel objects. 
-        Remark: this baseclass implementation is empty, must be implemented by the subclass. """
+        """getAcquisitionClass: factory method for Acquisition objects. 
+        Remark: this baseclass implementation is empty, needed logic will have top be implemented by the subclass."""
         pass
 
     def __init__(self, visaInstr:pyvisa.resources.MessageBasedResource):
-        """Method voor initialising this Channel object.
-        Remark: if the subclass relies the intialisation done below, don't forget to call super().__init()__ !"""
+        """Method voor initialising this Acquisition object.
+        Remark: if the subclass relies on the intialisation done below, don't forget to call super().__init()__ !"""
         self.visaInstr = visaInstr
 
     def mode(self):
