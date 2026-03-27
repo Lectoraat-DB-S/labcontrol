@@ -44,12 +44,6 @@ class SPDChannel(BaseSupplyChannel):
         """
         self.set_current(val)
 
-    def setI(self):
-        """
-            Gets the current setpoint of this channel.
-        """       
-        self.get_current(val)
-
     #### SPD dedicated methods ######
 
     def set_output(self, status: bool):

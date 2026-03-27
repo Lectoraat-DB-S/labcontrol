@@ -108,16 +108,19 @@ class BaseSupplyChannel(object):
         """
             Sets this channel's output voltage setpoint. To be implemented by the subclass.
         """
+        pass
     
     def setI(self, val):
-         """
+        """
             Sets this channel's output current setpoint. To be implemented by the subclass.
         """
-    def setI(self):
-         """
-            Gets this channel's output current setpoint. To be implemented by the subclass.
-        """
-    
+        pass
+
+    #def setI(self):
+    #    """
+    #        Gets this channel's output current setpoint. To be implemented by the subclass.
+    #    """
+    #    pass
 
 
 class BaseSupply(object):
@@ -202,9 +205,6 @@ class BaseSupply(object):
             except (socket.gaierror, pyvisa.VisaIOError) as error:
                 #logger.error(f"Couldn't resolve host {host}")
                 return None
-            
-            
-            
                 
     def __init__(self, nrOfChan : int = None, visaInstr : pyvisa.resources.MessageBasedResource = None): 
         """abstract init function. A subclass should be override this function, which wil intitialize object below"""

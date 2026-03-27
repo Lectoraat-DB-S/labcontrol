@@ -142,7 +142,7 @@ def maakIRLEDcurve():
 def performTransCurve():
     rm = pyvisa.ResourceManager()
     print(rm.list_resources())
-    curfje.createTransCurve()
+    curfje.measHFECurve()
     
 
 def testKorad():
@@ -158,6 +158,7 @@ if __name__ == "__main__":
     rm = pyvisa.ResourceManager()
     urls = rm.list_resources()
     print(urls)
+    performTransCurve()
     #logging.basicConfig(filename='myapp.log', level=logging.INFO)
     #logger.info('Started')
     #bu.testlmfit()
@@ -166,11 +167,11 @@ if __name__ == "__main__":
     #bu.setEthernet()
     #maakIRLEDcurve()
     #input("druk toets om te starten")
-    dummyUse()
+    #dummyUse()
     #input("druk toets om te stoppen .....")
     
     #ledcurve.testDiodePlotCurve()
-    doACSweep()
+    #doACSweep()
     #testUSBTMC()
     #testTekTm()
 
@@ -184,5 +185,6 @@ if __name__ == "__main__":
     #performTransCurve()
     #logger = logging.getLogger(__name__)
     #logger.setLevel(logging.DEBUG)
+    plt.show()
 
     
