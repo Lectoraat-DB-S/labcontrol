@@ -1,6 +1,6 @@
 import pyvisa as visa
 import numpy as np
-from prefixed import Float   
+#from prefixed import Float   
 
 from devices.BaseScope.BaseHorizontal import Horizontal
 

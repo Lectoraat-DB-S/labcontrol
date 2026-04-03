@@ -158,7 +158,13 @@ if __name__ == "__main__":
     rm = pyvisa.ResourceManager()
     urls = rm.list_resources()
     print(urls)
-    performTransCurve()
+    VBB_array = np.array([1, 2, 3, 4, 5])
+    VBE_array = np.array([0, 0.2, 0.3, 0.4, 0.5])
+    RB=100e3
+    myiblist = curfje.berekenStroomDoor(RB, list(VBB_array),list(VBE_array))
+    print(myiblist)
+    
+    #performTransCurve()
     #logging.basicConfig(filename='myapp.log', level=logging.INFO)
     #logger.info('Started')
     #bu.testlmfit()
@@ -185,6 +191,6 @@ if __name__ == "__main__":
     #performTransCurve()
     #logger = logging.getLogger(__name__)
     #logger.setLevel(logging.DEBUG)
-    plt.show()
+    #plt.show()
 
     

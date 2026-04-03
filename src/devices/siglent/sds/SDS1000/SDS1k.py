@@ -96,6 +96,15 @@ class SiglentScope1k(SiglentScope):
         self.trigger = SDSTrigger(self.vertical,visaResc)
         self.display = SDSDisplay(visaResc)
         self.acquisition = SDSAcquisition(visaResc)
+
+    def OPC(self):
+        """Method for sending an *OPC? query to the instrument. This query places an ASCII "1" in the output queue when 
+        all pending device operations have completed. The interface hangs until this query returns. However, testing with Siglent SDS1202XE
+        sampling at low speeds, shows direct return from this call. Unclear it's because of a bug in the Siglent firmware, in the handling
+        of this call by pyvisa, or the fact that Siglent immediately returns the most recent memory content.  
+        """
+        resp = self.visaInstr.query("*OPC?")
+        return resp
     
     def INR(self):
         """

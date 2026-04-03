@@ -131,12 +131,12 @@ class Scope(object):
         self._scopeConfig = scopeConfig
 
     def OPC(self):
-        """Method for sending an *OPC? query to the instrument. This query places an ASCII "1" in the output queue when 
-        all pending device operations have completed. The interface hangs until this query returns."""
-        resp =self.visaInstr.query("*OPC?")
-        print("OPC query response")
-        print(resp)
-        return self.visaInstr.query("*OPC?")
+        """Method for sending an *OPC? query to the instrument. The *OPC? query places a 1 in the Output Queue once an operation that  
+        generates an OPC message is complete. The *OPC? query does not return until all pending OPC operations have completed. Therefore, 
+        your time-out must be set to a time at least if the longest expected time for the operations to complete.
+          
+        """
+        pass
 
     def SAV(self):
         pass
@@ -176,7 +176,7 @@ class Scope(object):
         return self.visaInstr
     
     def setSCPICommand(self, SCPICommandDict: dict = None, PARAMDict: dict = None):
-        """This method sets the SCPI as well as the PARAM dict member of this Scope, if necessary. Both members are needed if an inheriting
+        """This method sets the SCPI as well as the PARAM dict member of this Scope if needed. Both members are needed if an inheriting
         class tries to avoid hardcoded SCPI commands. Using these dict for indirect referencing of a SCPI command and, optionally, its 
         companying PARAMeters, might help in making code more reuseable by prevent cluttering of hardcode instrument specific SCPI commands.    """
         self.scpiCommand = SCPICommand(SCPICommandDict, PARAMDict)
@@ -192,6 +192,8 @@ class Scope(object):
             self.vertical.setProcMode(self.mode)
     
 
- 
+class ScopePool(object):
+    """A class for synchronising access to a fysically connect oscilloscope."""
+    pass 
 
 
