@@ -1,8 +1,7 @@
-src
-===
+labcontrol
+==========
 
 .. toctree::
    :maxdepth: 4
 
-   src
-
+   labcontrol

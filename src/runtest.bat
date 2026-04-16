@@ -1,1 +1,0 @@
-python -m unittest tests.testSDS.TestSDSCreate.testNewSDS tests.testSDS.TestSDSCreate.testCaptureTDS
