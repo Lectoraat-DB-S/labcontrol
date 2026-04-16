@@ -1,0 +1,24 @@
+# Defining the exact version will make sure things don't break
+sphinx==5.3.0
+sphinx_rtd_theme==1.1.1
+sphinx-notfound-page==1.0.2
+standard-imghdr==3.13.0
+py7zr
+pyvisa
+numpy
+matplotlib
+prefixed
+sphinx
+sphinx-rtd-theme
+pandas
+lmfit
+scipy
+zeroconf
+psutil
+pyusb
+pyserial
+python-usbtmc
+pyqtgraph
+numdifftools
+libusb-package
+scapy
