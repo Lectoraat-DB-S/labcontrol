@@ -15,3 +15,5 @@ documentation for details.
    :maxdepth: 2
    :caption: Contents:
 
+   Introduction <introduction/index.rst>
+   labcontrol
