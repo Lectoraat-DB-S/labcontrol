@@ -2,10 +2,19 @@
 
 import shutil
 import subprocess
+import sys
 
 import click
 
 from ..output import success, warning, error
+
+
+def _detach_kwargs():
+    """Kwargs to launch a fully detached child across platforms."""
+    if sys.platform == "win32":
+        flags = subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
+        return {"creationflags": flags, "close_fds": True}
+    return {"start_new_session": True}
 
 
 @click.command()
@@ -27,4 +36,4 @@ def openhantek():
         error("OpenHantek not found in PATH")
         return
     success(f"Starting OpenHantek ({exe})")
-    subprocess.Popen([exe], start_new_session=True)
+    subprocess.Popen([exe], **_detach_kwargs())

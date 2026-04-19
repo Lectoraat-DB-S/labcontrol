@@ -74,7 +74,10 @@ def main():
         print("  1. Is the scope plugged in?")
         print("  2. Check USB cable connection")
         print("  3. Try a different USB port")
-        print("  4. Check permissions: sudo chmod 666 /dev/bus/usb/*/*")
+        if sys.platform.startswith("linux"):
+            print("  4. Check permissions: sudo chmod 666 /dev/bus/usb/*/*")
+        elif sys.platform == "win32":
+            print("  4. Install WinUSB driver via Zadig (https://zadig.akeo.ie/)")
         return 1
 
     print(f"✓ Found: {model}")
@@ -203,12 +206,21 @@ def main():
         print()
         print("✗ ERROR: Permission denied")
         print()
-        print("Fix (run in terminal):")
-        print("  sudo chmod 666 /dev/bus/usb/*/*")
-        print()
-        print("Or add a udev rule for permanent fix:")
-        print('  echo \'SUBSYSTEM=="usb", ATTR{idVendor}=="04b4", MODE="0666"\' | sudo tee /etc/udev/rules.d/50-hantek.rules')
-        print("  sudo udevadm control --reload-rules")
+        if sys.platform.startswith("linux"):
+            print("Fix (run in terminal):")
+            print("  sudo chmod 666 /dev/bus/usb/*/*")
+            print()
+            print("Or add a udev rule for permanent fix:")
+            print('  echo \'SUBSYSTEM=="usb", ATTR{idVendor}=="04b4", MODE="0666"\' | sudo tee /etc/udev/rules.d/50-hantek.rules')
+            print("  sudo udevadm control --reload-rules")
+        elif sys.platform == "win32":
+            print("Fix: install the WinUSB driver via Zadig.")
+            print("  1. Download Zadig: https://zadig.akeo.ie/")
+            print("  2. Options -> List All Devices, select the Hantek scope")
+            print("  3. Install WinUSB (or libusb-win32)")
+            print("  4. Repeat after firmware flash (VID changes 04B4 -> 04B5)")
+        else:
+            print("Fix: grant USB access for your platform.")
         return 1
 
     except usb1.USBErrorNoDevice:

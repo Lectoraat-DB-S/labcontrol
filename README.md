@@ -31,6 +31,36 @@ Installeer het pakket:
 pip install -e ".[dev]"
 ```
 
+## Platform setup
+
+### Linux
+
+USB toegang + automatische firmware flash via udev:
+
+```bash
+sudo ./install-hantek-udev.sh
+```
+
+Launcher: `./labcontrol-shell.sh` (gebruikt door `.desktop` file).
+
+### Windows
+
+1. **USB driver**: installeer eenmalig **Zadig** (https://zadig.akeo.ie/).
+   Sluit de Hantek aan, kies "Options → List All Devices", selecteer de scope
+   en installeer **WinUSB** (of libusb-win32). Doe dit voor beide USB-ID's:
+   - `04B4:6022` / `04B4:602A` / `04B4:6021` (vóór firmware)
+   - `04B5:6022` / `04B5:602A` / `04B5:6021` (ná firmware)
+
+2. **Firmware flash** (eerste keer, geen udev op Windows):
+
+   ```powershell
+   python src\flash_hantek_firmware.py
+   ```
+
+3. **Launcher**: dubbelklik `labcontrol-shell.cmd` of roep vanuit een
+   snelkoppeling aan. Die start PowerShell, activeert de venv en print de
+   banner. Voor een Startmenu-item: maak een `.lnk` naar `labcontrol-shell.cmd`.
+
 ## Commands
 
 ### Apparaten
