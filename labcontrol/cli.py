@@ -8,11 +8,15 @@ from .commands.scope import scope
 from .commands.tools import openhantek
 
 
-@click.group()
+@click.group(invoke_without_command=True)
 @click.version_option(package_name="labcontrol")
-def cli():
+@click.pass_context
+def cli(ctx):
     """Labcontrol - CLI instrument configuration tool."""
-    pass
+    if ctx.invoked_subcommand is None:
+        from .banner import print_banner
+        print_banner()
+        click.echo(ctx.get_help())
 
 
 cli.add_command(devices)
