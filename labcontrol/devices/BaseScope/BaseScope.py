@@ -16,10 +16,10 @@ logger = logging.getLogger(__name__)
 class Scope(object):
     """Scope: base class for oscilloscope implementation.
         An Implementation for a fysical oscilloscope has to inherit from this class, because:
+        
         1. This base class takes care for subclass auto registration, according to pep487, See:  
         https://peps.python.org/pep-0487/
-        2. Implementing subclasses HAVE TO implement the getDevice method of this class, which has subsequent signature:
-        @classmethod def getScopeClass(cls, rm, urls, host=None, scopeConfigs: list = None):
+        2. Implementing subclasses HAVE TO implement the getDevice method of this class, which has subsequent signature:@classmethod def getScopeClass(cls, rm, urls, host=None, scopeConfigs: list = None):
         3. Be sure BaseScope's constructor has access to the inheriting subclasses during instantion, for example by
         adding the path to the subclass to the __init__.py of the devices folder. If you won't, the
         subclass will not be registated and the correct supply object won't be instantiated.
@@ -30,6 +30,7 @@ class Scope(object):
         4. To instantiate an (oscilloscope) object at runtime, one has to call getDevice method of this base class. DO NOT DIRECTLY 
         CALL THE CONSTRUCTOR OF THIS BASE CLASS! The getDevice method which will start the object creation factory, which will return 
         the right subclass type of object belonging to the physically connected instrument
+        
     """
     scopeList = []        
     

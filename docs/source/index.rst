@@ -16,4 +16,5 @@ documentation for details.
    :caption: Contents:
 
    Introduction <introduction/index.rst>
+   Design <design/index.rst>
    labcontrol

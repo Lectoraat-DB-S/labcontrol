@@ -47,11 +47,11 @@ class SDSChannel(Channel):
 
     def setCoupling(self, coupling):
         if coupling == "GND":
-            self.write(f"{self.name}: CPL GND")
+            self.write(f"{self.name}:CPL GND")
         elif coupling == "AC":
-            self.write(f"{self.name}: CPL A1M")
+            self.write(f"{self.name}:CPL A1M")
         else:
-            self.write(f"{self.name}: CPL D1M")
+            self.write(f"{self.name}:CPL D1M")
 
     def getCoupling(self):
         return self.query(f"{self. name}: CouPLing?")

@@ -1,0 +1,23 @@
+\documentclass[tikz,border=15mm]{standalone}
+\usepackage[siunitx, RPvoltages,european]{circuitikz}
+
+\standaloneenv{circuitikz}
+\ctikzsetstyle{romano}
+\ctikzset{bipoles/open/voltage/distance from node=0.8mm}
+%\ctikzset{voltage/europeanfont=\tiny}
+
+\begin{document}
+
+\begin{circuitikz}
+	\path (0,0)coordinate(start)++(4,0)coordinate(toRE);
+	\node[vsourceshape, rotate=-90, anchor=west] (V1)at (0,1.5){};
+	\draw (start) -- (V1.east);
+	\draw (toRE) to [R,l_=$R_E$] ++(0,1.5) node[npn, anchor=E](Q1){};  
+	\draw (V1.west) -- (V1.west|-Q1.B) to[R,l_=$R_B$] (Q1.B);
+	\draw (Q1.C) to [ammeter] ++(2,0)coordinate(Vsupply) ;
+	\node[vsourceshape, rotate=-90] (V2)at (Vsupply|-Q1.E){};
+	\draw(V2.west) -- (Vsupply);
+	\draw(V2.east) -- (V2.east|-start)--(start);
+
+\end{circuitikz}
+\end{document}

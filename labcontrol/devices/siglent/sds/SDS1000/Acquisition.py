@@ -125,4 +125,7 @@ class SDSAcquisition(Acquisition):
             self.visaInstr.write("ACQuire:STOPAfter SEQuence")
         else:
             self.visaInstr.write("ACQuire:STOPAfter RUNSTop")
+
+    def setMemDepth(self, newMemDepth):
+        self.visaInstr.write(f"MEMORY_SIZE {newMemDepth}")
         

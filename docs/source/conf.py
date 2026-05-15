@@ -23,11 +23,24 @@ release = '1'
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ['sphinx.ext.autodoc',]
+extensions = ['sphinx.ext.autodoc',
+              'sphinx.ext.autosectionlabel',
+              'sphinx.ext.autosummary',
+              'sphinx.ext.napoleon',
+              'sphinx.ext.mathjax',
+              'sphinx.ext.viewcode',
+              'sphinx.ext.intersphinx',
+              'sphinx_rtd_theme',
+              'nbsphinx',
+              #'inheritance_diagram',
+              'IPython.sphinxext.ipython_directive',
+              'IPython.sphinxext.ipython_console_highlighting',]
 
 
 templates_path = ['_templates']
 exclude_patterns = []
+
+autodoc_mock_imports = ['pyvisa', 'pandas', 'lmfit', 'usb', 'scapy', 'serial', 'libusb_package', 'usbtmc']
 
 
 

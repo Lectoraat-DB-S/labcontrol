@@ -12,6 +12,137 @@ from devices.BaseScope.BaseChannel import Channel
 from devices.BaseDMM import BaseDMM
 import pandas as pd
 
+class BJTMEASMODEL(object):
+    def __init__(self):
+        self.BJTType= "NPN"
+        self._scope = None
+        self._dmm   = None
+        self._supply= None
+        self._Rb    = None
+        self._Rc    = None
+        self.VCCmax = None 
+        self.VCCmin = None
+        self.VCCstep = None
+        self._VCCList: list = None
+        self.VBBmax = None 
+        self.VBBmin = None
+        self.VBBstep = None
+        self._VBBList: list = None
+        self.VbbFineLevel = None       #the VBB inputlevel value to do smaller step measurements.  
+        self.VbbFineStepSize = None    #the stepsize for fine measurement. Above VbbFineLevel this stepsize will be used.
+        self.VbbCoarseStep = None      #the stepsize for coarse measurements. Below VbbFineLevel this stepsize will be used.
+        self._Vcmeas: list = None       #list holding measured Vc voltage by the scope
+        self._Vbmeas: list = None       #list holding scope measured Vb
+        self._Icmeas: list = None       #list for holding the DMM measured collector current
+        self._Vccmeas: list = None    #list holding Vcc read values of supply
+        self._Vbbmeas: list = None    #list holding Vbb read values of supply
+        self._WaitTime  = None
+
+    @property
+    def scope(self):
+        return self._scope
+    
+    @scope.setter
+    def scope(self, newScope: Scope):
+        self._scope = newScope
+    
+    @property
+    def dmm(self):
+        return self._dmm
+    
+    
+    @dmm.setter
+    def dmm(self, newDmm: BaseDMM):
+        self._scope = newDmm
+    
+    @property
+    def supply(self):
+        return self._supply
+
+    @supply.setter
+    def supply(self, newSupply: BaseSupply):
+        self._scope = newSupply
+    
+    def doInputCharMeas(self):
+        collControl:BaseSupplyChannel = self.supply.chan(1)
+        baseControl:BaseSupplyChannel = self.supply.chan(2)
+        basechan: Channel = self.scope.vertical.chan(1)
+        collchan: Channel = self.scope.vertical.chan(2)
+        #set all supply start values.
+        collControl.setV(self.VccMax)
+        baseControl.setV(self.VbbMin)
+        collControl.setI(1)
+        baseControl.setI(0.5)
+    
+        #Turn both supply channels on.
+        baseControl.enable(True)
+        collControl.enable(True)
+        #Turn both scope traces on
+        basechan.setVisible(True)
+        collchan.setVisible(True)
+        #set vertical scale for both channels.
+        basechan.setVdiv(0.5)
+        collchan.setVdiv(5)
+        
+        time.sleep(2*self._WaitTime) #Give circuit some time to stabilize 
+        
+        VBBsetPoints = list()
+        VBBsetPoints.append(np.arange (self.VbbMin, self.VbbFineLevel, self.VbbCoarseStep))
+        VBBsetPoints.append(np.arange (self.VbbFineLevel, self.Vbbmax, self.VbbFineStep))
+
+        for x in VBBsetPoints:
+            baseControl.setV(x)
+            time.sleep(self._WaitTime) # if RB value is low, settling time of IB, IC and VBE is also low.
+            val =self. dmm.get_current() 
+            self.collCurr.append(val)
+            basevolval = basechan.getMean()
+            self.Vbmeas.append(basevolval)
+            colvolval = collchan.getMean()
+            self.Vcmeas.append(colvolval)
+                
+        #Measurements all done. Disable supply
+        collControl.enable(False)  
+        baseControl.enable(False)     
+        
+    def setForIBTarget(self):
+        pass 
+        
+    def doOutputCharMeas(self):
+        collControl:BaseSupplyChannel = self.supply.chan(1)
+        baseControl:BaseSupplyChannel = self.supply.chan(2)
+        basechan: Channel = self.scope.vertical.chan(1)
+        collchan: Channel = self.scope.vertical.chan(2)
+        #set all supply start values.
+        collControl.setV(self.VccMax)
+        baseControl.setV(0)
+        collControl.setI(1)
+        baseControl.setI(0.5)
+    
+        #Turn both supply channels on.
+        baseControl.enable(True)
+        collControl.enable(True)
+        #Turn both scope traces on
+        basechan.setVisible(True)
+        collchan.setVisible(True)
+        #set vertical scale for both channels.
+        basechan.setVdiv(0.5)
+        collchan.setVdiv(5)
+        
+        
+        VCCsetPoints = list()
+        VCCsetPoints.append(np.arange ( self.VCCmax, self.VCCmin, -self.VCCstep))
+        
+        IBsetPoints = list()
+        # TODO: create the list
+        
+        time.sleep(2*self._WaitTime)
+        
+        for y in VCCsetPoints:
+            collControl.setV(y)    
+            time.sleep(2*self._WaitTime)
+            for x in IBsetPoints:
+                self.setForIBTarget(x)
+                #Now measure all relevant quantities
 
 INPUTDEV = 1
 OUTPUTDEV = 2
@@ -100,7 +231,7 @@ def makeCurveWithOnlySupply():
     plt.plot(base_vol,coll_curr)
     plt.show()
 
-def measHFECurve(VccMin = 0, VccMax = 15, VbbMin = 0, Vbbmax = 0.75, VbbFineLevel = 0.4, VbbFineStep = 0.01, VbbCoarseStep = 0.02,
+def measBJTInputChar(VccMin = 0, VccMax = 15, VbbMin = 0, Vbbmax = 0.75, VbbFineLevel = 0.4, VbbFineStep = 0.01, VbbCoarseStep = 0.02,
                  RB=0, RC=0, save2csv: bool = 'False'):
     """Function for extracting the BJT NPN characteristics by measurements.
     Internal variabels:
@@ -108,7 +239,8 @@ def measHFECurve(VccMin = 0, VccMax = 15, VbbMin = 0, Vbbmax = 0.75, VbbFineLeve
         Vbmeas  : A list for keeping the base voltage (Vb), measured by a scope.
         collCurr: A list for keeping the collector current (Ic), measured by dmm.
         Vccmeas : A list for keeping readout values of the VCC supply.
-        Vbbmeas : A list for keeping readout values of the VBB supply."""
+        Vbbmeas : A list for keeping readout values of the VBB supply.
+    """
     WAITTIME = 0.5      # Time in seconds to wait before taking measurement after setpoint change. Depends on circuit.
     Vcmeas = list()     #list holding measured Vc voltage by the scope
     Vbmeas = list()     #list holding scope measured Vb
@@ -159,33 +291,53 @@ def measHFECurve(VccMin = 0, VccMax = 15, VbbMin = 0, Vbbmax = 0.75, VbbFineLeve
     #Measurements all done. Disable supply
     collControl.enable(False)  
     baseControl.enable(False)  
+    ccurrent = np.array(collCurr)
+    basevolt = np.array(Vbmeas)
+    collvolt = np.array(Vcmeas)
         
     if RB !=0 and RC != 0:
         myIb = calcCurrent(RB, V1=Vbbmeas, V2=Vbmeas)
         myIc = calcCurrent(RC, V1=Vccmeas, V2=Vcmeas)
+        ibCalcCurrent = np.array(myIb)
+        icCalcCurrent = np.array(myIc)
         myHFE = np.empty(len(collCurr))
-        myHFE = myIc/myIb
+        myHFE = icCalcCurrent/ibCalcCurrent
    
-    #convert relevant lists to arrays for doing calucaltions and plotting
-    ccurrent = np.array(collCurr)
-    basevolt = np.array(Vbmeas)
-    collvolt = np.array(Vcmeas)
-    ibCalcCurrent = np.array(myIb)
-    icCalcCurrent = np.array(myIc)
+        #convert relevant lists to arrays for doing calucaltions and plotting
+        
+        retval = (basevolt, collvolt, ccurrent, ibCalcCurrent, icCalcCurrent, myHFE )
+        
+        #if save2csv == True => create dataframe for easy csv save
+        if save2csv:
+            df = pd.DataFrame((basevolt,ccurrent,collvolt, ibCalcCurrent, icCalcCurrent,np.array(Vbbmeas), np.array(Vccmeas)))
+            df.columns = ["VBE (Scope)", "Ic (DMM)", "VCE (Scope)", f"Ib (calculated Rb={RB})", f"Ic (calculated Rc={RC})", "Readout VBB", "Readout VCC"]
+            df.to_csv('hfeNPNBJT.csv', index=False, header=False)   
+    else: 
+        retval = (basevolt, collvolt, ccurrent)
+
+
+
+    return retval
     
-    #if save2csv == True => create dataframe for easy csv save
-    if save2csv:
-        df = pd.DataFrame((basevolt,ccurrent,collvolt, ibCalcCurrent, icCalcCurrent,np.array(Vbbmeas), np.array(Vccmeas)))
-        df.columns = ["VBE (Scope)", "Ic (DMM)", "VCE (Scope)", f"Ib (calculated Rb={RB})", f"Ic (calculated Rc={RC})", "Readout VBB", "Readout VCC"]
-        df.to_csv('hfeNPNBJT.csv', index=False, header=False)
-
-    #interesting plots for a BJT is: 1. ib vs ic 2, Ic-Vbe, 3. Ib-Vbe, 4. Ic-Vce
-    # interesting 'annotations' or 'features' are the tangents of Ic-Vbe and Ib-Vbe at a settable quiescent point.
-    # Another suggestions: curvefitting of ib and ic vs VBE (exponential function)
-    # Four quadrant plots of BJT characteristics exists, giving easy overview of the transistors properties. Should try to
-    # create one.   
-    fig, axs = createBJTCharPlots(Vbmeas, myIb, myIc)
-
-    #TODO: When debugging, plots won't show-up. They will show during normal execution.
-    # But calling plt.show() within main function does work. Plots appear normally, even with debug. 
-    plt.show()
+def measureBJTOutputChar(IBsetpoints: list, VCERange = (0,30, 0.1), Pmax = 0.1, RB=0, RC=0):
+    """Function for measuring the output characteristics of a BJT, based on measuring circuit: TBD.
+    For every value in the list IBsetpoints, this script will 
+    
+    1. measures VC (with E=0 V), VB with a oscilloscope and Ic with a DMM/ampmeter. 
+    2. Reads back the values of VCC and VBB
+    3. Values of RB and RC for calculating Ib and IC based on VBB, VB, VCC and VC.
+    For every VCE in the range VCEmin (default:0 V) to VCEMax(default: 30V) in  a predefined stepsize (0.1 V)
+    
+    Suggestion: start at VCE max en step down to VCE min.
+    Remark: better measurement when base of BJT is connect to a current source or sink, instead of a voltage source.  
+    
+    
+    """
+    VCEmin = VCERange[0]
+    VCEmax = VCERange[1]
+    VCEstep = VCERange[2]
+    
+    for val in np.arange (VCEmin, VCEmax, VCEstep):
+        pass
+    
+    pass

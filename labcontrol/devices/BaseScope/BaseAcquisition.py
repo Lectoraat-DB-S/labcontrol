@@ -44,3 +44,6 @@ class Acquisition(object):
 
     def state(self, runMode):
         pass
+    
+    def setMemDepth(self, newMemDepth):
+        pass

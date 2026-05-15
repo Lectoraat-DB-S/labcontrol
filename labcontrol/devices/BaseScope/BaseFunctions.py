@@ -2,10 +2,16 @@ import logging
 import math
 import lmfit
 import numpy as np
+import sys
+import os
 
 import matplotlib.pyplot as plt
 from scipy.fft import fft
+import multiprocessing
+
 from devices.BaseScope.BaseChannel import Channel, WaveForm
+
+from devices.BaseLabDeviceUtils import PhaseFittingProcess, PhaseFittingProcessProxy
 
 logger = logging.getLogger(__name__)
 ########## BASEFUNCTION ###########
@@ -16,6 +22,7 @@ class ScopeFunction(object):
     FFT:dict = {3: "FFT"}
     PHASEFIT = {4: "PHASE"}
     VALIDFUNCTONS:list = [ADD, SUB, MUL, FFT, PHASEFIT]
+    
     def __init__(self, theFunction:dict = None):
         self.functionType = None
         if type(theFunction) != dict or len(theFunction) != 1:
@@ -141,18 +148,18 @@ class SineFitter(object):
 
 
     """A class for fitting a model of a sine,"""
-    def __init__(self, amp=1, freq=1000, phase=0, offset=0):
+    def __init__(self, amp=1, freq=1000, phase=0, offset=0, debug=False):
         self._amp = amp
         self._freq = freq
         self._phase = phase
         self._offset = offset
-        self._model = None
+        self._model = lmfit.Model(self.sine_function)
         self._params = None
-        self._result = None
         self._method = "basinhopping"
-        self._summary = None
-        self._bestval = None
+        self._result = None
+        self._fitSummary = None
         self._WF: WaveForm = None
+        self._bestValues = None
         self._xdat = None
         self._ydat = None
         self._yfit = None
@@ -161,31 +168,60 @@ class SineFitter(object):
         self._bestFreq = 0
         self._bestPhase = 0
         self._bestOffset = 0
+        self._debugPrint = debug
+         
+    @property
+    def model(self):
+        return self._model
+    
+    @property
+    def fitSummary(self):
+        return self._fitSummary
+    
+    @fitSummary.setter
+    def fitSummary(self, newSummary):
+        if newSummary == None:
+            return
+        else:
+            self._fitSummary = newSummary
+            self._bestValues = newSummary['best_values']
 
+    @property
+    def bestValues(self):
+        return self._bestValues
+    
+    @bestValues.setter
+    def bestValues(self, newBestVals):
+        if newBestVals == None:
+            return
+        else:
+            self._bestValues = newBestVals
+    
     # Best properties
     @property
     def bestAmp(self):
-        if self._bestval == None:
+        if self.bestValues == None:
             return None
-        return self._bestval["amp"]
+        
+        return self.bestValues["amp"]
     
     @property
     def bestFreq(self):
-        if self._bestval == None:
+        if self.bestValues == None:
             return None
-        return self._bestval["freq"]
+        return self.bestValues["freq"]
     
     @property
     def bestPhase(self):
-        if self._bestval == None:
+        if self.bestValues == None:
             return None
-        return self._bestval["phase"]
+        return self.bestValues["phase"]
     
     @property
     def bestOffset(self):
-        if self._bestval == None:
+        if self.bestValues == None:
             return None
-        return self._bestval["offset"]
+        return self.bestValues["offset"]
     
     
 
@@ -245,8 +281,8 @@ class SineFitter(object):
     
     @property
     def params(self):
-       return self._params
-       
+        return self._params
+
     @params.setter
     def params(self, fitParams):
         self._params = fitParams
@@ -293,7 +329,7 @@ class SineFitter(object):
 
     def makeParam(self):
         #TODO: check whether 0.95*self will work. Goal: better control over variantion of parameters.
-        self.params = self._model.make_params(amp={'value': self.amp, 'min': 0.95*self.amp, 'max': 1.05*self.amp, 'vary': True},
+        self.params = self.model.make_params(amp={'value': self.amp, 'min': 0.95*self.amp, 'max': 1.05*self.amp, 'vary': True},
                             freq={'value': self._freq, 'min': 0.01*self._freq, 'max': 1.1*self._freq, 'vary': True},
                             phase={'value': self._phase, 'min': -np.pi, 'max': np.pi, 'vary': True},
                             offset={'value': self._offset, 'min': -0.1, 'max': +0.1, 'vary': True})
@@ -302,15 +338,25 @@ class SineFitter(object):
 
 
     def makeFit(self):
-        
-        self._model = lmfit.Model(self.sine_function)
         self.makeParam()
-        self._result = self._model.fit(data=self.ydat, params=self.params, x=self.xdat, 
+        self._result = self.model.fit(data=self.ydat, params=self.params, x=self.xdat, 
                                        method=self.method)
-        self._summary = self._result.summary()
-        self._bestval = self._summary['best_values']
+        self.fitSummary = self._result.summary()
         self.yfit = self.sine_function(self.xdat, self.bestAmp, self.bestFreq, self.bestPhase, 
                                        self.bestOffset)
+        
+    def makefit_mp_worker(self, outQueue):
+        if self._debugPrint:
+            print(f"fit worker with pid:{multiprocessing.current_process().pid} starts running")
+        outDict = {}
+        self.makeParam()
+        self._result = self.model.fit(data=self.ydat, params=self.params, x=self.xdat, 
+                                       method=self.method)
+        self.fitSummary = self._result.summary()
+        outDict.update(self.bestValues)
+        outQueue.put(outDict)
+        if self._debugPrint:
+            print(f"worker with pid:{multiprocessing.current_process().pid} exits now")
 
     def printFittedParam(self):
         print(f"Value of fitted amp: {self.amp}")
@@ -327,36 +373,48 @@ class SineFitter(object):
 
 class PhaseEstimator(ScopeFunction):
     
-    def __init__(self, inputWF:WaveForm=None, outputWF:WaveForm=None, debugPrint=False):
+    procs: list = None
+    
+    def __init__(self, inputWF:WaveForm=None, outputWF:WaveForm=None, fitVersion = 2, debugPrint=False):
         super().__init__(ScopeFunction.PHASEFIT)
         #TODO: create input- and outputfitter setters and getters for changing the fitting waveform function.
-        self._inputFitter = SineFitter()
-        self._outputFitter = SineFitter()
-        
+        #direct onderstaande is eerste versie curvefit software: met/zonder elementaire multiprocessing, waarbij process 1x gebruikt wordt.
+        if PhaseEstimator.procs != None: # This means init has been called before. Could mean processes are still running or waiting
+            if len(PhaseEstimator.procs) != 0: 
+                # Yep. There are processes still alive. Either you will use those ones, or kill them first and create new ones.
+                #TODO: use logging instead.
+                print("PhaseEstimator: trying to create fitting processes while List of processors is not None. Please quit current EStimator first.")
+            return
+        self._fitVersion = fitVersion
         self._inputWF = None
         self._input = None
         self._tAxis = None
-        self._inputFitter.WF = None
 
         self._outWF = None
         self._output = None
-        self._outputFitter.WF = None
+        self._debug = debugPrint
+        self._phaseDiff = None
 
+        if fitVersion == 1:  
+            self._inputFitter = SineFitter(debug=debugPrint)
+            self._outputFitter = SineFitter(debug=debugPrint)
+        else:
+            #Dit is de tweede versie: herbruikbare fitprocessen die via een proxy bestuurd worden.
+            self._inputFitter:PhaseFittingProcessProxy = None
+            self._outputFitter:PhaseFittingProcessProxy = None
+            #method below creates input and output queues needed and assignment to proxies.
+            self.create_mp_fit_workers()
+        
+        
         if inputWF != None:
             self._inputWF = inputWF
             self._input = inputWF.scaledYdata
             self._tAxis = inputWF.scaledXdata
-            self._inputFitter.WF = inputWF
+            
 
         if outputWF != None:
             self._outWF = outputWF
             self._output = outputWF.scaledYdata
-            self._outputFitter.WF = outputWF
-        
-        
-        
-        self._debug = debugPrint
-        self._phaseDiff = None
 
     def setOperands(self, oper1:WaveForm=None, oper2:WaveForm=None):
         super().setOperands(oper1, oper2)
@@ -371,10 +429,21 @@ class PhaseEstimator(ScopeFunction):
     @property
     def inputFitter(self):
         return self._inputFitter
+    
+    @inputFitter.setter
+    def inputFitter(self, newFitterObj):
+        if newFitterObj != None:
+            self._inputFitter = newFitterObj
 
     @property
     def outputFitter(self):
         return self._outputFitter
+
+    @inputFitter.setter
+    def outputFitter(self, newFitterObj):
+        if newFitterObj != None:
+            self._outputFitter = newFitterObj
+
 
     @property
     def inputWF(self):
@@ -383,9 +452,9 @@ class PhaseEstimator(ScopeFunction):
     @inputWF.setter
     def inputWF(self, inWF: WaveForm):
         if inWF.any() != None:
-           self._inputWF = inWF
-           self._input = self.inputWF.scaledYdata
-           self.inputFitter.WF = inWF
+            self._inputWF = inWF
+            self._input = self._inputWF.scaledYdata
+            self._inputFitter.WF = inWF
 
     @property
     def input(self):
@@ -394,7 +463,7 @@ class PhaseEstimator(ScopeFunction):
     @input.setter
     def input(self, signal):
         if signal.any() != None:
-           self._input = signal
+            self._input = signal
 
     @property
     def outputWF(self):
@@ -403,9 +472,9 @@ class PhaseEstimator(ScopeFunction):
     @outputWF.setter
     def outputWF(self, outWF: WaveForm):
         if outWF.any() != None:
-           self._outWF = outWF
-           self._output = self.outputWF.scaledYdata
-           self.outputFitter.WF = outWF
+            self._outWF = outWF
+            self._output = self._outputWF.scaledYdata
+            self._outputFitter.WF = outWF
     
     @property
     def output(self):
@@ -414,8 +483,8 @@ class PhaseEstimator(ScopeFunction):
     @output.setter
     def output(self, signal):
         if signal.any() != None:
-           self._output = signal 
-           
+            self._output = signal 
+
     @property
     def tAxis(self):
         return self._tAxis
@@ -423,12 +492,14 @@ class PhaseEstimator(ScopeFunction):
     @tAxis.setter
     def tAxis(self, timeData):
         if timeData != None:
-           self._tAxis = timeData 
+            self._tAxis = timeData 
 
 
     @property
     def phaseDiffRAD(self):
-        """Returns the phase difference between output en input in rad."""
+        """
+        Returns the phase difference between output en input in rad.
+        """
         #return (self._phaseDiff*180.0)/math.pi
         self._phaseDiff = self._outputFitter.bestPhase - self._inputFitter.bestPhase
 
@@ -440,36 +511,160 @@ class PhaseEstimator(ScopeFunction):
 
         return (self._phaseDiff*180.0)/math.pi
 
-
-    
-
     def setWFs(self, inWF: WaveForm = None, outWF: WaveForm = None):
         if inWF == None or outWF == None:
             logger.log(logging.WARNING, "Trying to set (one of) estimator WF with a None type")
             return
-        self.inputWF = inWF
-        self.outputWF = outWF
+        self._inputWF = inWF
+        self._outputWF = outWF
 
     def setAPriori(self, ampIn=0, ampOut=0, freq=0, phase=0, offset=0):
+        """
+        set input param for lmfit with some known values
+        """
         #set input param for lmfit with some known values
+        if self._debug:
+            print("PhaseEstrimator: setting a priori data for fitters.")
+        self._inputFitter.WF = self.inputWF
+        self._outputFitter.WF = self.outputWF
         self._inputFitter.setAPrioriData(ampIn,freq,phase,offset)
         self._outputFitter.setAPrioriData(ampOut,freq,phase,offset)
 
-    #def estimate(self, wfIn: BaseWaveForm, wfOut: BaseWaveForm):
-    def estimate(self):
-        """Estimates the phase difference between input and output, assuming fitparams for both signals have been set."""
+    def mp_fit_once(self):
+        # Each process will get 'chunksize' nums and a queue to put his out
+        # dict into
         
-        self._inputFitter.makeFit()
-        self._outputFitter.makeFit()
-        #TODO: check chi squared value or other indication of fit.
+        PhaseEstimator.procs= list() # ugly code, should do some checking here.
+        resultQueue1 = multiprocessing.Queue()
+        resultQueue2 = multiprocessing.Queue()
+        #chunksize = int(math.ceil(len(bufSize) / float(nprocs)))
+
+        
+        p1 = multiprocessing.Process(
+                target=self._inputFitter.makefit_mp_worker,
+                args=(resultQueue1, ))
+        PhaseEstimator.procs.append(p1)
+        p1.start()
         if self._debug:
+            print(f"process with pid={p1.pid} started.")
+        p2 = multiprocessing.Process(
+                target=self._outputFitter.makefit_mp_worker,
+                args=(resultQueue2, ))
+        PhaseEstimator.procs.append(p2)
+        p2.start()
+        if self._debug:
+            print(f"process with pid={p2.pid} started.")
+
+        #Now wait on the two process queues:
+        self.inputFitter.bestValues = resultQueue1.get()    
+        self.outputFitter.bestValues = resultQueue2.get()
+        #And for safety: wait on both processes to finish
+        for p in PhaseEstimator.procs:
+            myp:multiprocessing.Process = p
+            print(f"waiting for process with p: {myp.pid} to join")
+            p.join()
+        PhaseEstimator.procs.clear()
+        return
+    
+    def create_mp_fit_workers(self):
+        if PhaseEstimator.procs != None: # This means init has been called before. Could mean processes are still running or waiting
+            if len(PhaseEstimator.procs) != 0: # Yep. There are processes still alive. Either you will use those ones, or kill them first and create new ones.
+                #TODO: use logging instead.
+                print("PhaseEstimator: trying to create fitting processes while List of processors is not None. Please quit current EStimator first.")
+            return
+        else: # there's no list, so create one.
+            PhaseEstimator.procs = list()
+        
+        dataQueue1 = multiprocessing.Queue()
+        dataQueue2 = multiprocessing.Queue()
+        
+        resultQueue1 = multiprocessing.Queue()
+        resultQueue2 = multiprocessing.Queue()
+        
+        self._inputFitter = PhaseFittingProcessProxy(inQueue=dataQueue1, outQueue=resultQueue1)
+        self._outputFitter = PhaseFittingProcessProxy(inQueue=dataQueue2, outQueue=resultQueue2)
+        
+
+        p1 = PhaseFittingProcess(inQueue=dataQueue1, outQueue=resultQueue1)
+        PhaseEstimator.procs.append(p1)
+        p1.start()
+        if self._debug:
+            print(f"process with pid={p1.pid} started.")
+            
+        p2 = PhaseFittingProcess(inQueue=dataQueue2, outQueue=resultQueue2)
+        PhaseEstimator.procs.append(p2)
+        p2.start()
+        if self._debug:
+            print(f"process with pid={p2.pid} started.")
+
+    def startFitting(self):
+        #deze functie stuurt apriori schatting params + samples scope via proxy naar proces.
+        #Dus moet eerst apriori schatting gemaakt zijn
+        if self._debug:
+            print("PhaseEstimator starts fitting process.")
+        self._inputFitter.startFitting()
+        self._outputFitter.startFitting()
+    
+    def WaitForFitResult(self):
+        """
+        """
+        if self._debug:
+            print("PhaseEstimator waits for best values for fitters.")
+        self._inputFitter.getBestValues()
+        self._outputFitter.getBestValues()
+            
+    def getFitResults(self):
+        pass
+    
+    def quit(self):
+        if self._debug:
+            print("send messages to stop processes")
+        self._inputFitter.endProcess()
+        self._outputFitter.endProcess()
+        if self._debug:
+            print("wait for processes to join")
+        for p in PhaseEstimator.procs:
+            myp:multiprocessing.Process = p
+            print(f"waiting for process with p: {myp.pid} to join")
+            p.join()
+        if self._debug:
+            print("All processes joined, Bye, bye.....")
+        PhaseEstimator.procs.clear()
+        
+        
+        
+    def estimate(self):
+        """
+        Estimates the phase difference between input and output, assuming fitparams for both signals have been set.
+        """
+        
+        #self._inputFitter.makeFit()
+        #self._inputFitter.mp_makefit(832, 4)
+        #self._outputFitter.makeFit()
+        #self._outputFitter.mp_makefit(832,4)
+        if self._fitVersion == 1:
+            if self._debug:
+                print("Running mp fit once")
+            self.mp_fit_once()
+        else:
+            #For in- and output: 1. create lmfit params 2. create messages + put in queues 
+            # 3. Processes start fitting after getting the data from the queues.
+            self.startFitting()     
+            # Wait for result: owner thread/process of this code will wait until it is 
+            # able to get the fitresult from both resultqueues. 
+            self.WaitForFitResult()        
+        
+        
+        #TODO: check chi squared value or other indication of fit.
+            
+        #if self._debug:
             # y = A sin (2 pi f t + phi),  waar is een zerocrossing?
             # als sin (x)=0 dus als x =0 mod pi. dus als 2 pi f t = -phi
             # dus als t = -phi/(2 pi f)
             #self.bestAmp, self.bestFreq, self.bestPhase, 
-            self.plot()                        
-            self.printResults()
-            
+        #    self.plot()                        
+        #    self.printResults()
+         
         return  self._outputFitter.bestPhase - self._inputFitter.bestPhase
     
     def printResults(self):

@@ -10,6 +10,19 @@ import devices.BaseLabDeviceUtils as utils
 from devices.BaseScope.BaseFunctions import PhaseEstimator, SineFitter
 import math
 
+class Timer(object):
+    def __init__(self, name=None):
+        self.name = name
+
+    def __enter__(self):
+        self.tstart = time.time()
+
+    def __exit__(self, type, value, traceback):
+        if self.name:
+            print('[%s]' % self.name, end=' ')
+        print('Elapsed: %s' % (time.time() - self.tstart))
+
+
 def createBodePlot(wr, logMagnitude, phase):
     #gejat van: https://aleksandarhaber.com/how-to-create-bode-plots-of-transfer-functions-in-python-using-scipy-control-engineering-tutorial/
 
@@ -55,7 +68,7 @@ def doACSweep():
     # zet display persistence op minimaal
     # zet acquisitie mode op averaging en zet middeling op tenminste 4
     scope.acquisition.mode(acqMode=3) # SET TO AVERAGING
-    scope.acquisition.averaging(16)
+    scope.acquisition.averaging(64)
     # zet de tijdbasis van de scope goed
     # zet de triggersource goed: triggeren op kanaal 1, signaal van de generator.
     # zet, per kanaal de vdiv goed
@@ -65,7 +78,7 @@ def doACSweep():
     # step 0: set generator at first freq point + enable
     genChan1.setfreq(startFreq)
     genChan1.setAmp(4)
-    scope.acquire("RUN")
+    #scope.acquire("RUN")
     scopeChan1.setVisible(True)
     scopeChan2.setVisible(True)
     scopeChan1.probe(1)
@@ -83,6 +96,7 @@ def doACSweep():
     #scopeChan1.addMeas("FREQuency")
     time.sleep(WAITTIME)
     genChan1.enableOutput(True)
+    scope.acquisition.setMemDepth("7k")
     #scope.acquire(state="STOP", mode="SAMPLE", stopAfter="SEQUENCE")
     myFreqs = gen.createFreqArray(startFreq, stopFreq, nrOfFreqPerDec, 'DEC')
     # step 1: acquire all the data
@@ -121,8 +135,8 @@ def doACSweep():
         maxAmpOUT.append(val2)
         #Before using the phase estimation, first set some actual measured of the sinewave to fit.
         estimator.setAPriori(ampIn=val1, ampOut=val2, freq=freq)
-        
-        estimator.estimate()
+        with Timer(f"estimating for freq = {freq}"):
+            estimator.estimate()
         phShift = estimator.phaseDiffDEG
         print(f"Estimated phase (degrees) = {phShift}")
         AmpInFit = estimator.inputFitter.bestAmp
@@ -163,10 +177,10 @@ def doACSweep():
     
     phaseShift = np.array(phaseDiffList)
     f = np.array(measFreqs)
-    x = y = z = np.arange(0.0,5.0,1.0)
+    #x = y = z = np.arange(0.0,5.0,1.0)
     outMat = np.array((f,voltin,voltout,voltFitin,voltFitout))
-    np.savetxt('test1.out', outMat.T)   # x,y,z equal sized 1D arrays
-    np.savetxt('test2.out', outMat.T, fmt='%1.4e')   # use exponential notation
+    #np.savetxt('test1.out', outMat.T)   # x,y,z equal sized 1D arrays
+    #np.savetxt('test2.out', outMat.T, fmt='%1.4e')   # use exponential notation
     
     #csv_data =np.stack((voltin, voltout), axis=1)
     #voltin.tofile('xval.csv', sep = ',')

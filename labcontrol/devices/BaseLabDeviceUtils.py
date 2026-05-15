@@ -1,3 +1,42 @@
+"""
+.. currentmodule:: devices.BaseLabDeviceUtils
+
+========================================
+BaseLabDeviceUtils (:mod:`devices.BaseLabDeviceUtils`)
+========================================
+
+Provides a convienent functions and classes for Labcontrol.
+
+PhaseFittingProcess Class
+=========================
+.. autosummary::
+    :toctree: generated/
+
+    PhaseFittingProcess
+
+Functions
+=========
+
+.. autosummary::
+    :toctree: generated/
+
+PhaseFittingProcessProxy Class
+==============================
+.. autosummary::
+    :toctree: generated/
+
+    PhaseFittingProcessProxy
+
+Functions
+=========
+
+.. autosummary::
+    :toctree: generated/
+
+
+
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
@@ -10,8 +49,440 @@ from lmfit.model import ModelResult
 import subprocess
 import json
 import os
+from multiprocessing import Process, Queue
+import multiprocessing
 
 from devices.BaseScope.BaseChannel import WaveForm
+
+
+
+class FitProcessQueueData:
+    def __init__(self, amp, freq, phase, offset, xdata, ydata):
+        self.amp = amp
+        self.freq = freq
+        self.phase = phase
+        self.offset = offset
+        self.xdata = xdata
+        self.ydata = ydata
+        
+
+class PhaseFittingProcess(Process):
+    """
+    A custom Process class for fitting a parameterized sine function on given data.
+    
+    The PhaseFittingProcess class provides a convenient abstraction of Python's multiprocessing.Process.
+    By added input (:attr:`inQueue`) and output (:attr:`outQueue`) queues, together with needed lmfit functionalty and a customized  :func:`run` method, this class offers an easy to use, reusable process object for doing sinewave parameters fitting on sampled data.
+    
+    A PhaseFittingProcess object can be created by using Process default constructor.
+    """
+    def __init__(self, inQueue=None, outQueue=None, method = "basinhopping", debugPrint = True):
+        """
+        PhaseFittingProcess initializer.
+
+        Creates a multiprocessing.Process object. 
+        
+        Creation:
+        ---------
+        >>> inputQ = multiprocessing.Queue()
+        >>> outputQ = multiprocessing.Queue()
+        >>> procs = []
+        >>> p1 = PhaseFittingProcess(args=(inputQ, outputQueue))
+        >>> procs.append(p1)
+        >>> p1.start()
+
+        Parameters
+        ----------
+        inQueue : a multiprocessing.Queue(), required
+            the input queue object for sending new param and new datastart.
+        outQueue : a multiprocessing.Queue(), required
+            the output queue object to put the best values of fit in.
+        method  : string, optional
+            Method to be used by lmfit.fit(). Default value = "basinhopping".
+        debugPrint : boolean, optional, default value = True 
+            boolean flag for debug printing out. Defaults to True.
+        """
+        super(PhaseFittingProcess, self).__init__()
+        self._inQueue:Queue = inQueue
+        self._outQueue:Queue = outQueue
+        self.keepRunning = True
+        self.model = lmfit.Model(self.sine_function)
+        self.method = method
+        self.debug = debugPrint
+
+    def debugPrint(self, msg):
+        if self.debug:
+            print(f"process with pid={multiprocessing.current_process().pid} says: {msg}")
+
+    @property
+    def inQueue(self):
+        return self._inQueue
+    
+    @inQueue.setter
+    def inQueue(self, newInQueue):
+        self._inQueue = newInQueue
+        
+    @property
+    def outQueue(self):
+        return self._outQueue
+    
+    @outQueue.setter
+    def outQueue(self, newOutQueue):
+        self._outQueue = newOutQueue
+    
+    def sine_function(self, x: float, amp: float, freq: float, phase: float, offset: float):
+        """
+        Sine function to be used for fitting on sinusoidal data acquired.
+        
+         Parameters
+        -----------
+        x : float, required
+            Multiple time instances to calculate the function value for. Must be a np.array.
+        amp : float, required
+            the amplitude.
+        freq : float, required 
+            the frequency.
+        phase : float, required 
+            the phase shift.
+        offset : float, required
+            the (DC) offset.
+        return : function value according to the formula: = amp * np.sin((2*np.pi*freq * x) + phase) + offset
+        inQueue : a multiprocessing.Queue(), required
+            the input queue object for sending new param and new datastart.
+        outQueue : a multiprocessing.Queue(), required
+            the output queue object to put the best values of fit in.
+        method  : string, optional
+            Method to be used by lmfit.fit(). Default value = "basinhopping".
+        debugPrint : boolean, optional, default value = True 
+            boolean flag for debug printing out. Defaults to True.    
+        """
+        return amp * np.sin((2*np.pi*freq * x) + phase) + offset
+    
+    def run(self):
+        
+        self.debugPrint("run method of PhaseFitting has been started")
+        for func  in iter( self.inQueue.get, 'STOP'):
+            #API: for doing a new fit, messages must be added to inQueue, both of them are dict():
+            # 1. Firstly, the new params needed for lmfit, have to be send by inQueue  this process.
+            # 2. Secondly, the new samples will be retrieved from inQueue, so fitting can start. 
+            # Presume queue.get() to be blocking if nothing is in queue.
+            try:
+                self.debugPrint("got some data from the queue")
+                mydat:FitProcessQueueData = func[0]    # get the fitdata from inQueue
+                #Give lmfit new params
+                myNewParam = self.model.make_params(amp={'value': mydat.amp, 'min': 0.95*mydat.amp, 'max': 1.05*mydat.amp, 'vary': True},
+                                freq={'value': mydat.freq, 'min': 0.9*mydat.freq, 'max': 1.1*mydat.freq, 'vary': True},
+                                phase={'value': mydat.phase, 'min': -np.pi, 'max': np.pi, 'vary': True},
+                                offset={'value': mydat.offset, 'min': -0.1, 'max': +0.1, 'vary': True})
+                #get x,y samples out of the newSamplesDict
+                newXDat = mydat.xdata
+                newYDat = mydat.ydata
+                self.debugPrint("Start fitting")
+                myResult = self.model.fit(data=newYDat, params=myNewParam, x=newXDat, 
+                                        method=self.method)
+                mySummary = myResult.summary()
+                myBestVals = mySummary['best_values']
+                outDict: dict = {}
+                outDict.update(myBestVals)
+                
+                #finally put the bestvalues from the fit in outQueue.
+                self.debugPrint("putting bestvals into queue")
+                
+                self.outQueue.put(outDict)
+            except:
+                self.debugPrint("Some kind of error")
+                self.outQueue.put("ERROR")
+                break    
+        
+            self.debugPrint("quitting now.... bye")
+
+class PhaseFittingProcessProxy:
+    
+    """
+    A complementary stub for PhaseFittingProcess class. At this moment it resembles class SineFitter as much as possible, for easy integration into PhaseEstimator.
+    """
+    
+    VALID_METHODS = ['least_squares', 'differential_evolution', 'brute',
+                    'basinhopping', 'ampgo', 'nelder', 'lbfgsb', 'powell', 'cg',
+                    'newton', 'cobyla', 'bfgs', 'tnc', 'trust-ncg', 'trust-exact',
+                    'trust-krylov', 'trust-constr', 'dogleg', 'slsqp', 'emcee',
+                    'shgo', 'dual_annealing']
+
+    
+    def __init__(self, inQueue=None, outQueue=None, amp=1, freq=1000, phase=0, offset=0, debug=True ):
+        self._inQueue:Queue = inQueue    #This is the input queue of the process
+        self._outQueue:Queue = outQueue  #This is the output queue of the process
+        self._paramsDict:dict = None
+        self._samplesDict:dict = None
+        self._amp = amp
+        self._freq = freq
+        self._phase = phase
+        self._offset = offset
+        self._model = lmfit.Model(self.sine_function)
+        self._params = None
+        self._method = "basinhopping"
+        self._result = None
+        self._fitSummary = None
+        self._WF: WaveForm = None
+        self._bestValues = None
+        self._xdat = None
+        self._ydat = None
+        self._yfit = None
+        #best estimation section
+        self._bestAmp = 0
+        self._bestFreq = 0
+        self._bestPhase = 0
+        self._bestOffset = 0
+        self._debugPrint = debug
+    
+    @property
+    def inQueue(self):
+        return self._inQueue
+    
+    @inQueue.setter
+    def inQueue(self, newInQueue):
+        if self._debugPrint:
+            print("Proxy is setting inQueue")
+        self._inQueue = newInQueue
+        
+    @property
+    def outQueue(self):
+        return self._outQueue
+    
+    @outQueue.setter
+    def outQueue(self, newOutQueue):
+        if self._debugPrint:
+            print("Proxy is setting outQueue")
+        self._outQueue = newOutQueue
+        
+    @property
+    def model(self):
+        return self._model
+    
+    @property
+    def fitSummary(self):
+        return self._fitSummary
+    
+    @fitSummary.setter
+    def fitSummary(self, newSummary):
+        if newSummary == None:
+            return
+        else:
+            self._fitSummary = newSummary
+            self._bestValues = newSummary['best_values']
+
+    @property
+    def bestValues(self):
+        return self._bestValues
+    
+    @bestValues.setter
+    def bestValues(self, newBestVals):
+        if newBestVals == None:
+            return
+        else:
+            self._bestValues = newBestVals
+    
+    # Best properties
+    @property
+    def bestAmp(self):
+        if self._bestValues == None:
+            return None
+        
+        return self._bestValues["amp"]
+    
+    @property
+    def bestFreq(self):
+        if self._bestValues == None:
+            return None
+        return self._bestValues["freq"]
+    
+    @property
+    def bestPhase(self):
+        if self._bestValues == None:
+            return None
+        return self._bestValues["phase"]
+    
+    @property
+    def bestOffset(self):
+        if self._bestValues == None:
+            return None
+        return self._bestValues["offset"]
+    
+    
+
+    def sine_function(self, x, amp, freq, phase, offset):
+        return amp * np.sin((2*np.pi*freq * x) + phase) + offset
+
+    @property
+    def WF(self):
+        return self._WF
+    
+    @WF.setter
+    def WF(self, newWF):
+        self._WF = newWF
+
+    @property
+    def amp(self):
+        return self._amp
+
+    @amp.setter
+    def amp(self, newVal):
+        """Property for setting the amp parameter of the SineModel. This method also call the makeParam function of this class,
+        in order to set the proper lmfit params for doing the fit."""
+        self._amp = newVal
+        #self.makeParam()
+    
+    @property
+    def phase(self):
+        return self._phase
+
+    @phase.setter
+    def phase(self, newVal):
+        self._phase = newVal
+        #self.makeParam()
+
+
+    @property
+    def offset(self):
+        return self._offset 
+
+    @offset.setter
+    def offset(self, newVal):
+        self._offset = newVal
+        #self.makeParam()   
+
+    @property
+    def freq(self):
+        return self._freq
+
+    @freq.setter
+    def freq(self, newVal):
+        self._freq = newVal
+        #self.makeParam()
+
+    @property
+    def phaseDeg(self):
+        return (self._phase*180.0)/math.pi
+    
+    @property
+    def params(self):
+        return self._params
+
+    @params.setter
+    def params(self, fitParams):
+        self._params = fitParams
+
+    @property 
+    def method(self):
+        return self._method
+    
+    @method.setter
+    def method(self, newMethod):
+        if newMethod in PhaseFittingProcessProxy.VALID_METHODS:
+            self._method = newMethod
+
+    @property     
+    def xdat(self):
+        self._xdat = self._WF.scaledXdata
+        return self._xdat
+
+    @property     
+    def ydat(self):
+        self._ydat = self._WF.scaledYdata
+        return self._ydat    
+
+    @property     
+    def yfit(self):
+        return self._yfit
+    
+
+    @yfit.setter     
+    def yfit(self, newFitData):
+        self._yfit = newFitData
+            
+
+    def setData(self, xdata, ydata):
+        self._xdat = xdata
+        self._ydat = ydata
+
+    def setAPrioriData(self, amp=0, freq=0, phase=0, offset = 0):
+        """
+        This method sets the lmfit params for a first quess of a sine functions parameters to be fit.
+        This method has to be called first in order to create the correct messages, which will be sent to the process when calling startFitting.
+        """
+        if self._debugPrint:
+            print("Proxy sets a priori data")
+        self._amp = amp
+        self._freq = freq
+        self._phase = phase
+        self._offset = offset
+       
+                
+    def createParamsDict(self,  amp=1, freq=1000, phase=0, offset=0):
+        """
+        Method for creating a simple dict containing the educated guesses of the amplitude, frequency, phase and offset parameters of the sine function to be fitted.
+        """
+        self._paramsDict =  {"amp": amp, "freq":freq, "phase":phase, "offset":offset}
+    
+    def createSamplesDict(self):
+        """
+        Method for creating a simple dict containing the xdata and ydata acquired by the scope, needed als the source data used to fit the sine function parameters on.
+        """
+        self._samplesDict = {"xdata":self.xdat, "ydata":self.ydat}
+        
+    def startFitting(self):
+        """
+        Method for combining the 'params' and 'data' dicts into one "message "dict, which will be added to  the inQueue of the associate process of this proxy class. The associate process will get the message dict from its  input queue (inQueue), after it will start the fitting process.        
+        """
+        fitData = FitProcessQueueData(self.amp, self.freq, self.phase, self.offset, self.xdat, self.ydat)
+        if self._debugPrint:
+            print("PhaseFittingProcessProxy: Sending FitProcessQueueData to process")
+        self._inQueue.put([fitData])
+        
+    def makeParam(self):
+        print("Not implemented. Use createParamsDict and send it to process by calling startFitting.")
+        
+    def endProcess(self):
+        if self._debugPrint:
+            print("Proxy puts STOP message for process in Queue.")
+        self._inQueue.put("STOP")
+    
+    def getBestValues(self):
+        if self._debugPrint:
+            print("Proxy getting data from queue")
+        bestValDict = self._outQueue.get()
+        self._bestValues = bestValDict
+        if self._debugPrint:
+            print("got bestvaluels from queue, return now.")
+        return bestValDict
+class MPFitFactorizer(Process):
+    """
+    This multiprocessing.Process extension is a dedicated process for managing:
+    
+    1. The creation of queues for doing the necessary communication between all processes.
+    2. The creation of all PhaseFitting workerprocesses 
+    3. The creation of all PhaseFittingProxy objects for interfacing with all worker processes by putting items in and/or getting items off the queue.
+    4. Because this class is a Process by extension, its run() method will live in side a process on a processor, which will, together with other methodes of this class must implements following functionality:
+    
+        a. Able to accept fitjobs from one client i.e. the labautomation script, without blocking.
+        b. Do some booking which fitjobs are processed and which one aren't. E.g. use the frequency setted and if no result is added to it, then result for that fit is pending.
+        c. Putting the accepted job as an item onto the processing queues.
+        d. If a worker process has completed a fitjob, the results (bestvalues of the fit) must be taken from the result queue and added to the list of result.
+        e. The client will signal this class when it likes to have the results of all jobs, which is the same as a kind of quit message.
+        f. After receiving the collect for result message, this class waits until all jobs finished, collects all the results, puts them in a list and returns this list to the client. 
+         
+    """
+    
+    def run(self):
+        """
+        pseudo code:
+        wacht op een resultaat in één van de resultQueues
+        haal item uit betreffende Queue
+        Plaats item op juiste plek in resultList
+        Begin bovenaan, totdat "STOP"
+        """
+        pass
+    pass        
+
 
 class SCPIParam(object): 
     """Deze klasse is bedoeld om het beheer van multidim list iets logischer te maken.
@@ -448,4 +919,5 @@ def testBodePlot():
 def sine_decay(x, amplitude, frequency, offset, phase=0):
     #return offset + amplitude * np.sin(x*frequency + phase) * np.exp(-x/decay)
     return offset + amplitude * np.sin(x*frequency + phase)
+
 

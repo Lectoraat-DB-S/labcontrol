@@ -10,6 +10,9 @@ matplotlib
 prefixed
 sphinx
 sphinx-rtd-theme
+sphinx_rtd_theme
+IPython
+nbsphinx
 pandas
 lmfit
 scipy
