@@ -17,10 +17,20 @@ class SDSVertical(Vertical):
 
     def __init__(self, nrOfChan, dev:pyvisa.resources.MessageBasedResource):
         super().__init__(nrOfChan,dev)
+        self.scopeCommand = None
         
         for i in range(1, nrOfChan+1):
             self.channels.append({i:SDSChannel(i, dev)})
             
+    def setCommand(self, newCommands):
+        self.scopeCommand = newCommands
+        for i in range(self.nrOfChan):
+            
+            chanDict:dict = self.channels[i]   #self.channels is a list, with elements with one dim dicts
+            scopeChan = chanDict.get(i+1)       #key not needed, only the value which is the channel object.
+            scopeChan.setCommand(newCommands)
+        
+        
     def chan(self, chanNr): 
         """Gets a channel, based on its index: 1, 2 etc."""
         try: 

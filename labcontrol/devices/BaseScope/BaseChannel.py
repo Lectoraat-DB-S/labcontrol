@@ -39,6 +39,9 @@ class Channel(object):
         self.WFP = WaveFormPreample(visaInstr) # the waveformpreamble object for this channel
         self.mode = "SW" # measurements, pkpk for instance, will be performed in software. Set to "HW" when using scope functions 
 
+    def setCommand(self, newCommands):
+        pass
+        
     def query(self, cmdString):
         return self.visaInstr.query(cmdString)
     
@@ -90,7 +93,7 @@ class Channel(object):
         if mode == "SW" or mode == "HW":
             self.mode = mode    
         
-    def capture(self)->'WaveForm':
+    def capture(self, waitAcquisition = False)->'WaveForm':
         """Gets the waveform from the oscilloscope, by initiating a new aqquisition. This BaseChannel implementation 
         is empty. An inheriting subclass will have to implement this method by sending the proper SCPI commands 
         in order to: a. set this channel object as the source for the capture b. get waveform descriptors, c. get the 

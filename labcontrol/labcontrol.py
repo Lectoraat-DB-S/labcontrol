@@ -47,15 +47,58 @@ import devices.BaseLabDeviceUtils as bu
 from devices.siglent.sds.util import SiglentIDN
 import usbtmc
 from scipy.fft import fft
-from devices.BaseLabDeviceUtils import PhaseFittingProcess, PhaseFittingProcessProxy, FitProcessQueueData
-from devices.BaseScope.BaseFunctions import PhaseEstimator
+#from devices.BaseLabDeviceUtils import PhaseFittingProcess, PhaseFittingProcessProxy, FitProcessQueueData
+#from devices.BaseScope.BaseFunctions import PhaseEstimator
 from multiprocessing import Process, Queue
 from devices.BaseScope.BaseChannel import WaveForm
 
 
 logger = logging.getLogger(__name__)
 
+def analyseerScopeKnoppies():
+    """Een script van CHatGPT. Werkt voor geen meter."""
+    import pyvisa
+    import csv
+    import time
 
+    RESOURCE = "TCPIP0::192.168.1.240::INSTR"
+
+    rm = pyvisa.ResourceManager()
+    scope = rm.open_resource(RESOURCE)
+
+    scope.write("*CLS")
+    scope.write("*ESE 64")
+
+    seen = {}
+
+    with open("siglent_keys.csv", "w", newline="") as f:
+
+        writer = csv.writer(f)
+        writer.writerow(["timestamp", "urr"])
+
+        print("Press buttons on the oscilloscope...")
+
+        while True:
+
+            esr = int(scope.query("*ESR?"))
+
+            if esr & 0x40:
+
+                urr = scope.query("URR?").strip()
+
+                ts = time.time()
+
+                writer.writerow([ts, urr])
+                f.flush()
+
+                if urr not in seen:
+                    seen[urr] = 1
+                    print(f"NEW KEYCODE: {urr}")
+                else:
+                    seen[urr] += 1
+                    print(f"KEYCODE {urr} count={seen[urr]}")
+
+            time.sleep(0.02)
 
 def testEthConfig():
     bu.setEthernet()
@@ -195,20 +238,98 @@ def testEstimator():
     
     pe.quit()
     
+def testIEEEreg():
+    #scope.visaInstr.write("C1:WF? DAT2")
+    #print(scope.getEXR())
+    
+    #scope.visaInstr.write('INIT')
+    #scope.visaInstr.write('*OPC')
+    #print(scope.visaInstr.query('*ESR?'))
+    #print(scope.visaInstr.query('*STB?'))
+    #chan1:Channel = scope.vertical.chan(1)
+    #print("Start capture")
+    #chan1.capture()
+    #scope.visaInstr.write("C1:WF? DAT2;*WAI")
+    #print(scope.visaInstr.query('*ESR?'))
+    
+    waarde = scope.visaInstr.read_stb()
+    #while waarde ==0:
+    #    waarde = scope.visaInstr.read_stb()
+    
+    
+    #scope.visaInstr.write("C1:WF? DAT2")
+    #print("capture started")
+    #print(scope.visaInstr.read_stb())
+    #print("close instrument + exit")
+    #scope.visaInstr.close()
+    #scope.visaInstr.write("CLS")
+    #"*RST;*OPC?\n"
+    #scope.visaInstr.write("*RST;*OPC")
+    #scope.visaInstr.write("*OPC")
+    #while True:
+        # Read the event status register
+        #esr = int(scope.visaInstr.query('*ESR?'))
+        #if (esr & 1):  # Check if Operation Complete (Bit 0) is true
+        #    print("Operation complete!")
+        #    break
+    #print(scope.visaInstr.query("*OPC?"))
+    
+    
+    scope:Scope = Scope.getDevice()
+    vert: Vertical = scope.vertical
+    mychan: Channel = vert.chan(1)
+    if scope == None:
+        print("geen scope gevonden!")
+        exit()
+    scope.write("*RST")
+    print("scope resetted")
+    msg = scope.getESE()  
+    print(f"ESE resp = {msg}") 
+    scope.write("*CLS")   
+    scope.write("*ESE 73") #zie de prog SDS
+    scope.write("*SRE 254")
+    print("Getting ESE after setting ESE to 72")
+    msg = scope.getESE()  
+    print(f"ESE resp = {msg}") 
+    msg = scope.query("*SRE?")
+    print(f"SRE resp = {msg}")
+    while True:
+        msg = scope.getINR()
+        print(f"INR resp = {msg}")
+        mychan.capture()
+        msg = scope.getESR()  
+        print(f"ESR resp = {msg}")
+        msg = scope.getEXR()
+        print(f"EXR resp = {msg}")
+        msg = scope.getCMR()
+        print(f"CMR resp = {msg}")
+        msg = scope.SRE()
+        print(f"SRE resp = {msg}")
+        msg = scope.getSTB()
+        print(f"STB resp = {msg}")
+        msg = scope.visaInstr.read_stb()
+        print(f"stb function says {msg}")
+        #msg = scope.URR()
+        print(scope.visaInstr.query("ALL_STATUS?"))
+        #print(f"URR resp = {msg}")
+        time.sleep(5)
+    
+    
 
 if __name__ == "__main__":
     rm = pyvisa.ResourceManager()
     urls = rm.list_resources()
     print(urls)
+        
     
-    testEstimator()
+    #testEstimator()
     #VBB_array = np.array([1, 2, 3, 4, 5])
     #VBE_array = np.array([0, 0.2, 0.3, 0.4, 0.5])
     #RB=100e3
     #myiblist = curfje.berekenStroomDoor(RB, list(VBB_array),list(VBE_array))
     #print(myiblist)
     
-    #freqResp.doACSweep()
+    freqResp.doACSweep()
     
     #performTransCurve()
     #logging.basicConfig(filename='myapp.log', level=logging.INFO)
@@ -238,5 +359,3 @@ if __name__ == "__main__":
     #logger = logging.getLogger(__name__)
     #logger.setLevel(logging.DEBUG)
     #plt.show()
-
-    

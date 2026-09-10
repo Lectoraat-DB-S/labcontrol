@@ -11,7 +11,9 @@ import multiprocessing
 
 from devices.BaseScope.BaseChannel import Channel, WaveForm
 
-from devices.BaseLabDeviceUtils import PhaseFittingProcess, PhaseFittingProcessProxy
+from devices.BaseLabDeviceUtils import FittingProcess, FittingProcessProxy
+
+from concurrent.futures import ProcessPoolExecutor
 
 logger = logging.getLogger(__name__)
 ########## BASEFUNCTION ###########
@@ -100,7 +102,8 @@ class FFT(ScopeFunction):
             captureFirst: make capture first (True) or not. Default = False.
             linear      : True for lineair axis, False to dB plot. Default = True
             aliasing    : Plotting a complete FFT bin (True), of half of it (False), to prevent aliasing. Default = False
-            autoRange   : Automatic scaling of FFT, based on a power threshold."""
+            autoRange   : Automatic scaling of FFT, based on a power threshold.
+        """
 
         #TODO: implement autoRange
         if self.scopeChan == None or self.scopeChan.WF == None:
@@ -374,9 +377,11 @@ class SineFitter(object):
 class PhaseEstimator(ScopeFunction):
     
     procs: list = None
+    myInstance = None
     
-    def __init__(self, inputWF:WaveForm=None, outputWF:WaveForm=None, fitVersion = 2, debugPrint=False):
+    def __init__(self, inputWF:WaveForm=None, outputWF:WaveForm=None, fitVersion = 2, debugPrint=True):
         super().__init__(ScopeFunction.PHASEFIT)
+        self._debug = debugPrint
         #TODO: create input- and outputfitter setters and getters for changing the fitting waveform function.
         #direct onderstaande is eerste versie curvefit software: met/zonder elementaire multiprocessing, waarbij process 1x gebruikt wordt.
         if PhaseEstimator.procs != None: # This means init has been called before. Could mean processes are still running or waiting
@@ -386,11 +391,11 @@ class PhaseEstimator(ScopeFunction):
                 print("PhaseEstimator: trying to create fitting processes while List of processors is not None. Please quit current EStimator first.")
             return
         self._fitVersion = fitVersion
-        self._inputWF = None
-        self._input = None
-        self._tAxis = None
+        self._inputWF:WaveForm = None
+        self._inputData = None
+    
 
-        self._outWF = None
+        self._outputWF:WaveForm = None
         self._output = None
         self._debug = debugPrint
         self._phaseDiff = None
@@ -400,20 +405,19 @@ class PhaseEstimator(ScopeFunction):
             self._outputFitter = SineFitter(debug=debugPrint)
         else:
             #Dit is de tweede versie: herbruikbare fitprocessen die via een proxy bestuurd worden.
-            self._inputFitter:PhaseFittingProcessProxy = None
-            self._outputFitter:PhaseFittingProcessProxy = None
+            self._inputFitter:FittingProcessProxy = None
+            self._outputFitter:FittingProcessProxy = None
             #method below creates input and output queues needed and assignment to proxies.
             self.create_mp_fit_workers()
         
         
         if inputWF != None:
             self._inputWF = inputWF
-            self._input = inputWF.scaledYdata
-            self._tAxis = inputWF.scaledXdata
+            self._inputData = inputWF.scaledYdata
             
 
         if outputWF != None:
-            self._outWF = outputWF
+            self._outputWF = outputWF
             self._output = outputWF.scaledYdata
 
     def setOperands(self, oper1:WaveForm=None, oper2:WaveForm=None):
@@ -430,19 +434,19 @@ class PhaseEstimator(ScopeFunction):
     def inputFitter(self):
         return self._inputFitter
     
-    @inputFitter.setter
-    def inputFitter(self, newFitterObj):
-        if newFitterObj != None:
-            self._inputFitter = newFitterObj
+    #@inputFitter.setter
+    #def inputFitter(self, newFitterObj):
+    #    if newFitterObj != None:
+    #        self._inputFitter = newFitterObj
 
     @property
     def outputFitter(self):
         return self._outputFitter
 
-    @inputFitter.setter
-    def outputFitter(self, newFitterObj):
-        if newFitterObj != None:
-            self._outputFitter = newFitterObj
+    #@inputFitter.setter
+    #def outputFitter(self, newFitterObj):
+    #    if newFitterObj != None:
+    #        self._outputFitter = newFitterObj
 
 
     @property
@@ -453,26 +457,27 @@ class PhaseEstimator(ScopeFunction):
     def inputWF(self, inWF: WaveForm):
         if inWF.any() != None:
             self._inputWF = inWF
-            self._input = self._inputWF.scaledYdata
+            self._inputData = self._inputWF.scaledYdata
             self._inputFitter.WF = inWF
+            
 
     @property
     def input(self):
-        return self._input
+        return self._inputData
     
     @input.setter
     def input(self, signal):
         if signal.any() != None:
-            self._input = signal
+            self._inputData = signal
 
     @property
     def outputWF(self):
-        return self._outWF
+        return self._outputWF
     
     @outputWF.setter
     def outputWF(self, outWF: WaveForm):
         if outWF.any() != None:
-            self._outWF = outWF
+            self._outputWF = outWF
             self._output = self._outputWF.scaledYdata
             self._outputFitter.WF = outWF
     
@@ -484,16 +489,6 @@ class PhaseEstimator(ScopeFunction):
     def output(self, signal):
         if signal.any() != None:
             self._output = signal 
-
-    @property
-    def tAxis(self):
-        return self._tAxis
-    
-    @tAxis.setter
-    def tAxis(self, timeData):
-        if timeData != None:
-            self._tAxis = timeData 
-
 
     @property
     def phaseDiffRAD(self):
@@ -525,8 +520,8 @@ class PhaseEstimator(ScopeFunction):
         #set input param for lmfit with some known values
         if self._debug:
             print("PhaseEstrimator: setting a priori data for fitters.")
-        self._inputFitter.WF = self.inputWF
-        self._outputFitter.WF = self.outputWF
+        self._inputFitter.WF = self._inputWF
+        self._outputFitter.WF = self._outputWF
         self._inputFitter.setAPrioriData(ampIn,freq,phase,offset)
         self._outputFitter.setAPrioriData(ampOut,freq,phase,offset)
 
@@ -581,21 +576,57 @@ class PhaseEstimator(ScopeFunction):
         resultQueue1 = multiprocessing.Queue()
         resultQueue2 = multiprocessing.Queue()
         
-        self._inputFitter = PhaseFittingProcessProxy(inQueue=dataQueue1, outQueue=resultQueue1)
-        self._outputFitter = PhaseFittingProcessProxy(inQueue=dataQueue2, outQueue=resultQueue2)
-        
 
-        p1 = PhaseFittingProcess(inQueue=dataQueue1, outQueue=resultQueue1)
+        p1 = FittingProcess(name="inputFitter",inQueue=dataQueue1, outQueue=resultQueue1)
         PhaseEstimator.procs.append(p1)
         p1.start()
         if self._debug:
             print(f"process with pid={p1.pid} started.")
             
-        p2 = PhaseFittingProcess(inQueue=dataQueue2, outQueue=resultQueue2)
+        p2 = FittingProcess(name="outputFitter", inQueue=dataQueue2, outQueue=resultQueue2)
         PhaseEstimator.procs.append(p2)
         p2.start()
         if self._debug:
             print(f"process with pid={p2.pid} started.")
+            
+        if self._debug:
+            print("Estimator: creating proxies")
+        self._inputFitter = FittingProcessProxy(name="inputFitter",inQueue=dataQueue1, outQueue=resultQueue1)
+        self._outputFitter = FittingProcessProxy(name="outputFitter",inQueue=dataQueue2, outQueue=resultQueue2)
+        if self._debug:
+            print("Estimator: multiprocessing fit workers have been created.")
+
+    def create_mp_fit_pool(self):
+        """
+        Work in progress: below doesnt work yet. It might needs redesign of estimator: just one input queue and one output queue, instead of two. But this will need the dispatching of the batch to the proper calling source. Options:
+        - putting an id or a name of the caller proxy
+        - using some kind of async caller or a flexible callback functionality 
+        """
+        if PhaseEstimator.procs != None: # This means init has been called before. Could mean processes are still running or waiting
+            if len(PhaseEstimator.procs) != 0: # Yep. There are processes still alive. Either you will use those ones, or kill them first and create new ones.
+                #TODO: use logging instead.
+                print("PhaseEstimator: trying to create fitting processes while List of processors is not None. Please quit current EStimator first.")
+            return
+        else: # there's no list, so create one.
+            PhaseEstimator.procs = list()
+        
+        dataQueue1 = multiprocessing.Queue()
+        dataQueue2 = multiprocessing.Queue()
+        
+        resultQueue1 = multiprocessing.Queue()
+        resultQueue2 = multiprocessing.Queue()
+        
+        self._inputFitter = FittingProcessProxy(inQueue=dataQueue1, outQueue=resultQueue1)
+        self._outputFitter = FittingProcessProxy(inQueue=dataQueue2, outQueue=resultQueue2)
+        
+        #with ProcessPoolExecutor() as executor:
+        #executor.map(PhaseFittingProcessProxy, (inQueue=dataQueue1, outQueue=resultQueue1))
+        
+        with ProcessPoolExecutor() as executor:
+            executor.submit(FittingProcess, inQueue=dataQueue1, outQueue=resultQueue1,)
+            executor.submit(FittingProcess, inQueue=dataQueue2, outQueue=resultQueue2,)
+        
+
 
     def startFitting(self):
         #deze functie stuurt apriori schatting params + samples scope via proxy naar proces.
@@ -627,8 +658,8 @@ class PhaseEstimator(ScopeFunction):
             myp:multiprocessing.Process = p
             print(f"waiting for process with p: {myp.pid} to join")
             p.join()
-        if self._debug:
-            print("All processes joined, Bye, bye.....")
+    
+        print("All processes joined, Bye, bye.....")
         PhaseEstimator.procs.clear()
         
         
@@ -747,7 +778,7 @@ class ScopeMath(object):
     def __init__(self):
         self.functions:list = [] # list for holding the function
         self.functions.append(FFT())
-        self.functions.append(PhaseEstimator())
+        #self.functions.append(PhaseEstimator()) #16-5-2026: TODO: fix this. If add PhaseEstimator now, the PhaseEstimator will start the mp processes, which is unwanted side effect for now. The reason for all this is the fact that the API of scopemath is unclear. For PhaseEstimator is a seperate function.
 
     def add(self, aFunction: ScopeFunction):
         self.functions.append(aFunction)

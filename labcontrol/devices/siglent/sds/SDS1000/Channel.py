@@ -8,6 +8,7 @@ import logging
 import time
 from devices.siglent.sds.util import splitAndStripHz, splitAndStripSec, splitAndStripV 
 from devices.siglent.sds.util import TIMEBASE_HASHMAP
+from devices.siglent.sds.SDS1000.SDS1kCommands import SDS1kCommands
 import configparser
 
 
@@ -38,6 +39,10 @@ class SDSChannel(Channel):
         self.visaInstr: pyvisa.resources.MessageBasedResource = visaInstr
         self.WFP= SDSWaveFormPreamble(visaInstr)
         self.WF = SDSWaveForm()
+        self.scopeCommand = None
+
+    def setCommand(self, newCommands: SDS1kCommands):
+        self.scopeCommand = newCommands
 
     def query(self, cmd: str):
         return self.visaInstr.query(cmd)
@@ -119,9 +124,16 @@ class SDSChannel(Channel):
         wvpRespStr = self.visaInstr.query_binary_values(f"{self.name}:WaveForm? DESC", datatype='B', is_big_endian=False, container=np.ndarray)
         self.WFP.decodePreambleStr(params=wvpRespStr)
         
-    def capture(self)->WaveForm:
+    def capture(self, waitAcquisition = False)->WaveForm:
         self.getWaveformPreamble() #for quering the preamble, in order to have fresh WVP
         self.WF.setWaveForm(self.WFP)
+        if waitAcquisition:                         # if an acquisition takes a lot of time, better check if a new signal has been 
+                                                    # acquired by the scope, before sending waveform query.
+            self.scopeCommand.CLS()                 # clear the all status data registers of scope
+            inrval = self.scopeCommand.INR()        # query the INternal state change Register
+            if not inrval & SDS1kCommands.INR_NEW_SIGNAL_ACQUIRED:
+                inrval = self.scopeCommand.INR()    # if signal not available, query for new one:
+                time.sleep(0.1)
         data = self.visaInstr.query_binary_values(f"{self.name}:WF? DAT2", datatype='B', is_big_endian=False, container=np.ndarray)
         try:
             

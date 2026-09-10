@@ -12,6 +12,7 @@ from devices.BaseScope.BaseChannel import Channel
 from devices.BaseDMM import BaseDMM
 import pandas as pd
 
+
 class BJTMEASMODEL(object):
     def __init__(self):
         self.BJTType= "NPN"
@@ -20,6 +21,7 @@ class BJTMEASMODEL(object):
         self._supply= None
         self._Rb    = None
         self._Rc    = None
+        self._Re    = None
         self.VCCmax = None 
         self.VCCmin = None
         self.VCCstep = None
@@ -37,6 +39,7 @@ class BJTMEASMODEL(object):
         self._Vccmeas: list = None    #list holding Vcc read values of supply
         self._Vbbmeas: list = None    #list holding Vbb read values of supply
         self._WaitTime  = None
+        self._measSetup = None # the measurement setup variable defines the measurement circuit: 1. direct 2. Rb & Rc (CE) 3. Rb & Re (CC)
 
     @property
     def scope(self):
@@ -62,6 +65,12 @@ class BJTMEASMODEL(object):
     @supply.setter
     def supply(self, newSupply: BaseSupply):
         self._scope = newSupply
+        
+    def measInputCharCC():
+        """
+        Measures the input characteristics with a Common Collector (CC) configuration. In such a setup, VE and VB will be measured. VC equals VCC. Advantage: scope will measure VE directly as it shares its ground with an inpnutsource such as a supply of a signalgenerator. The latter will be connected to GND as the scope. Using a signalgenerator as inputsource, will prevent easy measurement of VC. 
+        """
+        pass
     
     def doInputCharMeas(self):
         collControl:BaseSupplyChannel = self.supply.chan(1)

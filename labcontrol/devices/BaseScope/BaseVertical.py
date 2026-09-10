@@ -34,7 +34,7 @@ class Vertical(object):
         """This method takes care of the intialisation of a BaseVertical object. Subclass must override this 
         method ,by initialising the datamembers needed. Remark: if the subclass relies on the intialisation done 
         below, don't forget to call super().__init()__ !"""
-        self.channels = []          
+        self.channels:list = []          
         self.nrOfChan = nrOfChan       # A virtual Baseclass: so no channels available.
         self.visaInstr = dev             # default value = None, see param
         self.mode = "SW"

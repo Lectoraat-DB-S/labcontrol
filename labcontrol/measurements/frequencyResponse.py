@@ -41,7 +41,7 @@ def createBodePlot(wr, logMagnitude, phase):
     fig.savefig('complete.png',dpi=600)
     fig.show()
 
-def doACSweep():
+def doACSweep(start_freq = 5e1, stop_freq = 5e6, nr_freq_dec = 5):
     scope: Scope = Scope.getDevice()
     scopeVert: Vertical = scope.vertical
     gen: BaseGenerator = BaseGenerator.getDevice()
@@ -58,9 +58,9 @@ def doACSweep():
     measFreqs = list()
     chan1CaptureList = list()
     chan2CaptureList = list()
-    startFreq = 50e1
-    stopFreq = 5e6
-    nrOfFreqPerDec = 5
+    startFreq = start_freq
+    stopFreq = stop_freq
+    nrOfFreqPerDec = nr_freq_dec
     ### oscilloscoop settings maken ####
     # zet display op YT
     scope.display.format("YT")
@@ -68,7 +68,7 @@ def doACSweep():
     # zet display persistence op minimaal
     # zet acquisitie mode op averaging en zet middeling op tenminste 4
     scope.acquisition.mode(acqMode=3) # SET TO AVERAGING
-    scope.acquisition.averaging(64)
+    scope.acquisition.averaging(16)
     # zet de tijdbasis van de scope goed
     # zet de triggersource goed: triggeren op kanaal 1, signaal van de generator.
     # zet, per kanaal de vdiv goed
@@ -83,8 +83,8 @@ def doACSweep():
     scopeChan2.setVisible(True)
     scopeChan1.probe(1)
     scopeChan2.probe(1)
-    scopeChan1.setVdiv(0.5)
-    scopeChan2.setVdiv(0.5)
+    scopeChan1.setVdiv(1)
+    scopeChan2.setVdiv(1)
     scopeChan1.position(0)
     scopeChan2.position(0)
     scopeChan1.setCoupling("AC")
@@ -110,8 +110,8 @@ def doACSweep():
         genChan1.setfreq(freq)
         end = time.time()
         #print(f"generator freqzetten kost: {end-start}")
-        #set the time base of the scope for two periods atleast.
-        divtime = (1/(15*freq))
+        #set the time base of the scope max two periods .
+        divtime = (1/(17*freq))
         scope.horizontal.setTimeDiv(divtime)
         #effe wachten om te stabiliseren
         #time.sleep(WAITTIME)
@@ -120,8 +120,8 @@ def doACSweep():
         #print(scopeChan1.query("MEASUrement:IMMed?"))
         #start = time.time()
         time.sleep(WAITTIME)
-        signalIn:WaveForm=scopeChan1.capture()
-        signalOut:WaveForm=scopeChan2.capture()
+        signalIn:WaveForm=scopeChan1.capture(waitAcquisition=True)
+        signalOut:WaveForm=scopeChan2.capture(waitAcquisition=True)
         time.sleep(WAITTIME)
         #phasediff= scopeChan2.getPhaseBetween(scopeChan1,freq)
         #end = time.time()
@@ -149,10 +149,12 @@ def doACSweep():
         #print(f"Estimated phaseshift: {phShift}")
         phaseDiffList.append(phShift)
         #scopeChan1.set2_80(val1)
-        scopeChan1.setVdiv(val1/4)
-        scopeChan2.setVdiv(val2/4)
+        scopeChan1.setVdiv(val1/3)
+        scopeChan2.setVdiv(val2/3)
         print(f"pkpk waarden. kan1: {val1}, kan2:{val2}")
+        print(f"amplitude fitwaarden. Kan1: {AmpInFit}, Kan2: {AmpOutFit}")
 
+    estimator.quit()
     #postpressing
     """
     ampIn_iter = iter(maxAmpIN)
@@ -198,7 +200,9 @@ def doACSweep():
     plt.figure(5)
     plt.loglog(f, voltFitin, f, voltFitout)
     
+    plt.figure(6)
     createBodePlot(f,20*np.log10(voltFitout),phaseShift)
+    plt.show()
     input(f'druk [Enter] om af te sluiten.')
     
 

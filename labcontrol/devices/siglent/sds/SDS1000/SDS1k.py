@@ -17,6 +17,7 @@ from devices.siglent.sds.SDS1000.Trigger import SDSTrigger
 from devices.BaseConfig import BaseScopeConfig, BaseDeviceConfig
 from devices.siglent.sds.SDS1000.Display import SDSDisplay
 from devices.siglent.sds.SDS1000.Acquisition import SDSAcquisition
+from devices.siglent.sds.SDS1000.SDS1kCommands import SDS1kCommands
 from devices.siglent.sds.Scopes import SiglentScope 
 
 
@@ -90,78 +91,14 @@ class SiglentScope1k(SiglentScope):
             during the initing of BaseScope, this method calls super().__init__() 
         """
         super().__init__(visaResc, myconfig)
+        self.scopeCommand = SDS1kCommands(visaResc)
         self.horizontal = SDSHorizontal(visaResc)
         self.vertical = SDSVertical(2, visaResc)
         self.trigger = SDSTrigger(self.vertical,visaResc)
         self.display = SDSDisplay(visaResc)
         self.acquisition = SDSAcquisition(visaResc)
-
-    def OPC(self):
-        """Method for sending an * OPC? query to the instrument. This query places an ASCII "1" in the output queue when 
-        all pending device operations have completed. The interface hangs until this query returns. However, testing with Siglent SDS1202XE
-        sampling at low speeds, shows direct return from this call. Unclear it's because of a bug in the Siglent firmware, in the handling
-        of this call by pyvisa, or the fact that Siglent immediately returns the most recent memory content.  
-        """
-        resp = self.visaInstr.query("*OPC?")
-        return resp
+        self.vertical.setCommand(newCommands=self.scopeCommand)
     
-    def INR(self):
-        """
-            The INR? query reads and clears the contents of the INternal state change Register (INR). 
-            The INR register (see table programming manual) records the completion of various internal operations 
-            and state transitions.
-        """
-        inrResp = self.query("INR?")
-        #return INR_HASHMAP[inrResp] #this crashed
-        return inrResp        
-    
-    def STB(self):
-        resp = self.query("*STB?")
-        return resp
-    
-    def SRE(self):
-        resp = self.query("*SRE?")
-        return resp
-    
-    def ESE(self):
-        resp = self.query("*ESE?")
-        return resp
-
-    def CMR(self):
-        resp = self.query("CMR?")
-        return resp
-    
-    def CLS(self):
-        resp = self.query("*CLS?")
-        return resp
-    
-    def DDR(self):
-        resp = self.query("DDR?")
-        return resp
-    
-    def EXR(self):
-        resp = self.query("EXR?")
-        return resp
-    
-    def RST(self):
-        """
-            The RST command initiates a device reset. The RST sets recalls the default setup.
-        """
-        self.write("*RST")
-    
-    def SAV(self, panelNr):
-        """
-            The SAV command stores the current state of the instrument in internal memory. The SAV command stores 
-            the complete front-panel setup of the instrument at the time the command is issued."""
-        self.write(f"*SAV{panelNr}")
-
-    def RCL(self, panelNr):
-        """
-            The RCL command sets the state of the instrument, using one of the ten non-volatile panel setups, by 
-            recalling the complete front-panel setup of the instrument. Panel setup 0 corresponds to the default panel 
-            setup.
-        """
-        self.write(f"*RCL{panelNr}")
 
     def LOCK(self, enable):
         """

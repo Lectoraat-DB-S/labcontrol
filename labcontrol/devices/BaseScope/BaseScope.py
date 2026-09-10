@@ -9,6 +9,7 @@ from devices.BaseScope.BaseHorizontal import Horizontal
 from devices.BaseScope.BaseTrigger import TriggerUnit
 from devices.BaseScope.BaseAcquisition import Acquisition
 from devices.BaseScope.BaseDisplay import Display
+from devices.BaseScope.BaseCommands import IEEE488Command
 
 
 logger = logging.getLogger(__name__)
@@ -117,6 +118,7 @@ class Scope(object):
         self.utility = None
         self.host = None
         self.scpiCommand: SCPICommand = None # this member is a ref to a dict() containing all commands known to a device.
+        self.ieeeCommand: IEEE488Command = None
         
         self.nrOfHoriDivs = None# maximum number of divs horizontally
         self.nrOfVertDivs = None # maximum number of divs vertically 
@@ -130,6 +132,9 @@ class Scope(object):
         #self.visibleVertDivs = scopeConfig.visibleVerticalGrid # number of visible divs on screen
         self.mode = "SW"  #default setting for the data processing, when doing measurements with this scope.
         self._scopeConfig = scopeConfig
+        
+    def STB():
+        pass
 
     def OPC(self):
         """Method for sending an *OPC? query to the instrument. The *OPC? query places a 1 in the Output Queue once an operation that  
@@ -147,17 +152,26 @@ class Scope(object):
 
     def INR(self):
         pass
+    
+    def getINR(self):
+        pass
 
     def STB(self):
-        pass
+        return self.visaInstr.read_stb()
 
     def SRE(self):
         pass
 
-    def ESE(self):
+    def ESE(self, newValue = None):
+        pass        
+    
+    def getESE(self):
         pass
-
+    
     def CMR(self):
+        pass
+    
+    def getCMR(self):
         pass
     
     def CLS(self):
@@ -166,8 +180,25 @@ class Scope(object):
     def DDR(self):
         pass
 
+
     def EXR(self):
         pass
+    
+    def getEXR(self):
+        pass
+    
+    def ESR(self):
+        pass
+    
+    def getESR(self):
+        pass
+    
+    def URR(self):
+        pass
+    
+    def getSTB(self):
+        pass
+    
     #@property 
     def visaInstr(self) -> pyvisa.resources.MessageBasedResource: 
         """Method for getting the reference to this objects VISA resource. 
