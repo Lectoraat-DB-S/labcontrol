@@ -36,6 +36,7 @@ Functions
 
 
 """
+import traceback
 import logging
 import numpy as np
 import matplotlib.pyplot as plt
@@ -197,13 +198,19 @@ class FittingProcess(Process):
                 #finally put the bestvalues from the fit in outQueue.
                 self.debugPrint("putting bestvals into queue")
                 self.outQueue.put(outDict)
-            except:
-                logger.error(f"FittingProcess ({self.name}, pid = {self.pid}) run into ERROR. Sending ERROR now.")
-                self.debugPrint("Some kind of error")
+            except Exception as e:
+                # Print the exception message
+                self.debugPrint(f"An error occurred: {e}")
+        
+                # Print the full traceback for debugging
+                print("Full traceback:")
+                traceback.print_exc()
+                logger.error(f"FittingProcess ({self.name}, pid = {self.pid}) run into ERROR ={e}. Sending ERROR now.")
                 self.outQueue.put("ERROR")
                 break    
-            logger.info(f"FittingProcess ({self.name}, pid = {self.pid}) will quit now. Bye, Bye!")
-            self.debugPrint("quitting now.... bye")
+            logger.info(f"FittingProcess ({self.name}, pid = {self.pid}) finished work. Ready for new input!")
+            self.debugPrint("Finished work, ready for accepting new fitjob")
+        self.debugPrint("Loop ended. I will be killed soon. Bye Bye!")
 
 class FittingProcessProxy:
     

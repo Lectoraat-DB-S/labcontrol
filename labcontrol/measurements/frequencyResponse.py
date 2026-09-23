@@ -41,11 +41,11 @@ def createBodePlot(wr, logMagnitude, phase):
     fig.savefig('complete.png',dpi=600)
     fig.show()
 
-def doACSweep(start_freq = 5e1, stop_freq = 5e6, nr_freq_dec = 5):
+def doACSweep(start_freq = 5e1, stop_freq = 5e6, nr_freq_dec = 5, genchan = 1):
     scope: Scope = Scope.getDevice()
     scopeVert: Vertical = scope.vertical
     gen: BaseGenerator = BaseGenerator.getDevice()
-    genChan1: BaseGenChannel = gen.chan(1)
+    genChan1: BaseGenChannel = gen.chan(genchan) #16-9-26: kan1 van gen op school is brak, gebruik dan 2
     scopeChan1: Channel = scopeVert.chan(1)
     scopeChan2: Channel = scopeVert.chan(2)
     signalIn = None     #was list(), maar dat lijkt me erg veel ruimte te kosten.
@@ -74,7 +74,7 @@ def doACSweep(start_freq = 5e1, stop_freq = 5e6, nr_freq_dec = 5):
     # zet, per kanaal de vdiv goed
     # zet , per kanaal de (vertical) coupling goed (ws AC, dan geen offset.)    
     # zet de scope triggering coupling goed
-    WAITTIME = 100e-3 #tijd om waarden te laten stabiliseren voor doen van meting.
+    WAITTIME = 50e-3 #tijd om waarden te laten stabiliseren voor doen van meting.
     # step 0: set generator at first freq point + enable
     genChan1.setfreq(startFreq)
     genChan1.setAmp(4)
@@ -98,6 +98,8 @@ def doACSweep(start_freq = 5e1, stop_freq = 5e6, nr_freq_dec = 5):
     genChan1.enableOutput(True)
     scope.acquisition.setMemDepth("7k")
     #scope.acquire(state="STOP", mode="SAMPLE", stopAfter="SEQUENCE")
+    print(f"Zet de timediv naar {1.0/(startFreq*14)}")
+    scope.horizontal.setTimeDiv(1.0/(start_freq*14))
     myFreqs = gen.createFreqArray(startFreq, stopFreq, nrOfFreqPerDec, 'DEC')
     # step 1: acquire all the data
     #for freq in np.arange (startFreq, stopFreq, stepFreq):
